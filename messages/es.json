@@ -1,0 +1,42 @@
+{
+  "nav": { "inicio": "Inicio", "tienda": "Tienda", "embajadores": "Embajadores", "blog": "Blog" },
+  "mode": { "cliente": "Comprar café", "embajador": "Soy embajador", "ariaLabel": "Tipo de visitante" },
+  "skip": "Saltar al contenido",
+  "a11y": { "openMenu": "Abrir menú", "prevMethod": "Método anterior", "nextMethod": "Método siguiente", "aiAgent": "Agente IA por WhatsApp" },
+  "hero": {
+    "kicker": "★ CAFÉ DE ESPECIALIDAD · COLOMBIA",
+    "h1a": "No solo tomas café.",
+    "h1b": "Construyes tu negocio",
+    "h1c": "con él.",
+    "sub": "Tueste fresco, trazable y premiado. Compra para disfrutar, o conviértete en embajador y vende café de especialidad con utilidades reales y capacitación constante.",
+    "ctaBuy": "Comprar café →",
+    "ctaAmb": "Quiero ser embajador",
+    "pathBuyTitle": "Quiero disfrutar café ☕",
+    "pathBuyDesc": "Compra libras de café de especialidad al detal. Envío a toda Colombia.",
+    "pathAmbTitle": "Quiero emprender 📈",
+    "pathAmbDesc": "Vende con precio mayorista o con tu propia marca. Sin franquicia."
+  },
+  "trustBar": ["✓ TUESTE FRESCO SEMANAL", "✓ ORIGEN TRAZABLE", "✓ ENVÍO NACIONAL", "✓ CAPACITACIÓN GRATUITA"],
+  "methods": { "kicker": "EXPLORA · APRENDE", "h2": "El método cambia la taza", "sub": "Cada preparación revela algo distinto del grano. Esto es parte de lo que enseñamos a nuestros embajadores.", "ratio": "RATIO", "time": "TIEMPO", "body": "CUERPO" },
+  "how": { "kicker": "EMPRENDE EN 4 PASOS", "h2": "Cómo te conviertes en embajador", "cta": "Ver beneficios y calcular ganancias →" },
+  "origin": { "kicker": "DEL ORIGEN A TU TAZA", "h2a": "Café que conoces", "h2b": "de raíz", "p": "Trabajamos directamente con caficultores de regiones premiadas de Colombia. Cada lote llega con su ficha: finca, altura, variedad, proceso y notas de catación. Tueste por perfil, no por moda." },
+  "testimonials": { "kicker": "HISTORIAS REALES", "h2": "Embajadores que ya emprenden" },
+  "shop": { "kickerCliente": "CATÁLOGO", "kickerEmbajador": "CATÁLOGO MAYORISTA", "h1": "Nuestro café", "subCliente": "Tueste fresco, origen trazable y notas de catación en cada libra. Envío a toda Colombia.", "subEmbajador": "Precios de embajador por libra. Compra al por mayor, vende al detal y queda la diferencia.", "priceLabelCliente": "PRECIO", "priceLabelEmbajador": "PRECIO EMBAJADOR", "perLb": "/libra", "ctaCliente": "Comprar", "ctaEmbajador": "Surtir", "retailCompare": "Detal:" },
+  "product": { "back": "← Volver a la tienda", "addCliente": "Agregar al carrito", "addEmbajador": "Agregar al pedido mayorista", "wholesaleBtn": "Precio mayorista", "addedCliente": "✓ Agregado al carrito. Envío a toda Colombia.", "addedEmbajador": "✓ Agregado al pedido mayorista. Tu asesor confirmará disponibilidad.", "specAltitude": "ALTURA", "specProcess": "PROCESO", "specPackaging": "PRESENTACIÓN", "packagingValue": "Libra / 454 g" },
+  "ambassador": {
+    "kicker": "PROGRAMA DE EMBAJADORES", "h1a": "Emprende con café", "h1b": "de especialidad",
+    "sub": "Compra a precio mayorista, vende con tu marca o la nuestra, y crece con capacitación y un asistente IA a tu lado. Sin franquicia.",
+    "ctaCalc": "Calcular mis ganancias", "ctaCatalog": "Ver catálogo mayorista",
+    "benefitsKicker": "POR QUÉ TAZA MAESTRA", "benefitsH2": "Más que café: un negocio acompañado",
+    "calcKicker": "SIMULADOR", "calcH2": "Calcula tus ganancias", "calcSub": "Ajusta cuántas libras vendes al mes y a qué precio. Te mostramos tu utilidad estimada.",
+    "calcLabelLibras": "Libras que vendes al mes", "calcLabelPrecio": "Tu precio de venta por libra", "calcNote": "* Costo embajador estimado: $24.000 /libra",
+    "calcResultLabel": "UTILIDAD ESTIMADA / MES", "calcUtilLibra": "UTIL/LIBRA", "calcMargen": "MARGEN", "calcInversion": "INVERSIÓN", "calcCta": "Empezar con mi primer pedido →",
+    "aiKicker": "🤖 NUEVO · ASISTENTE IA", "aiH2a": "Tu asistente de recompra", "aiH2b": "por WhatsApp",
+    "aiSub": "Nuestro agente inteligente vigila las fechas de tus pedidos y te avisa, por WhatsApp o correo, cuándo conviene recomprar o contactar a un cliente. Nunca más una venta perdida por olvido.",
+    "aiChatName": "Asistente Taza Maestra", "aiChatStatus": "en línea · responde al instante", "aiChatInput": "Escribe un mensaje…",
+    "faqKicker": "DUDAS FRECUENTES", "faqH2": "Antes de empezar"
+  },
+  "blog": { "kicker": "CAPACITACIÓN CONSTANTE · GRATIS", "h1": "Academia Taza Maestra", "sub": "Videos, guías y tips de café, tueste y estrategia de ventas. Aprende a tu ritmo y vende mejor.", "readMore": "Ver más →" },
+  "footer": { "about": "Café de especialidad colombiano. Tueste fresco para quienes disfrutan, y para quienes emprenden.", "shopTitle": "TIENDA", "shopLinks": ["Todo el café", "Por origen", "Métodos"], "ambTitle": "EMBAJADORES", "ambLinks": ["Beneficios", "Calculadora", "Capacitación"], "nlTitle": "NEWSLETTER", "nlSub": "Tips de café, tueste y ventas. Cada semana.", "nlPlaceholder": "tu@correo.com", "nlButton": "Suscribirme", "nlDone": "¡Listo! ✓", "copyright": "© 2026 TAZA MAESTRA · CAFÉ DE ESPECIALIDAD", "madeIn": "HECHO EN COLOMBIA 🇨🇴" },
+  "floatingAI": "Asistente IA"
+}

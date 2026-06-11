@@ -1,0 +1,113 @@
+{
+  "brand": {
+    "name": "Taza Maestra",
+    "tagline_es": "café de especialidad",
+    "tagline_en": "specialty coffee",
+    "country": "Colombia",
+    "currency": "COP",
+    "locale": "es-CO"
+  },
+  "heroStats": [
+    { "num": "100%", "label_es": "Café colombiano", "label_en": "Colombian coffee" },
+    { "num": "+40%", "label_es": "Margen embajador", "label_en": "Ambassador margin" },
+    { "num": "24/7", "label_es": "Asistente IA", "label_en": "AI assistant" }
+  ],
+  "products": [
+    { "id": "huila", "name": "Huila Reserva", "origin": "HUILA · COLOMBIA", "roast_es": "TUESTE MEDIO", "roast_en": "MEDIUM ROAST", "cat": "origen", "notes_es": "Caramelo, panela y mandarina. Acidez jugosa y final dulce.", "notes_en": "Caramel, raw cane sugar and mandarin. Juicy acidity, sweet finish.", "retail": 38000, "wholesale": 24500, "img": "assets/bag-maroon.png", "swatch": "linear-gradient(150deg,#7E181C,#4A0B0F)", "altitude": "1.700 msnm", "process_es": "Lavado", "process_en": "Washed" },
+    { "id": "narino", "name": "Nariño Altura", "origin": "NARIÑO · COLOMBIA", "roast_es": "TUESTE MEDIO-ALTO", "roast_en": "MEDIUM-DARK ROAST", "cat": "origen", "notes_es": "Chocolate, cereza y nuez. Cuerpo sedoso, muy equilibrado.", "notes_en": "Chocolate, cherry and walnut. Silky body, very balanced.", "retail": 39000, "wholesale": 25000, "img": "assets/bag-green.png", "swatch": "linear-gradient(150deg,#2F5D3A,#1c3a24)", "altitude": "1.900 msnm", "process_es": "Lavado", "process_en": "Washed" },
+    { "id": "geisha", "name": "Geisha Edición", "origin": "CAUCA · COLOMBIA", "roast_es": "TUESTE CLARO", "roast_en": "LIGHT ROAST", "cat": "especial", "notes_es": "Jazmín, durazno y bergamota. Una taza floral y vibrante.", "notes_en": "Jasmine, peach and bergamot. A floral, vibrant cup.", "retail": 64000, "wholesale": 44000, "img": null, "swatch": "linear-gradient(150deg,#B6893B,#8a6a2c)", "altitude": "1.800 msnm", "process_es": "Honey", "process_en": "Honey" },
+    { "id": "espresso", "name": "Blend Espresso", "origin": "BLEND · COLOMBIA", "roast_es": "TUESTE OSCURO", "roast_en": "DARK ROAST", "cat": "espresso", "notes_es": "Cacao, avellana y caramelo. Crema densa, base ideal con leche.", "notes_en": "Cocoa, hazelnut and caramel. Dense crema, ideal base with milk.", "retail": 36000, "wholesale": 23000, "img": null, "swatch": "linear-gradient(150deg,#3A2418,#1f120b)", "altitude": "1.600 msnm", "process_es": "Lavado", "process_en": "Washed" },
+    { "id": "descafeinado", "name": "Descafeinado", "origin": "PROCESO AGUA · COLOMBIA", "roast_es": "TUESTE MEDIO", "roast_en": "MEDIUM ROAST", "cat": "especial", "notes_es": "Sin cafeína, con todo el sabor. Chocolate y caña dulce.", "notes_en": "Caffeine-free, full flavor. Chocolate and sweet cane.", "retail": 40000, "wholesale": 26000, "img": null, "swatch": "linear-gradient(150deg,#5E4636,#3a2a1f)", "altitude": "1.700 msnm", "process_es": "Agua (Swiss Water)", "process_en": "Water (Swiss Water)" },
+    { "id": "coldbrew", "name": "Cold Brew Listo", "origin": "BOTELLA 1 L · LISTO", "roast_es": "LISTO PARA SERVIR", "roast_en": "READY TO SERVE", "cat": "espresso", "notes_es": "Suave y dulce, listo para vender frío. Producto de alta rotación.", "notes_en": "Smooth and sweet, ready to sell cold. High-rotation product.", "retail": 28000, "wholesale": 17500, "img": null, "swatch": "linear-gradient(150deg,#6E1417,#3a0c0e)", "altitude": "—", "process_es": "Inmersión en frío", "process_en": "Cold immersion" }
+  ],
+  "productFilters": [
+    { "id": "todos", "label_es": "Todos", "label_en": "All" },
+    { "id": "origen", "label_es": "Por origen", "label_en": "By origin" },
+    { "id": "espresso", "label_es": "Espresso & listos", "label_en": "Espresso & ready" },
+    { "id": "especial", "label_es": "Ediciones especiales", "label_en": "Special editions" }
+  ],
+  "methods": [
+    { "code": "MÉTODO 01", "big": "V60", "tag": "FILTRADO · POUR OVER", "name": "Hario V60", "desc_es": "Claridad y dulzor. Resalta las notas florales y frutales de cafés lavados de altura. El favorito para descubrir un origen.", "desc_en": "Clarity and sweetness. Highlights the floral and fruity notes of high-altitude washed coffees. The favorite for discovering an origin.", "ratio": "1:16", "time": "3:00", "body_es": "Ligero", "body_en": "Light" },
+    { "code": "MÉTODO 02", "big": "FP", "tag": "INMERSIÓN", "name": "Prensa Francesa", "desc_es": "Cuerpo redondo y textura envolvente. Sin papel, conserva los aceites del café. Tolerante y consistente para el día a día.", "desc_en": "Round body and enveloping texture. No paper, it keeps the coffee oils. Forgiving and consistent for everyday.", "ratio": "1:15", "time": "4:00", "body_es": "Alto", "body_en": "High" },
+    { "code": "MÉTODO 03", "big": "ES", "tag": "PRESIÓN", "name": "Espresso", "desc_es": "Concentrado e intenso, con crema dorada. La base de todo café con leche. Exige tueste y molienda precisos.", "desc_en": "Concentrated and intense, with golden crema. The base of every milk drink. Demands precise roast and grind.", "ratio": "1:2", "time": "0:28", "body_es": "Intenso", "body_en": "Intense" },
+    { "code": "MÉTODO 04", "big": "CX", "tag": "FILTRADO", "name": "Chemex", "desc_es": "Taza limpísima y elegante gracias a su filtro grueso. Ideal para compartir y para perfiles delicados y aromáticos.", "desc_en": "A very clean, elegant cup thanks to its thick filter. Great for sharing and for delicate, aromatic profiles.", "ratio": "1:16", "time": "4:30", "body_es": "Limpio", "body_en": "Clean" },
+    { "code": "MÉTODO 05", "big": "CB", "tag": "INMERSIÓN EN FRÍO", "name": "Cold Brew", "desc_es": "Dulce, suave y bajo en acidez. Se extrae en frío durante horas. Perfecto para climas cálidos y para vender listo.", "desc_en": "Sweet, smooth and low in acidity. Extracted cold over hours. Perfect for warm climates and to sell ready-made.", "ratio": "1:8", "time": "14 h", "body_es": "Suave", "body_en": "Smooth" },
+    { "code": "MÉTODO 06", "big": "MK", "tag": "PRESIÓN CASERA", "name": "Moka / Greca", "desc_es": "El clásico de casa. Café fuerte y aromático sobre la estufa. Nostálgico, económico y siempre confiable.", "desc_en": "The home classic. Strong, aromatic coffee on the stovetop. Nostalgic, affordable and always reliable.", "ratio": "1:10", "time": "5:00", "body_es": "Fuerte", "body_en": "Strong" }
+  ],
+  "steps": [
+    { "n": "1", "t_es": "Regístrate", "t_en": "Sign up", "d_es": "Cuéntanos de ti. Sin franquicia ni cuotas ocultas. Te asignamos un asesor.", "d_en": "Tell us about you. No franchise or hidden fees. We assign you an advisor." },
+    { "n": "2", "t_es": "Elige tu plan", "t_en": "Choose your plan", "d_es": "Compra tus primeras libras a precio mayorista. Con tu marca o con la nuestra.", "d_en": "Buy your first pounds at wholesale price. With your brand or ours." },
+    { "n": "3", "t_es": "Capacítate", "t_en": "Get trained", "d_es": "Acceso gratuito a formación en café, tueste y estrategia de ventas.", "d_en": "Free access to training in coffee, roasting and sales strategy." },
+    { "n": "4", "t_es": "Vende y crece", "t_en": "Sell and grow", "d_es": "El asistente IA te recuerda recompras y resuelve dudas por WhatsApp.", "d_en": "The AI assistant reminds you of reorders and answers questions on WhatsApp." }
+  ],
+  "benefits": [
+    { "icon": "📈", "t_es": "Buenas utilidades", "t_en": "Strong profits", "d_es": "Compras a precio mayorista y defines tu margen. Café premium con demanda real y recompra alta.", "d_en": "Buy at wholesale and set your margin. Premium coffee with real demand and high reorder rates." },
+    { "icon": "🎓", "t_es": "Capacitación gratuita", "t_en": "Free training", "d_es": "Formación constante en café, tueste y catación. Aprende a vender con criterio, no improvisando.", "d_en": "Constant training in coffee, roasting and cupping. Learn to sell with knowledge, not guesswork." },
+    { "icon": "🎯", "t_es": "Apoyo en estrategia", "t_en": "Sales strategy support", "d_es": "Te acompañamos con tácticas de venta, precios y material para que cierres más clientes.", "d_en": "We support you with sales tactics, pricing and materials to close more clients." },
+    { "icon": "🏷️", "t_es": "Tu marca o la nuestra", "t_en": "Your brand or ours", "d_es": "Marca blanca disponible: vende con tu propio logo y nombre, o bajo el respaldo de Taza Maestra.", "d_en": "White-label available: sell under your own logo and name, or backed by Taza Maestra." },
+    { "icon": "🚚", "t_es": "Sin franquicia", "t_en": "No franchise", "d_es": "Cero cuotas fijas ni inversión obligatoria en local. Empiezas con las libras que decidas.", "d_en": "Zero fixed fees or mandatory storefront investment. Start with the pounds you choose." },
+    { "icon": "🤖", "t_es": "Asistente IA 24/7", "t_en": "24/7 AI assistant", "d_es": "Un agente por WhatsApp que te recuerda recompras y resuelve tus dudas a cualquier hora.", "d_en": "A WhatsApp agent that reminds you of reorders and answers your questions any time." }
+  ],
+  "aiFeatures": [
+    { "t_es": "Recordatorio de recompra", "t_en": "Reorder reminder", "d_es": "detecta cuándo tu cliente está por quedarse sin café y te avisa para vender de nuevo.", "d_en": "detects when your client is about to run out of coffee and alerts you to sell again." },
+    { "t_es": "Seguimiento por fechas", "t_en": "Date-based tracking", "d_es": "registra cada pedido y monitorea el ciclo de consumo automáticamente.", "d_en": "logs each order and monitors the consumption cycle automatically." },
+    { "t_es": "Alertas por WhatsApp y correo", "t_en": "WhatsApp & email alerts", "d_es": "recibes el aviso por donde prefieras, sin revisar nada manualmente.", "d_en": "get the alert wherever you prefer, without checking anything manually." },
+    { "t_es": "Resuelve dudas al instante", "t_en": "Instant answers", "d_es": "preguntas sobre café, tueste o ventas, respondidas 24/7.", "d_en": "questions about coffee, roasting or sales, answered 24/7." }
+  ],
+  "aiChat": [
+    { "from": "bot", "text_es": "☕ ¡Hola Laura! Tu cliente Cafetería El Roble pidió 8 libras hace 28 días. Suele recomprar cada 30. ¿Le escribimos?", "text_en": "☕ Hi Laura! Your client Cafetería El Roble ordered 8 pounds 28 days ago. They usually reorder every 30. Shall we message them?" },
+    { "from": "user", "text_es": "Sí, mándale el recordatorio 🙌", "text_en": "Yes, send the reminder 🙌" },
+    { "from": "bot", "text_es": "Listo ✅ Mensaje enviado. También te recuerdo: tu inventario de Huila baja, ¿reabastecemos?", "text_en": "Done ✅ Message sent. Also a heads-up: your Huila stock is low, shall we restock?" },
+    { "from": "user", "text_es": "Perfecto, agenda 15 libras 👌", "text_en": "Perfect, schedule 15 pounds 👌" }
+  ],
+  "testimonials": [
+    { "quote_es": "Empecé con 10 libras al mes. Hoy surto tres cafeterías y vivo de esto.", "quote_en": "I started with 10 pounds a month. Today I supply three cafés and live off this.", "name": "Laura Restrepo", "role_es": "Embajadora · Medellín", "role_en": "Ambassador · Medellín", "initial": "L" },
+    { "quote_es": "La capacitación en tueste me cambió la forma de vender. Mis clientes lo notan.", "quote_en": "The roasting training changed how I sell. My clients notice it.", "name": "Andrés Gómez", "role_es": "Cafetería · Bogotá", "role_en": "Café · Bogotá", "initial": "A" },
+    { "quote_es": "El recordatorio de recompra por WhatsApp me ahorra horas y no pierdo ventas.", "quote_en": "The WhatsApp reorder reminder saves me hours and I don't lose sales.", "name": "Valentina Cruz", "role_es": "Embajadora · Cali", "role_en": "Ambassador · Cali", "initial": "V" }
+  ],
+  "originFacts": [
+    { "k_es": "REGIONES", "k_en": "REGIONS", "v": "Huila · Nariño · Cauca" },
+    { "k_es": "ALTURA", "k_en": "ALTITUDE", "v": "1.600–2.000 msnm" },
+    { "k_es": "PROCESO", "k_en": "PROCESS", "v_es": "Lavado · Honey", "v_en": "Washed · Honey" },
+    { "k_es": "PUNTAJE SCA", "k_en": "SCA SCORE", "v": "84–88+" }
+  ],
+  "faqs": [
+    { "q_es": "¿Necesito experiencia o un local para ser embajador?", "q_en": "Do I need experience or a storefront to be an ambassador?", "a_es": "No. Muchos embajadores empiezan desde casa, vendiendo a su círculo cercano y por redes. Te damos la formación y el material para arrancar.", "a_en": "No. Many ambassadors start from home, selling to their close circle and via social media. We give you the training and materials to begin." },
+    { "q_es": "¿Puedo vender con mi propia marca?", "q_en": "Can I sell under my own brand?", "a_es": "Sí. Ofrecemos marca blanca: tú pones tu logo y nombre, nosotros el café de especialidad y el tueste. También puedes vender bajo Taza Maestra.", "a_en": "Yes. We offer white-label: you provide your logo and name, we provide the specialty coffee and roast. You can also sell under Taza Maestra." },
+    { "q_es": "¿Cuál es la inversión inicial?", "q_en": "What is the initial investment?", "a_es": "No hay franquicia ni cuota fija. Solo compras tu primer lote de café a precio mayorista; tú defines cuántas libras según tu meta.", "a_en": "There's no franchise or fixed fee. You only buy your first batch of coffee at wholesale price; you decide how many pounds based on your goal." },
+    { "q_es": "¿Cómo funciona el asistente IA de WhatsApp?", "q_en": "How does the WhatsApp AI assistant work?", "a_es": "Monitorea las fechas de tus pedidos y te avisa cuándo conviene recomprar o contactar a un cliente. También responde tus dudas sobre café y ventas 24/7.", "a_en": "It monitors your order dates and alerts you when it's a good time to reorder or contact a client. It also answers your coffee and sales questions 24/7." },
+    { "q_es": "¿El café siempre llega fresco?", "q_en": "Does the coffee always arrive fresh?", "a_es": "Tostamos por pedido cada semana. Verás la fecha de tueste en cada bolsa, con su ficha de origen y notas de catación.", "a_en": "We roast to order every week. You'll see the roast date on each bag, with its origin sheet and cupping notes." }
+  ],
+  "blogFilters": [
+    { "id": "todos", "label_es": "Todo", "label_en": "All" },
+    { "id": "cafe", "label_es": "Café & métodos", "label_en": "Coffee & methods" },
+    { "id": "video", "label_es": "Videos", "label_en": "Videos" },
+    { "id": "ventas", "label_es": "Estrategia de ventas", "label_en": "Sales strategy" }
+  ],
+  "blogFeatured": {
+    "kicker_es": "DESTACADO · 6 EPISODIOS", "kicker_en": "FEATURED · 6 EPISODES",
+    "badge_es": "SERIE · TUESTE", "badge_en": "SERIES · ROASTING",
+    "t_es": "Del grano verde a la taza: el tueste explicado", "t_en": "From green bean to cup: roasting explained",
+    "d_es": "Una serie en video para entender cómo el tueste define dulzor, acidez y cuerpo. Imprescindible antes de vender café de especialidad.", "d_en": "A video series to understand how roasting defines sweetness, acidity and body. A must before selling specialty coffee.",
+    "cta_es": "Ver la serie ▶", "cta_en": "Watch the series ▶"
+  },
+  "blogPosts": [
+    { "tag": "VIDEO · TUESTE", "cat": "video", "isVideo": true, "t_es": "Cómo leer una curva de tueste", "t_en": "How to read a roast curve", "d_es": "8 min · Entiende desarrollo, primer crack y cómo afecta la taza.", "d_en": "8 min · Understand development, first crack and how it affects the cup.", "sw": "linear-gradient(140deg,#7E181C,#4A0B0F)" },
+    { "tag": "GUÍA · MÉTODO", "cat": "cafe", "isVideo": false, "t_es": "V60 perfecto: la receta base", "t_en": "Perfect V60: the base recipe", "d_es": "Lectura 5 min · Ratio, molienda y vertido paso a paso.", "d_en": "5 min read · Ratio, grind and pour step by step.", "sw": "linear-gradient(140deg,#B6893B,#8a6a2c)" },
+    { "tag": "VIDEO · VENTAS", "cat": "ventas", "isVideo": true, "t_es": "Cómo presentar café a una cafetería", "t_en": "How to pitch coffee to a café", "d_es": "12 min · El pitch que convierte una muestra en cliente fijo.", "d_en": "12 min · The pitch that turns a sample into a regular client.", "sw": "linear-gradient(140deg,#2F5D3A,#1c3a24)" },
+    { "tag": "GUÍA · NEGOCIO", "cat": "ventas", "isVideo": false, "t_es": "Calcula tu precio de venta", "t_en": "Calculate your selling price", "d_es": "Lectura 6 min · Margen, empaque y logística sin perder plata.", "d_en": "6 min read · Margin, packaging and logistics without losing money.", "sw": "linear-gradient(140deg,#3A2418,#1f120b)" },
+    { "tag": "VIDEO · CAFÉ", "cat": "cafe", "isVideo": true, "t_es": "Catación para principiantes", "t_en": "Cupping for beginners", "d_es": "10 min · Entrena tu paladar e identifica notas como un pro.", "d_en": "10 min · Train your palate and identify notes like a pro.", "sw": "linear-gradient(140deg,#E8731E,#b8550f)" },
+    { "tag": "GUÍA · TUESTE", "cat": "cafe", "isVideo": false, "t_es": "Almacenar café en grano", "t_en": "Storing whole-bean coffee", "d_es": "Lectura 4 min · Conserva el frescor y evita errores comunes.", "d_en": "4 min read · Keep it fresh and avoid common mistakes.", "sw": "linear-gradient(140deg,#5E4636,#3a2a1f)" }
+  ],
+  "calculator": {
+    "costoEmbajador": 24000,
+    "libras": { "min": 5, "max": 200, "step": 5, "default": 25 },
+    "precio": { "min": 28000, "max": 80000, "step": 1000, "default": 38000 },
+    "formula": {
+      "utilLibra": "max(0, precio - costoEmbajador)",
+      "utilMes": "utilLibra * libras",
+      "inversion": "costoEmbajador * libras",
+      "margen": "round(utilLibra / precio * 100)"
+    }
+  }
+}

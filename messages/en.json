@@ -1,0 +1,42 @@
+{
+  "nav": { "inicio": "Home", "tienda": "Shop", "embajadores": "Ambassadors", "blog": "Blog" },
+  "mode": { "cliente": "Buy coffee", "embajador": "I'm an ambassador", "ariaLabel": "Visitor type" },
+  "skip": "Skip to content",
+  "a11y": { "openMenu": "Open menu", "prevMethod": "Previous method", "nextMethod": "Next method", "aiAgent": "WhatsApp AI agent" },
+  "hero": {
+    "kicker": "★ SPECIALTY COFFEE · COLOMBIA",
+    "h1a": "You don't just drink coffee.",
+    "h1b": "You build your business",
+    "h1c": "with it.",
+    "sub": "Fresh, traceable, award-winning roast. Buy to enjoy, or become an ambassador and sell specialty coffee with real profits and constant training.",
+    "ctaBuy": "Buy coffee →",
+    "ctaAmb": "I want to be an ambassador",
+    "pathBuyTitle": "I want to enjoy coffee ☕",
+    "pathBuyDesc": "Buy pounds of specialty coffee at retail. Shipping across Colombia.",
+    "pathAmbTitle": "I want to start a business 📈",
+    "pathAmbDesc": "Sell at wholesale price or under your own brand. No franchise."
+  },
+  "trustBar": ["✓ WEEKLY FRESH ROAST", "✓ TRACEABLE ORIGIN", "✓ NATIONWIDE SHIPPING", "✓ FREE TRAINING"],
+  "methods": { "kicker": "EXPLORE · LEARN", "h2": "The method changes the cup", "sub": "Every brew reveals something different about the bean. This is part of what we teach our ambassadors.", "ratio": "RATIO", "time": "TIME", "body": "BODY" },
+  "how": { "kicker": "START IN 4 STEPS", "h2": "How you become an ambassador", "cta": "See benefits and calculate profits →" },
+  "origin": { "kicker": "FROM ORIGIN TO YOUR CUP", "h2a": "Coffee you know", "h2b": "from the root", "p": "We work directly with coffee growers from award-winning regions of Colombia. Each lot arrives with its sheet: farm, altitude, variety, process and cupping notes. Roasted by profile, not by trend." },
+  "testimonials": { "kicker": "REAL STORIES", "h2": "Ambassadors already in business" },
+  "shop": { "kickerCliente": "CATALOG", "kickerEmbajador": "WHOLESALE CATALOG", "h1": "Our coffee", "subCliente": "Fresh roast, traceable origin and cupping notes in every pound. Shipping across Colombia.", "subEmbajador": "Ambassador prices per pound. Buy wholesale, sell retail and keep the difference.", "priceLabelCliente": "PRICE", "priceLabelEmbajador": "AMBASSADOR PRICE", "perLb": "/lb", "ctaCliente": "Buy", "ctaEmbajador": "Stock up", "retailCompare": "Retail:" },
+  "product": { "back": "← Back to shop", "addCliente": "Add to cart", "addEmbajador": "Add to wholesale order", "wholesaleBtn": "Wholesale price", "addedCliente": "✓ Added to cart. Shipping across Colombia.", "addedEmbajador": "✓ Added to wholesale order. Your advisor will confirm availability.", "specAltitude": "ALTITUDE", "specProcess": "PROCESS", "specPackaging": "PACKAGING", "packagingValue": "Pound / 454 g" },
+  "ambassador": {
+    "kicker": "AMBASSADOR PROGRAM", "h1a": "Build a business with", "h1b": "specialty coffee",
+    "sub": "Buy at wholesale, sell under your brand or ours, and grow with training and an AI assistant by your side. No franchise.",
+    "ctaCalc": "Calculate my profits", "ctaCatalog": "See wholesale catalog",
+    "benefitsKicker": "WHY TAZA MAESTRA", "benefitsH2": "More than coffee: a business with support",
+    "calcKicker": "SIMULATOR", "calcH2": "Calculate your profits", "calcSub": "Adjust how many pounds you sell per month and at what price. We'll show your estimated profit.",
+    "calcLabelLibras": "Pounds you sell per month", "calcLabelPrecio": "Your selling price per pound", "calcNote": "* Estimated ambassador cost: $24,000 /lb",
+    "calcResultLabel": "ESTIMATED PROFIT / MONTH", "calcUtilLibra": "PROFIT/LB", "calcMargen": "MARGIN", "calcInversion": "INVESTMENT", "calcCta": "Start with my first order →",
+    "aiKicker": "🤖 NEW · AI ASSISTANT", "aiH2a": "Your reorder assistant", "aiH2b": "on WhatsApp",
+    "aiSub": "Our smart agent watches your order dates and alerts you, via WhatsApp or email, when it's a good time to reorder or contact a client. Never lose a sale to forgetfulness again.",
+    "aiChatName": "Taza Maestra Assistant", "aiChatStatus": "online · replies instantly", "aiChatInput": "Type a message…",
+    "faqKicker": "FREQUENT QUESTIONS", "faqH2": "Before you start"
+  },
+  "blog": { "kicker": "CONSTANT TRAINING · FREE", "h1": "Taza Maestra Academy", "sub": "Videos, guides and tips on coffee, roasting and sales strategy. Learn at your pace and sell better.", "readMore": "Read more →" },
+  "footer": { "about": "Colombian specialty coffee. Fresh roast for those who enjoy, and those who start a business.", "shopTitle": "SHOP", "shopLinks": ["All coffee", "By origin", "Methods"], "ambTitle": "AMBASSADORS", "ambLinks": ["Benefits", "Calculator", "Training"], "nlTitle": "NEWSLETTER", "nlSub": "Coffee, roasting and sales tips. Every week.", "nlPlaceholder": "you@email.com", "nlButton": "Subscribe", "nlDone": "Done! ✓", "copyright": "© 2026 TAZA MAESTRA · SPECIALTY COFFEE", "madeIn": "MADE IN COLOMBIA 🇨🇴" },
+  "floatingAI": "AI Assistant"
+}
