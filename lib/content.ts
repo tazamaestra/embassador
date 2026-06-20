@@ -24,6 +24,9 @@ const c = rawContent as {
   calculator: CalculatorConfig;
 };
 
-export const { brand, heroStats, products, productFilters, methods, steps,
+export const { brand, heroStats, productFilters, steps,
   benefits, aiFeatures, aiChat, testimonials, originFacts, faqs,
   blogFilters, blogFeatured, blogPosts, calculator } = c;
+
+export const products = c.products.filter((p: Product & { _disabled?: boolean }) => !p._disabled);
+export const methods = c.methods.filter((m: Method & { _disabled?: boolean }) => !m._disabled);

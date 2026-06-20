@@ -15,6 +15,7 @@ export default function Origins({ locale }: { locale: Locale }) {
         <div className="relative rounded-card-lg overflow-hidden bg-arena min-h-[300px] flex items-center justify-center">
           <div className="absolute inset-0 flex items-center justify-center">
             <div
+              role="img"
               className="w-full h-full"
               aria-label="[ foto: finca cafetera colombiana ]"
               style={{ background: "repeating-linear-gradient(45deg, #EFE3C8, #EFE3C8 10px, #E5D5B5 10px, #E5D5B5 20px)" }}

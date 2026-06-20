@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Mulish, Space_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getLocale } from "next-intl/server";
+import { getMessages } from "next-intl/server";
 import { ModeProvider } from "@/contexts/ModeContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import FloatingAI from "@/components/layout/FloatingAI";
+import CartDrawer from "@/components/shop/CartDrawer";
 import "../globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -63,6 +64,7 @@ export default async function LocaleLayout({
             </main>
             <Footer />
             <FloatingAI />
+            <CartDrawer />
           </ModeProvider>
         </NextIntlClientProvider>
       </body>
