@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/lib/nav";
 import { useAuthStore } from "@/lib/auth-store";
 import type { Locale } from "@/lib/types";
 
 type Tab = "register" | "login";
-type RegErrors = Partial<Record<"name" | "email" | "phone" | "city" | "password" | "confirm", string>>;
+type RegErrors = Partial<Record<"name" | "email" | "phone" | "password" | "confirm", string>>;
 
 function Field({
   id,
@@ -56,13 +57,15 @@ function Field({
 export default function AuthForm({ locale }: { locale: Locale }) {
   const es = locale !== "en";
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/embajadores";
   const { user, register, login } = useAuthStore();
 
   const [tab, setTab] = useState<Tab>("register");
   const [loading, setLoading] = useState(false);
 
   // Register state
-  const [reg, setReg] = useState({ name: "", email: "", phone: "", city: "", password: "", confirm: "" });
+  const [reg, setReg] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
   const [regErrors, setRegErrors] = useState<RegErrors>({});
 
   // Login state
@@ -71,8 +74,8 @@ export default function AuthForm({ locale }: { locale: Locale }) {
   const [loginError, setLoginError] = useState("");
 
   useEffect(() => {
-    if (user) router.push("/embajadores");
-  }, [user, router]);
+    if (user) router.push(next);
+  }, [user, router, next]);
 
   function setRegField(key: keyof typeof reg) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +89,6 @@ export default function AuthForm({ locale }: { locale: Locale }) {
     if (!reg.name.trim()) errs.name = es ? "Requerido" : "Required";
     if (!reg.email.includes("@")) errs.email = es ? "Email inválido" : "Invalid email";
     if (!reg.phone.trim()) errs.phone = es ? "Requerido" : "Required";
-    if (!reg.city.trim()) errs.city = es ? "Requerido" : "Required";
     if (reg.password.length < 8) errs.password = es ? "Mínimo 8 caracteres" : "At least 8 characters";
     if (reg.confirm !== reg.password) errs.confirm = es ? "Las contraseñas no coinciden" : "Passwords don't match";
     setRegErrors(errs);
@@ -98,7 +100,7 @@ export default function AuthForm({ locale }: { locale: Locale }) {
     if (!validateReg()) return;
     setLoading(true);
     await new Promise((r) => setTimeout(r, 500));
-    const result = register({ name: reg.name, email: reg.email, phone: reg.phone, city: reg.city });
+    const result = register({ name: reg.name, email: reg.email, phone: reg.phone, password: reg.password });
     setLoading(false);
     if (!result.success) {
       setRegErrors({ email: es ? "Este correo ya está registrado" : "Email already registered" });
@@ -114,9 +116,11 @@ export default function AuthForm({ locale }: { locale: Locale }) {
     }
     setLoading(true);
     await new Promise((r) => setTimeout(r, 500));
-    const result = login(loginEmail);
+    const result = login(loginEmail, loginPassword);
     setLoading(false);
-    if (!result.success) {
+    if (result.error === "wrong_password") {
+      setLoginError(es ? "Contraseña incorrecta" : "Incorrect password");
+    } else if (result.error === "not_found") {
       setLoginError(
         es
           ? "Correo no encontrado. ¿Ya tienes cuenta?"
@@ -125,9 +129,6 @@ export default function AuthForm({ locale }: { locale: Locale }) {
     }
     // If success, useEffect above will redirect
   }
-
-  const inputCls =
-    "w-full bg-white/5 border border-white/10 rounded-input px-4 py-3 font-body text-crema-papel text-sm placeholder:text-crema/20 focus:outline-none focus:border-naranja focus:ring-1 focus:ring-naranja transition-colors";
 
   return (
     <div
@@ -212,43 +213,35 @@ export default function AuthForm({ locale }: { locale: Locale }) {
               error={regErrors.email}
               autoComplete="email"
             />
+            <Field
+              id="r-phone"
+              label="WhatsApp"
+              type="tel"
+              value={reg.phone}
+              onChange={setRegField("phone")}
+              error={regErrors.phone}
+              autoComplete="tel"
+            />
             <div className="grid grid-cols-2 gap-3">
               <Field
-                id="r-phone"
-                label="WhatsApp"
-                type="tel"
-                value={reg.phone}
-                onChange={setRegField("phone")}
-                error={regErrors.phone}
-                autoComplete="tel"
+                id="r-password"
+                label={es ? "Contraseña" : "Password"}
+                type="password"
+                value={reg.password}
+                onChange={setRegField("password")}
+                error={regErrors.password}
+                autoComplete="new-password"
               />
               <Field
-                id="r-city"
-                label={es ? "Ciudad" : "City"}
-                value={reg.city}
-                onChange={setRegField("city")}
-                error={regErrors.city}
-                autoComplete="address-level2"
+                id="r-confirm"
+                label={es ? "Confirmar" : "Confirm"}
+                type="password"
+                value={reg.confirm}
+                onChange={setRegField("confirm")}
+                error={regErrors.confirm}
+                autoComplete="new-password"
               />
             </div>
-            <Field
-              id="r-password"
-              label={es ? "Contraseña" : "Password"}
-              type="password"
-              value={reg.password}
-              onChange={setRegField("password")}
-              error={regErrors.password}
-              autoComplete="new-password"
-            />
-            <Field
-              id="r-confirm"
-              label={es ? "Confirmar contraseña" : "Confirm password"}
-              type="password"
-              value={reg.confirm}
-              onChange={setRegField("confirm")}
-              error={regErrors.confirm}
-              autoComplete="new-password"
-            />
 
             <button
               type="submit"
@@ -296,41 +289,23 @@ export default function AuthForm({ locale }: { locale: Locale }) {
               </p>
             )}
 
-            <div className="space-y-1">
-              <label
-                htmlFor="l-email"
-                className="block font-mono text-[11px] tracking-[.15em] text-crema/60 uppercase"
-              >
-                Email
-              </label>
-              <input
-                id="l-email"
-                type="email"
-                value={loginEmail}
-                onChange={(e) => { setLoginEmail(e.target.value); setLoginError(""); }}
-                autoComplete="email"
-                className={inputCls}
-                style={{ caretColor: "#E8731E" }}
-              />
-            </div>
+            <Field
+              id="l-email"
+              label="Email"
+              type="email"
+              value={loginEmail}
+              onChange={(e) => { setLoginEmail(e.target.value); setLoginError(""); }}
+              autoComplete="email"
+            />
 
-            <div className="space-y-1">
-              <label
-                htmlFor="l-password"
-                className="block font-mono text-[11px] tracking-[.15em] text-crema/60 uppercase"
-              >
-                {es ? "Contraseña" : "Password"}
-              </label>
-              <input
-                id="l-password"
-                type="password"
-                value={loginPassword}
-                onChange={(e) => { setLoginPassword(e.target.value); setLoginError(""); }}
-                autoComplete="current-password"
-                className={inputCls}
-                style={{ caretColor: "#E8731E" }}
-              />
-            </div>
+            <Field
+              id="l-password"
+              label={es ? "Contraseña" : "Password"}
+              type="password"
+              value={loginPassword}
+              onChange={(e) => { setLoginPassword(e.target.value); setLoginError(""); }}
+              autoComplete="current-password"
+            />
 
             <button
               type="submit"

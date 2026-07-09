@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Link } from "@/lib/nav";
 import { useTranslations } from "next-intl";
-import { formatCOP } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { useMode } from "@/contexts/ModeContext";
 import { useCartStore } from "@/lib/cart-store";
 import type { Product, Locale } from "@/lib/types";
@@ -17,11 +17,12 @@ export default function ProductCard({ product, locale }: { product: Product; loc
 
   const isAmb = mode === "embajador";
   const price = isAmb ? product.wholesale : product.retail;
+  const priceUsd = isAmb ? product.wholesale_usd : product.retail_usd;
   const roast = locale === "en" ? product.roast_en : product.roast_es;
   const notes = locale === "en" ? product.notes_en : product.notes_es;
 
   function handleAdd() {
-    addItem({ id: product.id, name: product.name, price, swatch: product.swatch, img: product.img });
+    addItem({ id: product.id, name: product.name, price, priceUsd, swatch: product.swatch, img: product.img });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   }
@@ -61,20 +62,21 @@ export default function ProductCard({ product, locale }: { product: Product; loc
 
         {/* Price + add to cart */}
         <div className="mt-4 pt-4 border-t border-borde flex items-end justify-between gap-2">
-          <div>
-            <p className="font-mono text-[9px] tracking-[.18em] text-tinta-suave uppercase mb-0.5">
-              {isAmb ? t("priceLabelEmbajador") : t("priceLabelCliente")}
-            </p>
-            <p className="font-display font-bold text-vino text-2xl leading-none">
-              {formatCOP(price)}
-              <span className="font-mono font-400 text-[11px] text-tinta-suave ml-1">{t("perLb")}</span>
-            </p>
-            {isAmb && (
-              <p className="font-body text-xs text-tinta-suave mt-0.5">
-                {t("retailCompare")} <s>{formatCOP(product.retail)}</s>
+          {!isAmb && (
+            <div>
+              <p className="font-mono text-[9px] tracking-[.18em] text-tinta-suave uppercase mb-0.5">
+                {t("priceLabelCliente")}
               </p>
-            )}
-          </div>
+              <p className="font-display font-bold text-vino text-2xl leading-none">
+                {formatPrice(product.retail, product.retail_usd, locale)}
+                <span className="font-mono font-400 text-[11px] text-tinta-suave ml-1">{t("perLb")}</span>
+              </p>
+              <p className="font-mono text-[9px] tracking-[.12em] text-tinta-suave mt-0.5 uppercase">
+                {locale === "en" ? "+ shipping" : "+ envío"}
+              </p>
+            </div>
+          )}
+          {isAmb && <div />}
 
           <button
             onClick={handleAdd}

@@ -5,6 +5,7 @@ export interface CartItem {
   id: string;
   name: string;
   price: number;
+  priceUsd?: number;
   qty: number;
   swatch: string;
   img: string | null;
@@ -32,7 +33,9 @@ export const useCartStore = create<CartState>()(
           if (exists) {
             return {
               items: s.items.map((i) =>
-                i.id === item.id ? { ...i, qty: i.qty + 1, price: item.price } : i
+                i.id === item.id
+                  ? { ...i, qty: i.qty + 1, price: item.price, priceUsd: item.priceUsd }
+                  : i
               ),
               open: true,
             };

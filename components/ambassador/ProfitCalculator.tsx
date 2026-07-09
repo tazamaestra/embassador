@@ -2,20 +2,19 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/lib/nav";
 import { calculator } from "@/lib/content";
 import { formatCOP } from "@/lib/format";
 
 export default function ProfitCalculator() {
   const t = useTranslations("ambassador");
-  const { costoEmbajador, libras: libCfg, precio: priceCfg } = calculator;
+  const { precioVenta, utilLibra, libras: libCfg } = calculator;
 
   const [libras, setLibras] = useState(libCfg.default);
-  const [precio, setPrecio] = useState(priceCfg.default);
 
-  const utilLibra = Math.max(0, precio - costoEmbajador);
   const utilMes = utilLibra * libras;
-  const inversion = costoEmbajador * libras;
-  const margen = Math.round((utilLibra / precio) * 100);
+  const ventaTotal = precioVenta * libras;
+  const porcentaje = Math.round((utilLibra / precioVenta) * 100);
 
   return (
     <section id="tm-calc" className="py-20" style={{ background: "#2A1410" }}>
@@ -55,30 +54,6 @@ export default function ProfitCalculator() {
               </div>
             </div>
 
-            {/* Precio slider */}
-            <div>
-              <div className="flex justify-between items-baseline mb-2">
-                <label htmlFor="slider-precio" className="font-body font-600 text-crema-papel text-sm">
-                  {t("calcLabelPrecio")}
-                </label>
-                <span className="font-display font-bold text-dorado-claro text-2xl">{formatCOP(precio)}</span>
-              </div>
-              <input
-                id="slider-precio"
-                type="range"
-                min={priceCfg.min}
-                max={priceCfg.max}
-                step={priceCfg.step}
-                value={precio}
-                onChange={(e) => setPrecio(Number(e.target.value))}
-                aria-valuetext={`${formatCOP(precio)} por libra`}
-                className="w-full accent-naranja cursor-pointer"
-              />
-              <div className="flex justify-between font-mono text-[10px] text-crema/30 mt-1 tracking-[.1em]">
-                <span>{formatCOP(priceCfg.min)}</span><span>{formatCOP(priceCfg.max)}</span>
-              </div>
-            </div>
-
             <p className="font-mono text-[10px] tracking-[.1em] text-crema/30">{t("calcNote")}</p>
           </div>
 
@@ -96,8 +71,8 @@ export default function ProfitCalculator() {
             <div className="grid grid-cols-3 gap-4 mb-6">
               {[
                 { label: t("calcUtilLibra"), value: formatCOP(utilLibra) },
-                { label: t("calcMargen"), value: `${margen}%` },
-                { label: t("calcInversion"), value: formatCOP(inversion) },
+                { label: t("calcPorcentaje"), value: `${porcentaje}%` },
+                { label: t("calcVentaTotal"), value: formatCOP(ventaTotal) },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-white/5 border border-white/10 rounded-card p-4 text-center">
                   <div className="font-display font-bold text-dorado-claro text-xl">{value}</div>
@@ -106,9 +81,12 @@ export default function ProfitCalculator() {
               ))}
             </div>
 
-            <button className="w-full bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base py-4 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5">
+            <Link
+              href="/acceso"
+              className="block text-center w-full bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base py-4 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5"
+            >
               {t("calcCta")}
-            </button>
+            </Link>
           </div>
         </div>
       </div>

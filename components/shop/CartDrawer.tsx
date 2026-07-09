@@ -2,18 +2,29 @@
 
 import { useEffect, useRef } from "react";
 import { useLocale } from "next-intl";
-import { Link } from "@/lib/nav";
+import { Link, useRouter } from "@/lib/nav";
 import { useCartStore } from "@/lib/cart-store";
-import { formatCOP } from "@/lib/format";
+import { useAuthStore } from "@/lib/auth-store";
+import { formatPrice } from "@/lib/format";
 import type { Locale } from "@/lib/types";
 
 export default function CartDrawer() {
   const locale = useLocale() as Locale;
   const es = locale !== "en";
+  const router = useRouter();
   const { items, open, closeCart, setQty, removeItem, clear } = useCartStore();
+  const { user } = useAuthStore();
   const closeRef = useRef<HTMLButtonElement>(null);
 
+  function handleCheckout() {
+    closeCart();
+    if (!user) {
+      router.push({ pathname: "/acceso", query: { next: "/tienda" } });
+    }
+  }
+
   const total = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const totalUsd = items.reduce((s, i) => s + (i.priceUsd ?? 0) * i.qty, 0);
   const count = items.reduce((s, i) => s + i.qty, 0);
 
   // Close on Escape
@@ -116,7 +127,7 @@ export default function CartDrawer() {
                       {item.name}
                     </p>
                     <p className="font-mono text-[10px] tracking-[.1em] text-tinta-suave mt-0.5">
-                      {formatCOP(item.price)} / lb
+                      {formatPrice(item.price, item.priceUsd, locale)} / lb
                     </p>
 
                     {/* Qty controls */}
@@ -155,7 +166,7 @@ export default function CartDrawer() {
                       ×
                     </button>
                     <p className="font-display font-bold text-vino text-base">
-                      {formatCOP(item.price * item.qty)}
+                      {formatPrice(item.price * item.qty, (item.priceUsd ?? 0) * item.qty, locale)}
                     </p>
                   </div>
                 </li>
@@ -172,13 +183,14 @@ export default function CartDrawer() {
                 {es ? "Total estimado" : "Estimated total"}
               </span>
               <span className="font-display font-bold text-tinta text-2xl">
-                {formatCOP(total)}
+                {formatPrice(total, totalUsd, locale)}
               </span>
             </div>
             <p className="font-body text-tinta-suave text-xs mb-4">
               {es ? "Envío calculado al finalizar el pedido" : "Shipping calculated at checkout"}
             </p>
             <button
+              onClick={handleCheckout}
               className="w-full bg-vino hover:bg-vino-900 text-crema-papel font-body font-semibold text-base py-3.5 rounded-btn transition-colors duration-150 mb-2"
             >
               {es ? "Proceder al pago →" : "Proceed to checkout →"}
