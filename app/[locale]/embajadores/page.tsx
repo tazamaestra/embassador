@@ -6,7 +6,6 @@ import { useLocale } from "next-intl";
 import { Link } from "@/lib/nav";
 import { benefits } from "@/lib/content";
 import ProfitCalculator from "@/components/ambassador/ProfitCalculator";
-import WhatsAppMock from "@/components/ambassador/WhatsAppMock";
 import FaqAccordion from "@/components/ambassador/FaqAccordion";
 import type { Locale } from "@/lib/types";
 
@@ -59,7 +58,7 @@ export default function EmbajadoresPage() {
       </section>
 
       {/* Benefits grid */}
-      <section className="py-20 bg-fondo">
+      <section id="beneficios" className="py-20 bg-fondo">
         <div className="max-w-[1240px] mx-auto px-[22px]">
           <div className="text-center mb-12">
             <p className="font-mono text-[11px] tracking-[.2em] text-dorado uppercase mb-2">{t("benefitsKicker")}</p>
@@ -91,7 +90,6 @@ export default function EmbajadoresPage() {
       </section>
 
       <ProfitCalculator />
-      <WhatsAppMock locale={locale} />
       <FaqAccordion locale={locale} />
     </>
   );

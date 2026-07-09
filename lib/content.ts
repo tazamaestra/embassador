@@ -1,6 +1,6 @@
 import rawContent from "../data/content.json";
 import type {
-  Product, ProductFilter, Method, Step, Benefit, AiFeature, AiChat,
+  Product, ProductFilter, Method, Step, Benefit,
   Testimonial, OriginFact, Faq, BlogFilter, BlogPost, BlogFeatured,
   HeroStat, CalculatorConfig
 } from "./types";
@@ -13,8 +13,6 @@ const c = rawContent as {
   methods: Method[];
   steps: Step[];
   benefits: Benefit[];
-  aiFeatures: AiFeature[];
-  aiChat: AiChat[];
   testimonials: Testimonial[];
   originFacts: OriginFact[];
   faqs: Faq[];
@@ -25,7 +23,7 @@ const c = rawContent as {
 };
 
 export const { brand, heroStats, productFilters, steps,
-  benefits, aiFeatures, aiChat, testimonials, originFacts, faqs,
+  benefits, testimonials, originFacts, faqs,
   blogFilters, blogFeatured, blogPosts, calculator } = c;
 
 export const products = c.products.filter((p: Product & { _disabled?: boolean }) => !p._disabled);

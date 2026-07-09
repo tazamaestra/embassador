@@ -1,19 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { blogPosts, blogFilters, blogFeatured } from "@/lib/content";
 import BlogCard from "@/components/blog/BlogCard";
+import VideoModal, { type ActiveVideo } from "@/components/blog/VideoModal";
 import type { Locale } from "@/lib/types";
 
 export default function BlogPage() {
   const t = useTranslations("blog");
   const locale = useLocale() as Locale;
   const [filter, setFilter] = useState("todos");
+  const [activeVideo, setActiveVideo] = useState<ActiveVideo | null>(null);
 
   const filtered = filter === "todos" ? blogPosts : blogPosts.filter((p) => p.cat === filter);
   const feat = blogFeatured;
+  const featTitle = locale === "en" ? feat.t_en : feat.t_es;
 
   return (
     <>
@@ -34,12 +38,30 @@ export default function BlogPage() {
       <div className="bg-fondo py-12">
         <div className="max-w-[1240px] mx-auto px-[22px]">
           {/* Featured article */}
-          <div className="rounded-card-lg overflow-hidden border border-borde mb-12 grid grid-cols-1 md:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => feat.videoId && setActiveVideo({ id: feat.videoId, title: featTitle })}
+            className="rounded-card-lg overflow-hidden border border-borde mb-12 grid grid-cols-1 md:grid-cols-2 w-full text-left group"
+          >
             {/* Visual */}
             <div
-              className="min-h-[220px] md:min-h-[280px] flex items-end p-6 relative"
+              className="min-h-[220px] md:min-h-[280px] flex items-end p-6 relative overflow-hidden"
               style={{ background: "linear-gradient(150deg,#7E181C,#4A0B0F)" }}
             >
+              {feat.videoId && (
+                <Image
+                  src={`https://img.youtube.com/vi/${feat.videoId}/hqdefault.jpg`}
+                  alt={featTitle}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              )}
+              <div
+                className="absolute inset-0"
+                style={{ background: "linear-gradient(150deg,#7E181C,#4A0B0F)", opacity: 0.55, mixBlendMode: "multiply" }}
+                aria-hidden="true"
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-black/55 via-black/5 to-transparent" aria-hidden="true" />
               <span className="font-mono text-[10px] tracking-[.18em] text-white/70 bg-black/20 px-2 py-1 rounded-btn uppercase z-10">
                 {locale === "en" ? feat.badge_en : feat.badge_es}
               </span>
@@ -61,11 +83,11 @@ export default function BlogPage() {
               <p className="font-body text-tinta-suave text-sm leading-relaxed mb-5">
                 {locale === "en" ? feat.d_en : feat.d_es}
               </p>
-              <button className="self-start bg-vino hover:bg-vino-800 text-crema font-body font-700 text-sm px-5 py-2.5 rounded-btn transition-all duration-150 hover:-translate-y-0.5">
+              <span className="self-start bg-vino group-hover:bg-vino-800 text-crema font-body font-700 text-sm px-5 py-2.5 rounded-btn transition-all duration-150 group-hover:-translate-y-0.5">
                 {locale === "en" ? feat.cta_en : feat.cta_es}
-              </button>
+              </span>
             </div>
-          </div>
+          </button>
 
           {/* Filters */}
           <div
@@ -95,11 +117,18 @@ export default function BlogPage() {
           {/* Posts grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" aria-live="polite">
             {filtered.map((post, i) => (
-              <BlogCard key={i} post={post} locale={locale} />
+              <BlogCard
+                key={i}
+                post={post}
+                locale={locale}
+                onPlay={(videoId, title) => setActiveVideo({ id: videoId, title })}
+              />
             ))}
           </div>
         </div>
       </div>
+
+      <VideoModal video={activeVideo} onClose={() => setActiveVideo(null)} />
     </>
   );
 }

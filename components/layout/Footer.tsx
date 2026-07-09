@@ -50,11 +50,15 @@ export default function Footer() {
           <div>
             <h3 className="font-mono text-[11px] tracking-[.2em] text-crema mb-4">{t("shopTitle")}</h3>
             <ul className="space-y-2">
-              {shopLinks.map((link, i) => (
-                <li key={i}>
-                  <Link href="/tienda" className="font-body text-sm hover:text-crema transition-colors">{link}</Link>
-                </li>
-              ))}
+              {shopLinks.map((link, i) => {
+                const filters = ["todos", "afrutado", "dulce"];
+                const href = i === 0 ? "/tienda" : `/tienda?filter=${filters[i]}`;
+                return (
+                  <li key={i}>
+                    <Link href={href} className="font-body text-sm hover:text-crema transition-colors">{link}</Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -62,11 +66,14 @@ export default function Footer() {
           <div>
             <h3 className="font-mono text-[11px] tracking-[.2em] text-crema mb-4">{t("ambTitle")}</h3>
             <ul className="space-y-2">
-              {ambLinks.map((link, i) => (
-                <li key={i}>
-                  <Link href="/embajadores" className="font-body text-sm hover:text-crema transition-colors">{link}</Link>
-                </li>
-              ))}
+              {ambLinks.map((link, i) => {
+                const hrefs = ["/embajadores#beneficios", "/embajadores#tm-calc", "/blog"];
+                return (
+                  <li key={i}>
+                    <Link href={hrefs[i]} className="font-body text-sm hover:text-crema transition-colors">{link}</Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { Coffee, TrendingUp } from "lucide-react";
 import { Link } from "@/lib/nav";
 import { heroStats } from "@/lib/content";
 import type { Locale } from "@/lib/types";
@@ -18,7 +19,7 @@ export default function Hero({ locale }: { locale: Locale }) {
       }}
     >
       {/* Main hero */}
-      <div className="max-w-[1240px] mx-auto px-[22px] py-20 md:py-28 grid grid-cols-1 md:grid-cols-[1.05fr_.95fr] gap-10 items-center">
+      <div className="max-w-310 mx-auto px-5.5 py-20 md:py-28 grid grid-cols-1 md:grid-cols-[1.05fr_.95fr] gap-10 items-center">
         {/* Left: copy */}
         <div>
           {/* Kicker */}
@@ -36,7 +37,7 @@ export default function Hero({ locale }: { locale: Locale }) {
             {t("h1c")}
           </h1>
 
-          <p className="font-body text-crema/80 text-base md:text-lg leading-relaxed mb-8 max-w-[500px]">
+          <p className="font-body text-crema/80 text-base md:text-lg leading-relaxed mb-8 max-w-125">
             {t("sub")}
           </p>
 
@@ -99,7 +100,7 @@ export default function Hero({ locale }: { locale: Locale }) {
             alt="Café Taza Maestra — bolsa de café de especialidad colombiano"
             width={340}
             height={420}
-            className="relative z-10 w-[240px] md:w-[320px] drop-shadow-2xl"
+            className="relative z-10 w-60 md:w-80 drop-shadow-2xl"
             priority
           />
         </div>
@@ -110,11 +111,18 @@ export default function Hero({ locale }: { locale: Locale }) {
         className="border-t border-white/10"
         style={{ background: "rgba(0,0,0,.16)" }}
       >
-        <div className="max-w-[1240px] mx-auto px-[22px] py-5 grid grid-cols-1 sm:grid-cols-2 gap-0">
+        <div className="max-w-310 mx-auto px-5.5 py-5 grid grid-cols-1 sm:grid-cols-2 gap-0">
           <Link
             href="/tienda"
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-3 px-6 py-4 rounded-btn hover:bg-white/10 transition-colors duration-150 sm:border-r sm:border-white/10"
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 px-6 py-4 rounded-btn hover:bg-white/10 transition-colors duration-150 sm:border-r sm:border-white/10"
           >
+            <span
+              className="shrink-0 w-10 h-10 rounded-card flex items-center justify-center"
+              style={{ background: "rgba(232,115,30,.18)" }}
+              aria-hidden="true"
+            >
+              <Coffee size={20} className="text-naranja-claro" strokeWidth={1.75} aria-hidden="true" />
+            </span>
             <div>
               <div className="font-display font-bold text-crema-papel text-xl">{t("pathBuyTitle")}</div>
               <div className="font-body text-crema/60 text-sm mt-0.5">{t("pathBuyDesc")}</div>
@@ -125,8 +133,15 @@ export default function Hero({ locale }: { locale: Locale }) {
           </Link>
           <Link
             href="/embajadores"
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-3 px-6 py-4 rounded-btn hover:bg-white/10 transition-colors duration-150"
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 px-6 py-4 rounded-btn hover:bg-white/10 transition-colors duration-150"
           >
+            <span
+              className="shrink-0 w-10 h-10 rounded-card flex items-center justify-center"
+              style={{ background: "rgba(232,115,30,.18)" }}
+              aria-hidden="true"
+            >
+              <TrendingUp size={20} className="text-naranja-claro" strokeWidth={1.75} aria-hidden="true" />
+            </span>
             <div>
               <div className="font-display font-bold text-crema-papel text-xl">{t("pathAmbTitle")}</div>
               <div className="font-body text-crema/60 text-sm mt-0.5">{t("pathAmbDesc")}</div>

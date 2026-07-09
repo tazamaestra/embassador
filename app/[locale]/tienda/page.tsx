@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMode } from "@/contexts/ModeContext";
 import { products, productFilters } from "@/lib/content";
@@ -12,7 +13,12 @@ export default function TiendaPage() {
   const t = useTranslations("shop");
   const { mode } = useMode();
   const locale = useLocale() as Locale;
-  const [filter, setFilter] = useState("todos");
+  const searchParams = useSearchParams();
+  const [filter, setFilter] = useState(() => searchParams.get("filter") ?? "todos");
+
+  useEffect(() => {
+    setFilter(searchParams.get("filter") ?? "todos");
+  }, [searchParams]);
 
   const isAmb = mode === "embajador";
   const filtered = filter === "todos" ? products : products.filter((p) => p.cat === filter);

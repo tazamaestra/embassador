@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { Link } from "@/lib/nav";
 import { products } from "@/lib/content";
-import { formatCOP } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { useMode } from "@/contexts/ModeContext";
 import type { Locale } from "@/lib/types";
 
@@ -131,19 +131,18 @@ export default function ProductoPage({ params }: { params: Promise<{ slug: strin
 
             {/* Price block */}
             <div className="bg-vino rounded-card p-6 mt-auto">
-              <p className="font-mono text-[10px] tracking-[.2em] text-dorado-claro/80 uppercase mb-1">
-                {isAmb ? t("addEmbajador").replace("Agregar al", "Precio").replace("Add to", "Price") : "PRECIO"}
-              </p>
-              <p className="font-display font-bold text-dorado-claro text-4xl leading-none mb-1">
-                {formatCOP(price)}
-                <span className="font-mono font-400 text-sm text-crema/50 ml-1">/libra</span>
-              </p>
-              {isAmb && (
-                <p className="font-body text-xs text-crema/50 mb-4">
-                  Detal: <s>{formatCOP(product.retail)}</s>
-                </p>
+              {!isAmb && (
+                <>
+                  <p className="font-mono text-[10px] tracking-[.2em] text-dorado-claro/80 uppercase mb-1">
+                    {locale === "en" ? "PRICE" : "PRECIO"}
+                  </p>
+                  <p className="font-display font-bold text-dorado-claro text-4xl leading-none mb-1">
+                    {formatPrice(product.retail, product.retail_usd, locale)}
+                    <span className="font-mono font-400 text-sm text-crema/50 ml-1">/libra</span>
+                  </p>
+                  <div className="mb-4" />
+                </>
               )}
-              {!isAmb && <div className="mb-4" />}
 
               <button
                 onClick={handleAdd}

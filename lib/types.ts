@@ -4,11 +4,13 @@ export interface Product {
   origin: string;
   roast_es: string;
   roast_en: string;
-  cat: "origen" | "espresso" | "especial";
+  cat: "afrutado" | "dulce";
   notes_es: string;
   notes_en: string;
   retail: number;
+  retail_usd?: number;
   wholesale: number;
+  wholesale_usd?: number;
   img: string | null;
   swatch: string;
   altitude: string;
@@ -29,6 +31,8 @@ export interface Method {
   name: string;
   desc_es: string;
   desc_en: string;
+  steps_es: string[];
+  steps_en: string[];
   ratio: string;
   time: string;
   body_es: string;
@@ -49,19 +53,6 @@ export interface Benefit {
   t_en: string;
   d_es: string;
   d_en: string;
-}
-
-export interface AiFeature {
-  t_es: string;
-  t_en: string;
-  d_es: string;
-  d_en: string;
-}
-
-export interface AiChat {
-  from: "bot" | "user";
-  text_es: string;
-  text_en: string;
 }
 
 export interface Testimonial {
@@ -103,6 +94,7 @@ export interface BlogPost {
   d_es: string;
   d_en: string;
   sw: string;
+  videoId?: string;
 }
 
 export interface BlogFeatured {
@@ -116,6 +108,7 @@ export interface BlogFeatured {
   d_en: string;
   cta_es: string;
   cta_en: string;
+  videoId?: string;
 }
 
 export interface HeroStat {
@@ -125,9 +118,9 @@ export interface HeroStat {
 }
 
 export interface CalculatorConfig {
-  costoEmbajador: number;
+  precioVenta: number;
+  utilLibra: number;
   libras: { min: number; max: number; step: number; default: number };
-  precio: { min: number; max: number; step: number; default: number };
   formula: Record<string, string>;
 }
 
