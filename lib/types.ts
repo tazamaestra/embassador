@@ -119,7 +119,9 @@ export interface HeroStat {
 
 export interface CalculatorConfig {
   precioVenta: number;
+  precioVenta_usd?: number;
   utilLibra: number;
+  utilLibra_usd?: number;
   libras: { min: number; max: number; step: number; default: number };
   formula: Record<string, string>;
 }

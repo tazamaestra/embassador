@@ -9,6 +9,23 @@ import type { Locale } from "@/lib/types";
 type Tab = "register" | "login";
 type RegErrors = Partial<Record<"name" | "email" | "phone" | "password" | "confirm", string>>;
 
+function translateAuthError(message: string | undefined, es: boolean): string {
+  const m = (message ?? "").toLowerCase();
+  if (m.includes("already registered") || m.includes("already exists")) {
+    return es ? "Este correo ya está registrado" : "Email already registered";
+  }
+  if (m.includes("invalid login credentials")) {
+    return es ? "Correo o contraseña incorrectos" : "Incorrect email or password";
+  }
+  if (m.includes("email not confirmed")) {
+    return es ? "Confirma tu correo antes de iniciar sesión" : "Please confirm your email before logging in";
+  }
+  if (m.includes("password should be at least")) {
+    return es ? "La contraseña es muy corta" : "Password is too short";
+  }
+  return es ? "Ocurrió un error. Intenta de nuevo." : "Something went wrong. Please try again.";
+}
+
 function Field({
   id,
   label,
@@ -58,15 +75,20 @@ export default function AuthForm({ locale }: { locale: Locale }) {
   const es = locale !== "en";
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/embajadores";
-  const { user, register, login } = useAuthStore();
+  const next = searchParams.get("next") || "/cuenta";
+  const { user, register, login, init } = useAuthStore();
 
-  const [tab, setTab] = useState<Tab>("register");
+  const [tab, setTab] = useState<Tab>(searchParams.get("tab") === "login" ? "login" : "register");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    init();
+  }, [init]);
 
   // Register state
   const [reg, setReg] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
   const [regErrors, setRegErrors] = useState<RegErrors>({});
+  const [confirmSent, setConfirmSent] = useState(false);
 
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
@@ -99,13 +121,16 @@ export default function AuthForm({ locale }: { locale: Locale }) {
     e.preventDefault();
     if (!validateReg()) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 500));
-    const result = register({ name: reg.name, email: reg.email, phone: reg.phone, password: reg.password });
+    const result = await register({ name: reg.name, email: reg.email, phone: reg.phone, password: reg.password });
     setLoading(false);
     if (!result.success) {
-      setRegErrors({ email: es ? "Este correo ya está registrado" : "Email already registered" });
+      setRegErrors({ email: translateAuthError(result.error, es) });
+      return;
     }
-    // If success, useEffect above will redirect
+    if (result.needsEmailConfirmation) {
+      setConfirmSent(true);
+    }
+    // If a session was created, useEffect above will redirect
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -115,17 +140,10 @@ export default function AuthForm({ locale }: { locale: Locale }) {
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 500));
-    const result = login(loginEmail, loginPassword);
+    const result = await login(loginEmail, loginPassword);
     setLoading(false);
-    if (result.error === "wrong_password") {
-      setLoginError(es ? "Contraseña incorrecta" : "Incorrect password");
-    } else if (result.error === "not_found") {
-      setLoginError(
-        es
-          ? "Correo no encontrado. ¿Ya tienes cuenta?"
-          : "Email not found. Do you have an account?"
-      );
+    if (!result.success) {
+      setLoginError(translateAuthError(result.error, es));
     }
     // If success, useEffect above will redirect
   }
@@ -190,6 +208,15 @@ export default function AuthForm({ locale }: { locale: Locale }) {
           aria-labelledby="auth-tab-register"
           hidden={tab !== "register"}
         >
+          {confirmSent ? (
+            <div className="p-6 md:p-8 text-center">
+              <p className="font-body text-crema-papel text-sm">
+                {es
+                  ? "Te enviamos un correo para confirmar tu cuenta. Revisa tu bandeja de entrada."
+                  : "We sent you an email to confirm your account. Check your inbox."}
+              </p>
+            </div>
+          ) : (
           <form
             onSubmit={handleRegister}
             noValidate
@@ -264,6 +291,7 @@ export default function AuthForm({ locale }: { locale: Locale }) {
               </button>
             </p>
           </form>
+          )}
         </div>
 
         {/* Login panel */}

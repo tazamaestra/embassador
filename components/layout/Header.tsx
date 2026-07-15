@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
-import { Link, usePathname } from "@/lib/nav";
+import { LogOut, LogIn } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import { Link, usePathname, useRouter } from "@/lib/nav";
 import ModeToggle from "./ModeToggle";
 import { useCartStore } from "@/lib/cart-store";
+import { useAuthStore } from "@/lib/auth-store";
 import LocaleSwitcher from "./LocaleSwitcher";
 
 const NAV_KEYS = ["inicio", "tienda", "embajadores", "blog"] as const;
@@ -19,10 +21,23 @@ const NAV_PATHS: Record<string, string> = {
 export default function Header() {
   const t = useTranslations("nav");
   const tA11y = useTranslations("a11y");
+  const locale = useLocale();
+  const es = locale !== "en";
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const { items, openCart } = useCartStore();
   const cartCount = items.reduce((s, i) => s + i.qty, 0);
+  const { user, init, logout } = useAuthStore();
+
+  useEffect(() => {
+    init();
+  }, [init]);
+
+  async function handleLogout() {
+    await logout();
+    router.push("/");
+  }
 
   function isActive(key: string) {
     const path = NAV_PATHS[key];
@@ -76,6 +91,23 @@ export default function Header() {
           {/* Language switcher */}
           <LocaleSwitcher />
 
+          {/* Account link (logged-in ambassadors only) */}
+          {user && (
+            <Link
+              href="/cuenta"
+              className="flex items-center gap-1.5 px-2 py-2 rounded-btn text-vino hover:bg-arena transition-colors"
+              aria-label={es ? "Mi cuenta" : "My account"}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" />
+              </svg>
+              <span className="hidden sm:inline font-body font-600 text-sm max-w-28 truncate">
+                {user.nombre.split(" ")[0]}
+              </span>
+            </Link>
+          )}
+
           {/* Cart button */}
           <button
             onClick={openCart}
@@ -97,8 +129,27 @@ export default function Header() {
             )}
           </button>
 
-          <div className="hidden sm:block">
+          <div className="hidden sm:flex items-center gap-2">
             <ModeToggle />
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-btn text-vino hover:bg-arena transition-colors"
+                aria-label={es ? "Cerrar sesión" : "Log out"}
+                title={es ? "Cerrar sesión" : "Log out"}
+              >
+                <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            ) : (
+              <Link
+                href={{ pathname: "/acceso", query: { tab: "login" } }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-vino hover:bg-vino-900 text-crema-papel font-body font-600 text-sm transition-colors"
+                aria-label={es ? "Iniciar sesión" : "Log in"}
+              >
+                <LogIn size={16} strokeWidth={1.8} aria-hidden="true" />
+                {es ? "Iniciar sesión" : "Log in"}
+              </Link>
+            )}
           </div>
 
           {/* Hamburger */}
@@ -139,8 +190,28 @@ export default function Header() {
               {t(key)}
             </Link>
           ))}
-          <div className="pt-2 border-t border-borde">
+          <div className="pt-2 border-t border-borde flex items-center gap-2">
             <ModeToggle />
+            {user ? (
+              <button
+                onClick={() => { setMenuOpen(false); handleLogout(); }}
+                className="p-2 rounded-btn text-vino hover:bg-arena transition-colors"
+                aria-label={es ? "Cerrar sesión" : "Log out"}
+                title={es ? "Cerrar sesión" : "Log out"}
+              >
+                <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            ) : (
+              <Link
+                href={{ pathname: "/acceso", query: { tab: "login" } }}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-vino hover:bg-vino-900 text-crema-papel font-body font-600 text-sm transition-colors"
+                aria-label={es ? "Iniciar sesión" : "Log in"}
+              >
+                <LogIn size={16} strokeWidth={1.8} aria-hidden="true" />
+                {es ? "Iniciar sesión" : "Log in"}
+              </Link>
+            )}
           </div>
         </div>
       )}

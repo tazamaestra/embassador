@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale } from "next-intl";
 import { Link, useRouter } from "@/lib/nav";
 import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
+import { guardarCarritoComoPedido } from "@/lib/pedidos";
 import { formatPrice } from "@/lib/format";
 import type { Locale } from "@/lib/types";
 
@@ -13,13 +14,33 @@ export default function CartDrawer() {
   const es = locale !== "en";
   const router = useRouter();
   const { items, open, closeCart, setQty, removeItem, clear } = useCartStore();
-  const { user } = useAuthStore();
+  const { user, loading: authLoading, init } = useAuthStore();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
-  function handleCheckout() {
-    closeCart();
+  useEffect(() => {
+    init();
+  }, [init]);
+
+  async function handleCheckout() {
+    if (authLoading || saving) return;
     if (!user) {
-      router.push({ pathname: "/acceso", query: { next: "/tienda" } });
+      closeCart();
+      router.push({ pathname: "/acceso", query: { next: "/cuenta" } });
+      return;
+    }
+    setSaving(true);
+    setSaveError(false);
+    try {
+      await guardarCarritoComoPedido(user.id, items);
+      clear();
+      closeCart();
+      router.push("/cuenta");
+    } catch {
+      setSaveError(true);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -189,11 +210,19 @@ export default function CartDrawer() {
             <p className="font-body text-tinta-suave text-xs mb-4">
               {es ? "Envío calculado al finalizar el pedido" : "Shipping calculated at checkout"}
             </p>
+            {saveError && (
+              <p role="alert" className="font-body text-xs text-vino mb-2">
+                {es ? "No pudimos guardar tu pedido. Intenta de nuevo." : "We couldn't save your order. Please try again."}
+              </p>
+            )}
             <button
               onClick={handleCheckout}
-              className="w-full bg-vino hover:bg-vino-900 text-crema-papel font-body font-semibold text-base py-3.5 rounded-btn transition-colors duration-150 mb-2"
+              disabled={saving}
+              className="w-full bg-vino hover:bg-vino-900 disabled:opacity-60 text-crema-papel font-body font-semibold text-base py-3.5 rounded-btn transition-colors duration-150 mb-2"
             >
-              {es ? "Proceder al pago →" : "Proceed to checkout →"}
+              {saving
+                ? (es ? "Guardando…" : "Saving…")
+                : (es ? "Proceder al pago →" : "Proceed to checkout →")}
             </button>
             <button
               onClick={clear}

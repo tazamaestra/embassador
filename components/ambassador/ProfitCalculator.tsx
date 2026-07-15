@@ -1,19 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/lib/nav";
 import { calculator } from "@/lib/content";
-import { formatCOP } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
+import type { Locale } from "@/lib/types";
 
 export default function ProfitCalculator() {
   const t = useTranslations("ambassador");
-  const { precioVenta, utilLibra, libras: libCfg } = calculator;
+  const locale = useLocale() as Locale;
+  const { precioVenta, precioVenta_usd, utilLibra, utilLibra_usd, libras: libCfg } = calculator;
 
   const [libras, setLibras] = useState(libCfg.default);
 
   const utilMes = utilLibra * libras;
+  const utilMesUsd = utilLibra_usd !== undefined ? utilLibra_usd * libras : undefined;
   const ventaTotal = precioVenta * libras;
+  const ventaTotalUsd = precioVenta_usd !== undefined ? precioVenta_usd * libras : undefined;
   const porcentaje = Math.round((utilLibra / precioVenta) * 100);
 
   return (
@@ -63,16 +67,16 @@ export default function ProfitCalculator() {
             <div className="bg-naranja rounded-card-lg p-8 mb-5">
               <p className="font-mono text-[10px] tracking-[.22em] text-white/70 uppercase mb-1">{t("calcResultLabel")}</p>
               <p className="font-display font-bold text-white leading-none" style={{ fontSize: "clamp(40px,6vw,64px)" }}>
-                {formatCOP(utilMes)}
+                {formatPrice(utilMes, utilMesUsd, locale)}
               </p>
             </div>
 
             {/* Mini-cards */}
             <div className="grid grid-cols-3 gap-4 mb-6">
               {[
-                { label: t("calcUtilLibra"), value: formatCOP(utilLibra) },
+                { label: t("calcUtilLibra"), value: formatPrice(utilLibra, utilLibra_usd, locale) },
                 { label: t("calcPorcentaje"), value: `${porcentaje}%` },
-                { label: t("calcVentaTotal"), value: formatCOP(ventaTotal) },
+                { label: t("calcVentaTotal"), value: formatPrice(ventaTotal, ventaTotalUsd, locale) },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-white/5 border border-white/10 rounded-card p-4 text-center">
                   <div className="font-display font-bold text-dorado-claro text-xl">{value}</div>

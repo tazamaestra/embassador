@@ -13,8 +13,8 @@
     { "num": "24/7", "label_es": "Asistente IA", "label_en": "AI assistant" }
   ],
   "products": [
-    { "id": "afrutado", "name": "TazaMaestra Afrutado", "origin": "BALBOA · RISARALDA", "roast_es": "TUESTE MEDIO", "roast_en": "MEDIUM ROAST", "cat": "afrutado", "notes_es": "Frutos rojos, arándanos y uva. Acidez cítrica.", "notes_en": "Red fruits, blueberries and grape. Citric acidity.", "retail": 45000, "retail_usd": 11, "wholesale": 29000, "wholesale_usd": 7, "img": "assets/bag-maroon.png", "swatch": "linear-gradient(150deg,#7E181C,#4A0B0F)", "altitude": "1.700 msnm", "process_es": "Lavado", "process_en": "Washed" },
-    { "id": "dulce", "name": "TazaMaestra Dulce", "origin": "BALBOA · RISARALDA", "roast_es": "TUESTE MEDIO", "roast_en": "MEDIUM ROAST", "cat": "dulce", "notes_es": "Chocolate y almendra con toque cítrico. Final suave y dulce.", "notes_en": "Chocolate and almond with a citric touch. Smooth, sweet finish.", "retail": 35000, "retail_usd": 9, "wholesale": 22000, "wholesale_usd": 5.5, "img": "assets/bag-green.png", "swatch": "linear-gradient(150deg,#2F5D3A,#1c3a24)", "altitude": "1.900 msnm", "process_es": "Lavado", "process_en": "Washed" }
+    { "id": "afrutado", "name": "TazaMaestra Afrutado", "origin": "BALBOA · RISARALDA", "roast_es": "TUESTE MEDIO", "roast_en": "MEDIUM ROAST", "cat": "afrutado", "notes_es": "Frutos rojos, arándanos y uva. Acidez cítrica.", "notes_en": "Red fruits, blueberries and grape. Citric acidity.", "retail": 45000, "retail_usd": 11, "wholesale": 38000, "wholesale_usd": 9.5, "img": "assets/bag-maroon.png", "swatch": "linear-gradient(150deg,#7E181C,#4A0B0F)", "altitude": "1.700 msnm", "process_es": "Lavado", "process_en": "Washed" },
+    { "id": "dulce", "name": "TazaMaestra Dulce", "origin": "BALBOA · RISARALDA", "roast_es": "TUESTE MEDIO", "roast_en": "MEDIUM ROAST", "cat": "dulce", "notes_es": "Chocolate y almendra con toque cítrico. Final suave y dulce.", "notes_en": "Chocolate and almond with a citric touch. Smooth, sweet finish.", "retail": 35000, "retail_usd": 9, "wholesale": 28000, "wholesale_usd": 7, "img": "assets/bag-green.png", "swatch": "linear-gradient(150deg,#2F5D3A,#1c3a24)", "altitude": "1.900 msnm", "process_es": "Lavado", "process_en": "Washed" }
   ],
   "productFilters": [
     { "id": "todos", "label_es": "Todos", "label_en": "All" },
@@ -107,7 +107,9 @@
   ],
   "calculator": {
     "precioVenta": 45000,
+    "precioVenta_usd": 11,
     "utilLibra": 7000,
+    "utilLibra_usd": 2,
     "libras": { "min": 5, "max": 200, "step": 5, "default": 25 },
     "formula": {
       "utilMes": "utilLibra * libras",
