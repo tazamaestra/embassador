@@ -72,9 +72,8 @@ export default function ProfitCalculator() {
             </div>
 
             {/* Mini-cards */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-4 mb-6">
               {[
-                { label: t("calcUtilLibra"), value: formatPrice(utilLibra, utilLibra_usd, locale) },
                 { label: t("calcPorcentaje"), value: `${porcentaje}%` },
                 { label: t("calcVentaTotal"), value: formatPrice(ventaTotal, ventaTotalUsd, locale) },
               ].map(({ label, value }) => (

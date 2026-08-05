@@ -3,11 +3,20 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
+import { TrendingUp, GraduationCap, Target, Tag, ShieldOff } from "lucide-react";
 import { Link } from "@/lib/nav";
 import { benefits } from "@/lib/content";
 import ProfitCalculator from "@/components/ambassador/ProfitCalculator";
 import FaqAccordion from "@/components/ambassador/FaqAccordion";
 import type { Locale } from "@/lib/types";
+
+const BENEFIT_ICONS: Record<string, React.ElementType> = {
+  "trending-up": TrendingUp,
+  "graduation-cap": GraduationCap,
+  target: Target,
+  tag: Tag,
+  "shield-off": ShieldOff,
+};
 
 export default function EmbajadoresPage() {
   const t = useTranslations("ambassador");
@@ -67,24 +76,27 @@ export default function EmbajadoresPage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {benefits.map((b, i) => (
-              <div key={i} className="bg-white rounded-card border border-borde p-6 flex gap-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover">
-                <div
-                  className="w-11 h-11 rounded-[10px] bg-vino flex items-center justify-center text-xl shrink-0"
-                  aria-hidden="true"
-                >
-                  {b.icon}
+            {benefits.map((b, i) => {
+              const Icon = BENEFIT_ICONS[b.icon];
+              return (
+                <div key={i} className="bg-white rounded-card border border-borde p-6 flex gap-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover">
+                  <div
+                    className="w-11 h-11 rounded-[10px] bg-vino flex items-center justify-center shrink-0"
+                    aria-hidden="true"
+                  >
+                    <Icon size={20} strokeWidth={1.75} className="text-crema-papel" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-tinta text-xl mb-1">
+                      {locale === "en" ? b.t_en : b.t_es}
+                    </h3>
+                    <p className="font-body text-tinta-suave text-sm leading-relaxed">
+                      {locale === "en" ? b.d_en : b.d_es}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-display font-bold text-tinta text-xl mb-1">
-                    {locale === "en" ? b.t_en : b.t_es}
-                  </h3>
-                  <p className="font-body text-tinta-suave text-sm leading-relaxed">
-                    {locale === "en" ? b.d_en : b.d_es}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

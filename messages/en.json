@@ -29,7 +29,7 @@
     "ctaCalc": "Calculate my profits", "ctaCatalog": "See wholesale catalog",
     "benefitsKicker": "WHY TAZA MAESTRA", "benefitsH2": "More than coffee: a business with support",
     "calcKicker": "SIMULATOR", "calcH2": "Calculate your profits", "calcSub": "Adjust how many pounds you sell per month. We'll show your estimated profit at a selling price of $45,000 per pound.",
-    "calcLabelLibras": "Pounds you sell per month", "calcNote": "* Selling price: $45,000 /lb · Profit: $7,000 /lb",
+    "calcLabelLibras": "Pounds you sell per month", "calcNote": "* Selling price: $45,000 /lb · Profit: 16%",
     "calcResultLabel": "ESTIMATED PROFIT / MONTH", "calcUtilLibra": "PROFIT/LB", "calcPorcentaje": "PERCENTAGE", "calcVentaTotal": "TOTAL SALES", "calcCta": "Start with my first order →",
     "faqKicker": "FREQUENT QUESTIONS", "faqH2": "Before you start"
   },

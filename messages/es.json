@@ -29,7 +29,7 @@
     "ctaCalc": "Calcular mis ganancias", "ctaCatalog": "Ver catálogo mayorista",
     "benefitsKicker": "POR QUÉ TAZA MAESTRA", "benefitsH2": "Más que café: un negocio acompañado",
     "calcKicker": "SIMULADOR", "calcH2": "Calcula tus ganancias", "calcSub": "Ajusta cuántas libras vendes al mes. Te mostramos tu utilidad estimada con precio de venta de $45.000 por libra.",
-    "calcLabelLibras": "Libras que vendes al mes", "calcNote": "* Precio de venta: $45.000 /libra · Utilidad: $7.000 /libra",
+    "calcLabelLibras": "Libras que vendes al mes", "calcNote": "* Precio de venta: $45.000 /libra · Utilidad: 16%",
     "calcResultLabel": "UTILIDAD ESTIMADA / MES", "calcUtilLibra": "UTIL/LIBRA", "calcPorcentaje": "PORCENTAJE", "calcVentaTotal": "VENTA TOTAL", "calcCta": "Empezar con mi primer pedido →",
     "faqKicker": "DUDAS FRECUENTES", "faqH2": "Antes de empezar"
   },
