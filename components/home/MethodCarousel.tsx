@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import type { JSX } from "react";
 import { useTranslations } from "next-intl";
 import { methods } from "@/lib/content";
 import type { Locale } from "@/lib/types";
