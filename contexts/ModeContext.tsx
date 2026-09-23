@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createContext, useContext, type ReactNode } from "react";
+import { FEATURE_AMBASSADORS } from "@/lib/flags";
 import type { Mode } from "@/lib/types";
 
 interface ModeStore {
@@ -22,9 +23,15 @@ const useModeStore = create<ModeStore>()(
 
 const ModeContext = createContext<ModeStore | null>(null);
 
+// Con el programa de embajadores apagado el modo queda clavado en "cliente",
+// incluso si el navegador tiene "embajador" guardado de una visita anterior.
+// Así ningún componente puede caer en la rama de precios mayoristas.
+const MODO_CLIENTE: ModeStore = { mode: "cliente", setMode: () => {} };
+
 export function ModeProvider({ children }: { children: ReactNode }) {
   const store = useModeStore();
-  return <ModeContext.Provider value={store}>{children}</ModeContext.Provider>;
+  const value = FEATURE_AMBASSADORS ? store : MODO_CLIENTE;
+  return <ModeContext.Provider value={value}>{children}</ModeContext.Provider>;
 }
 
 export function useMode(): ModeStore {

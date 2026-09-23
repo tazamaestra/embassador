@@ -1,8 +1,26 @@
-import { getLocale } from "next-intl/server";
-import AmbassadorDashboard from "@/components/dashboard/AmbassadorDashboard";
+import dynamic from "next/dynamic";
+import { setRequestLocale } from "next-intl/server";
+import SubscriberDashboard from "@/components/account/SubscriberDashboard";
+import { FEATURE_AMBASSADORS } from "@/lib/flags";
 import type { Locale } from "@/lib/types";
 
-export default async function CuentaPage() {
-  const locale = (await getLocale()) as Locale;
-  return <AmbassadorDashboard locale={locale} />;
+// El panel de embajador se carga bajo demanda: con el flag apagado no entra
+// al bundle ni existe para el visitante.
+const AmbassadorDashboard = dynamic(
+  () => import("@/components/dashboard/AmbassadorDashboard")
+);
+
+export default async function CuentaPage({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  if (FEATURE_AMBASSADORS) {
+    return <AmbassadorDashboard locale={locale} />;
+  }
+
+  return <SubscriberDashboard locale={locale} />;
 }

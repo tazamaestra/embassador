@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import { Link, useRouter } from "@/lib/nav";
-import { useAuthStore } from "@/lib/auth-store";
+import { useEmbajadorStore } from "@/lib/embajador-store";
 import { obtenerPedidos, actualizarLibrasPedido, eliminarPedido, type PedidoItem } from "@/lib/pedidos";
 import { products } from "@/lib/content";
 import { formatPrice } from "@/lib/format";
 import type { Locale } from "@/lib/types";
 
 export default function AmbassadorDashboard({ locale }: { locale: Locale }) {
-  const t = useTranslations("account");
+  const t = useTranslations("ambassadorAccount");
   const router = useRouter();
-  const { user, loading, init } = useAuthStore();
+  const { user, loading, init } = useEmbajadorStore();
   const [copied, setCopied] = useState(false);
   const [pedidos, setPedidos] = useState<PedidoItem[]>([]);
   const [pedidosLoading, setPedidosLoading] = useState(true);
@@ -43,8 +43,8 @@ export default function AmbassadorDashboard({ locale }: { locale: Locale }) {
   const totalUtilidad = pedidos.reduce((s, p) => s + p.utilidad_total, 0);
   const totalUtilidadUsd = pedidos.reduce((s, p) => {
     const product = products.find((prod) => prod.id === p.producto_slug);
-    if (!product?.retail_usd || !product?.wholesale_usd) return s;
-    return s + (product.retail_usd - product.wholesale_usd) * p.libras;
+    if (!product?.precioUsd || !product?.wholesale_usd) return s;
+    return s + (product.precioUsd - product.wholesale_usd) * p.libras;
   }, 0);
 
   function startEdit(p: PedidoItem) {
@@ -190,8 +190,8 @@ export default function AmbassadorDashboard({ locale }: { locale: Locale }) {
                   {pedidos.map((p) => {
                     const product = products.find((prod) => prod.id === p.producto_slug);
                     const utilidadLbUsd =
-                      product?.retail_usd !== undefined && product?.wholesale_usd !== undefined
-                        ? product.retail_usd - product.wholesale_usd
+                      product?.precioUsd !== undefined && product?.wholesale_usd !== undefined
+                        ? product.precioUsd - product.wholesale_usd
                         : undefined;
                     const isEditing = editingId === p.id;
                     const isBusy = busyId === p.id;
@@ -214,7 +214,7 @@ export default function AmbassadorDashboard({ locale }: { locale: Locale }) {
                           )}
                         </td>
                         <td className="font-mono text-crema/80 py-2.5 pr-3 text-right">
-                          {formatPrice(p.precio_venta_lb, product?.retail_usd, locale)}
+                          {formatPrice(p.precio_venta_lb, product?.precioUsd, locale)}
                         </td>
                         <td className="font-mono text-dorado-claro py-2.5 pr-3 text-right">
                           {formatPrice(p.utilidad_lb, utilidadLbUsd, locale)}

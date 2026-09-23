@@ -63,16 +63,18 @@ export default function LocaleSwitcher() {
             aria-pressed={isActive}
             title={ariaLabel}
             className={[
-              "group flex items-center gap-2 px-3 py-1.5 rounded-btn border transition-all duration-200",
+              "group items-center gap-2 px-2 sm:px-3 py-1.5 rounded-btn border transition-all duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vino focus-visible:ring-offset-1",
+              // En móvil solo se ve el otro idioma, como interruptor: dos
+              // botones completos no caben junto al carrito y el menú.
               isActive
-                ? "bg-white border-vino shadow-sm"
-                : "border-transparent hover:bg-arena/70 hover:border-borde",
+                ? "hidden sm:flex bg-white border-vino shadow-sm"
+                : "flex border-transparent hover:bg-arena/70 hover:border-borde",
             ].join(" ")}
           >
             {/* Flag */}
             <span
-              className="w-8 h-5 rounded overflow-hidden shrink-0 block"
+              className="w-6 h-4 sm:w-8 sm:h-5 rounded overflow-hidden shrink-0 block"
               style={{ boxShadow: "0 1px 3px rgba(0,0,0,.3)" }}
             >
               <Flag />

@@ -1,14 +1,11 @@
-"use client";
-
 import Image from "next/image";
-import { useTranslations } from "next-intl";
-import { Coffee, TrendingUp } from "lucide-react";
-import { Link } from "@/lib/nav";
+import { getTranslations } from "next-intl/server";
 import { heroStats } from "@/lib/content";
 import type { Locale } from "@/lib/types";
 
-export default function Hero({ locale }: { locale: Locale }) {
-  const t = useTranslations("hero");
+// Componente de servidor: el home solo manda al navegador la isla del quiz.
+export default async function Hero({ locale }: { locale: Locale }) {
+  const t = await getTranslations("hero");
 
   return (
     <section
@@ -18,46 +15,31 @@ export default function Hero({ locale }: { locale: Locale }) {
           "radial-gradient(120% 130% at 80% 0%, #7E181C, #5E0F13 55%, #4A0B0F)",
       }}
     >
-      {/* Main hero */}
-      <div className="max-w-310 mx-auto px-5.5 py-20 md:py-28 grid grid-cols-1 md:grid-cols-[1.05fr_.95fr] gap-10 items-center">
-        {/* Left: copy */}
+      <div className="max-w-310 mx-auto px-5.5 py-16 md:py-24 grid grid-cols-1 md:grid-cols-[1.05fr_.95fr] gap-10 items-center">
         <div>
-          {/* Kicker */}
           <div className="inline-flex items-center gap-2 bg-white/10 text-naranja-claro font-mono text-[11px] tracking-[.2em] px-3 py-1.5 rounded-pill mb-6">
             {t("kicker")}
           </div>
 
-          {/* H1 */}
           <h1
             className="font-display font-bold text-crema-papel leading-[1.02] tracking-[-0.01em] mb-5"
             style={{ fontSize: "clamp(40px, 6vw, 72px)" }}
           >
             {t("h1a")}{" "}
-            <em className="text-naranja-claro not-italic">{t("h1b")}</em>{" "}
-            {t("h1c")}
+            <em className="text-naranja-claro not-italic">{t("h1b")}</em>
           </h1>
 
           <p className="font-body text-crema/80 text-base md:text-lg leading-relaxed mb-8 max-w-125">
             {t("sub")}
           </p>
 
-          {/* CTAs */}
-          <div className="flex flex-wrap gap-3 mb-10">
-            <Link
-              href="/tienda"
-              className="bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-6 py-3 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5"
-            >
-              {t("ctaBuy")}
-            </Link>
-            <Link
-              href="/embajadores"
-              className="border border-crema/50 text-crema hover:bg-white/10 font-body font-700 text-base px-6 py-3 rounded-btn transition-all duration-150"
-            >
-              {t("ctaAmb")}
-            </Link>
-          </div>
+          <a
+            href="#tm-quiz"
+            className="inline-block bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-6 py-3 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5 mb-10"
+          >
+            {t("cta")}
+          </a>
 
-          {/* Stats */}
           <div className="flex flex-wrap gap-8">
             {heroStats.map((stat, i) => (
               <div key={i}>
@@ -72,84 +54,33 @@ export default function Hero({ locale }: { locale: Locale }) {
           </div>
         </div>
 
-        {/* Right: bag + steam */}
         <div className="flex items-center justify-center relative">
           <div
             className="absolute inset-0 rounded-full opacity-20"
             style={{
-              background:
-                "radial-gradient(circle, #F0C14B 0%, transparent 70%)",
+              background: "radial-gradient(circle, #F0C14B 0%, transparent 70%)",
               transform: "scale(0.8)",
             }}
             aria-hidden="true"
           />
-          {/* Steam columns */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-6" aria-hidden="true">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
                 className="w-1 h-10 rounded-full bg-white/30"
-                style={{
-                  animation: `steam 3.2s ease-in-out ${[0, 0.9, 1.7][i]}s infinite`,
-                }}
+                style={{ animation: `steam 3.2s ease-in-out ${[0, 0.9, 1.7][i]}s infinite` }}
               />
             ))}
           </div>
           <Image
             src="/bag-maroon.png"
-            alt="Café Taza Maestra — bolsa de café de especialidad colombiano"
+            alt="Bolsa de café Taza Maestra"
             width={340}
             height={420}
-            className="relative z-10 w-60 md:w-80 drop-shadow-2xl"
+            sizes="(max-width: 768px) 240px, 320px"
+            className="relative z-10 w-60 max-w-full h-auto md:w-80 drop-shadow-2xl"
             priority
           />
-        </div>
-      </div>
-
-      {/* Double-path strip */}
-      <div
-        className="border-t border-white/10"
-        style={{ background: "rgba(0,0,0,.16)" }}
-      >
-        <div className="max-w-310 mx-auto px-5.5 py-5 grid grid-cols-1 sm:grid-cols-2 gap-0">
-          <Link
-            href="/tienda"
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 px-6 py-4 rounded-btn hover:bg-white/10 transition-colors duration-150 sm:border-r sm:border-white/10"
-          >
-            <span
-              className="shrink-0 w-10 h-10 rounded-card flex items-center justify-center"
-              style={{ background: "rgba(232,115,30,.18)" }}
-              aria-hidden="true"
-            >
-              <Coffee size={20} className="text-naranja-claro" strokeWidth={1.75} aria-hidden="true" />
-            </span>
-            <div>
-              <div className="font-display font-bold text-crema-papel text-xl">{t("pathBuyTitle")}</div>
-              <div className="font-body text-crema/60 text-sm mt-0.5">{t("pathBuyDesc")}</div>
-            </div>
-            <svg className="w-5 h-5 text-naranja-claro ml-auto shrink-0" fill="none" viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
-          <Link
-            href="/embajadores"
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 px-6 py-4 rounded-btn hover:bg-white/10 transition-colors duration-150"
-          >
-            <span
-              className="shrink-0 w-10 h-10 rounded-card flex items-center justify-center"
-              style={{ background: "rgba(232,115,30,.18)" }}
-              aria-hidden="true"
-            >
-              <TrendingUp size={20} className="text-naranja-claro" strokeWidth={1.75} aria-hidden="true" />
-            </span>
-            <div>
-              <div className="font-display font-bold text-crema-papel text-xl">{t("pathAmbTitle")}</div>
-              <div className="font-body text-crema/60 text-sm mt-0.5">{t("pathAmbDesc")}</div>
-            </div>
-            <svg className="w-5 h-5 text-naranja-claro ml-auto shrink-0" fill="none" viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
         </div>
       </div>
     </section>

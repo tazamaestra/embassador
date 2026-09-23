@@ -1,12 +1,10 @@
-"use client";
-
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { originFacts } from "@/lib/content";
 import type { Locale } from "@/lib/types";
 
-export default function Origins({ locale }: { locale: Locale }) {
-  const t = useTranslations("origin");
+export default async function Origins({ locale }: { locale: Locale }) {
+  const t = await getTranslations("origin");
 
   return (
     <section className="py-20 bg-fondo">
@@ -26,7 +24,7 @@ export default function Origins({ locale }: { locale: Locale }) {
           </div>
           <Image
             src="/bag-green.png"
-            alt="Café Nariño Altura — bolsa verde"
+            alt="Bolsa de café Taza Maestra"
             width={180}
             height={220}
             className="relative z-10 drop-shadow-xl"

@@ -1,4 +1,5 @@
 {
+  "_nota": "Contenido del sitio. El programa de embajadores vive aparte, en data/embajadores.json, dormido detrás de FEATURE_AMBASSADORS.",
   "brand": {
     "name": "Taza Maestra",
     "tagline_es": "café de especialidad",
@@ -8,18 +9,220 @@
     "locale": "es-CO"
   },
   "heroStats": [
-    { "num": "100%", "label_es": "Café colombiano", "label_en": "Colombian coffee" },
-    { "num": "+20%", "label_es": "Margen embajador", "label_en": "Ambassador margin" },
-    { "num": "24/7", "label_es": "Asistente IA", "label_en": "AI assistant" }
+    { "num": "5", "label_es": "Fincas", "label_en": "Farms" },
+    { "num": "454 g", "label_es": "Por bolsa", "label_en": "Per bag" },
+    { "num": "48 h", "label_es": "Del tueste al envío", "label_en": "Roast to shipping" }
+  ],
+  "momentos": [
+    {
+      "id": "tres-pm",
+      "label_es": "Las 3:00 p.m.",
+      "label_en": "3:00 p.m.",
+      "opcion_es": "Las 3:00 p.m., y todavía faltan dos horas",
+      "opcion_en": "3:00 p.m., with two hours still to go",
+      "historia_es": "A las tres de la tarde el sueño pesa. Quedan dos horas de trabajo y ninguna reunión que las haga pasar más rápido. Un café de acidez alta sostiene mejor que uno dulce.",
+      "historia_en": "At three in the afternoon the drowsiness settles in. Two hours of work left and no meeting to make them go faster. A bright, acidic cup holds up better than a sweet one."
+    },
+    {
+      "id": "antes-del-deploy",
+      "label_es": "Antes del deploy",
+      "label_en": "Before the deploy",
+      "opcion_es": "La medianoche, revisando logs",
+      "opcion_en": "Midnight, reading logs",
+      "historia_es": "La salida a producción no avanza. Los logs siguen corriendo y hay que leerlos con calma. Tueste medio y cuerpo alto: aguanta la taza larga.",
+      "historia_en": "The release isn't moving. The logs keep scrolling and they need a careful read. Medium roast, full body: it holds up over a long cup."
+    },
+    {
+      "id": "madrugada",
+      "label_es": "La madrugada",
+      "label_en": "Before dawn",
+      "opcion_es": "Las 4:40 a.m., antes de que amanezca",
+      "opcion_en": "4:40 a.m., before it gets light",
+      "historia_es": "La casa está oscura y el día no ha empezado para nadie más. A esa hora no se piensa mucho: se prepara. Tueste más oscuro, chocolate y almendra.",
+      "historia_en": "The house is dark and the day hasn't started for anyone else. At that hour you don't think much, you just brew. Darker roast, chocolate and almond."
+    },
+    {
+      "id": "domingo-tranquilo",
+      "label_es": "El domingo lento",
+      "label_en": "A slow Sunday",
+      "opcion_es": "El domingo, cuando nadie tiene afán",
+      "opcion_en": "Sunday, when nobody is in a hurry",
+      "historia_es": "Nadie tiene afán. Hay tiempo de moler, pesar el agua y esperar los cuatro minutos. Un lavado de altura se nota más cuando se prepara así.",
+      "historia_en": "Nobody is in a hurry. There's time to grind, weigh the water and wait the four minutes. A high-altitude washed coffee shows more when it's brewed like this."
+    }
   ],
   "products": [
-    { "id": "afrutado", "name": "TazaMaestra Afrutado", "origin": "BALBOA · RISARALDA", "roast_es": "TUESTE MEDIO", "roast_en": "MEDIUM ROAST", "cat": "afrutado", "notes_es": "Frutos rojos, arándanos y uva. Acidez cítrica.", "notes_en": "Red fruits, blueberries and grape. Citric acidity.", "retail": 45000, "retail_usd": 11, "wholesale": 38000, "wholesale_usd": 9.5, "img": "assets/bag-maroon.png", "swatch": "linear-gradient(150deg,#7E181C,#4A0B0F)", "altitude": "1.700 msnm", "process_es": "Lavado", "process_en": "Washed" },
-    { "id": "dulce", "name": "TazaMaestra Dulce", "origin": "BALBOA · RISARALDA", "roast_es": "TUESTE MEDIO", "roast_en": "MEDIUM ROAST", "cat": "dulce", "notes_es": "Chocolate y almendra con toque cítrico. Final suave y dulce.", "notes_en": "Chocolate and almond with a citric touch. Smooth, sweet finish.", "retail": 35000, "retail_usd": 9, "wholesale": 28000, "wholesale_usd": 7, "img": "assets/bag-green.png", "swatch": "linear-gradient(150deg,#2F5D3A,#1c3a24)", "altitude": "1.900 msnm", "process_es": "Lavado", "process_en": "Washed" }
+    {
+      "id": "la-esperanza",
+      "name": "La Esperanza",
+      "productor": "Taza Maestra · finca propia",
+      "finca": "La Esperanza",
+      "region": "Balboa, Risaralda",
+      "altura": "1.500 msnm",
+      "proceso_es": "Natural",
+      "proceso_en": "Natural",
+      "variedad": "Castillo",
+      "notas_es": "Frutos rojos, arándano y uva. Acidez cítrica.",
+      "notas_en": "Red fruits, blueberry and grape. Citric acidity.",
+      "historia_es": "Taza Maestra nació de una pregunta: ¿quién le enseña a la gente a distinguir un café de especialidad de uno comercial? Este café es la respuesta. Queremos que sea el punto de referencia, la taza contra la cual comparas todas las demás, para que aprendas a reconocer por tu cuenta cuándo un café es de calidad y cuándo no.",
+      "historia_en": "Taza Maestra began with a question: who teaches people to tell specialty coffee from commercial coffee? This coffee is the answer. We want it to be the reference point, the cup you measure every other against, so you learn to tell for yourself when a coffee is good and when it isn't.",
+      "tueste_es": "Medio",
+      "tueste_en": "Medium",
+      "pesoG": 454,
+      "precioCop": 45000,
+      "precioUsd": 11,
+      "precioSuscriptorCop": 38000,
+      "precioSuscriptorUsd": 9.5,
+      "momento": "tres-pm",
+      "img": "assets/bag-maroon.png",
+      "swatch": "linear-gradient(150deg,#7E181C,#4A0B0F)",
+      "wholesale": 38000,
+      "wholesale_usd": 9.5
+    },
+    {
+      "id": "el-jardin",
+      "name": "El Jardín",
+      "productor": "Ana Milena Quiceno",
+      "finca": "El Jardín",
+      "region": "Pitalito, Huila",
+      "altura": "1.850 msnm",
+      "proceso_es": "Honey",
+      "proceso_en": "Honey",
+      "variedad": "Caturra",
+      "notas_es": "Panela, mandarina y durazno. Cuerpo medio.",
+      "notas_en": "Panela, mandarin and peach. Medium body.",
+      "tueste_es": "Medio claro",
+      "tueste_en": "Medium-light",
+      "pesoG": 454,
+      "precioCop": 47000,
+      "precioUsd": 11.5,
+      "precioSuscriptorCop": 40000,
+      "precioSuscriptorUsd": 10,
+      "momento": "tres-pm",
+      "img": null,
+      "swatch": "linear-gradient(150deg,#B6893B,#8a6a2c)"
+    },
+    {
+      "id": "el-descanso",
+      "name": "El Descanso",
+      "productor": "Familia Ipia",
+      "finca": "El Descanso",
+      "region": "Inzá, Cauca",
+      "altura": "1.900 msnm",
+      "proceso_es": "Natural",
+      "proceso_en": "Natural",
+      "variedad": "Colombia",
+      "notas_es": "Mora, vino tinto y cacao. Cuerpo alto.",
+      "notas_en": "Blackberry, red wine and cocoa. Full body.",
+      "tueste_es": "Medio",
+      "tueste_en": "Medium",
+      "pesoG": 454,
+      "precioCop": 49000,
+      "precioUsd": 12,
+      "precioSuscriptorCop": 41000,
+      "precioSuscriptorUsd": 10,
+      "momento": "antes-del-deploy",
+      "img": null,
+      "swatch": "linear-gradient(150deg,#3A2418,#1f120b)"
+    },
+    {
+      "id": "santa-rita",
+      "name": "Santa Rita",
+      "productor": "Gilberto Ramírez",
+      "finca": "Santa Rita",
+      "region": "Andes, Antioquia",
+      "altura": "1.650 msnm",
+      "proceso_es": "Lavado",
+      "proceso_en": "Washed",
+      "variedad": "Tabi",
+      "notas_es": "Chocolate, almendra y naranja. Final dulce.",
+      "notas_en": "Chocolate, almond and orange. Sweet finish.",
+      "tueste_es": "Medio oscuro",
+      "tueste_en": "Medium-dark",
+      "pesoG": 454,
+      "precioCop": 42000,
+      "precioUsd": 10.5,
+      "precioSuscriptorCop": 35000,
+      "precioSuscriptorUsd": 9,
+      "momento": "madrugada",
+      "img": "assets/bag-green.png",
+      "swatch": "linear-gradient(150deg,#2F5D3A,#1c3a24)",
+      "wholesale": 28000,
+      "wholesale_usd": 7
+    },
+    {
+      "id": "la-cumbre",
+      "name": "La Cumbre",
+      "productor": "Jorge Eliécer Muñoz",
+      "finca": "La Cumbre",
+      "region": "Buesaco, Nariño",
+      "altura": "2.050 msnm",
+      "proceso_es": "Lavado",
+      "proceso_en": "Washed",
+      "variedad": "Bourbon rosado",
+      "notas_es": "Jazmín, lima y miel. Acidez marcada.",
+      "notas_en": "Jasmine, lime and honey. Pronounced acidity.",
+      "tueste_es": "Claro",
+      "tueste_en": "Light",
+      "pesoG": 454,
+      "precioCop": 52000,
+      "precioUsd": 13,
+      "precioSuscriptorCop": 44000,
+      "precioSuscriptorUsd": 11,
+      "momento": "domingo-tranquilo",
+      "img": null,
+      "swatch": "linear-gradient(150deg,#E8731E,#b8550f)"
+    }
   ],
   "productFilters": [
     { "id": "todos", "label_es": "Todos", "label_en": "All" },
-    { "id": "afrutado", "label_es": "Afrutados", "label_en": "Fruity" },
-    { "id": "dulce", "label_es": "Dulces", "label_en": "Sweet" }
+    { "id": "tres-pm", "label_es": "Las 3:00 p.m.", "label_en": "3:00 p.m." },
+    { "id": "antes-del-deploy", "label_es": "Antes del deploy", "label_en": "Before the deploy" },
+    { "id": "madrugada", "label_es": "La madrugada", "label_en": "Before dawn" },
+    { "id": "domingo-tranquilo", "label_es": "El domingo lento", "label_en": "A slow Sunday" }
+  ],
+  "steps": [
+    { "n": "1", "t_es": "Responde una pregunta", "t_en": "Answer one question", "d_es": "Cuál es tu hora más difícil. Con eso elegimos el café.", "d_en": "Which hour is hardest for you. That's how we pick the coffee." },
+    { "n": "2", "t_es": "Elige cada cuánto", "t_en": "Choose how often", "d_es": "Cada 15 o cada 30 días. Se cambia después sin pedir permiso.", "d_en": "Every 15 or every 30 days. You can change it later without asking." },
+    { "n": "3", "t_es": "Pagas una vez", "t_en": "Pay once", "d_es": "El resto llega solo. Pausas, saltas un envío o cancelas cuando quieras.", "d_en": "The rest arrives on its own. Pause, skip a shipment or cancel whenever." }
+  ],
+  "originFacts": [
+    { "k_es": "REGIONES", "k_en": "REGIONS", "v": "Risaralda · Huila · Cauca · Antioquia · Nariño" },
+    { "k_es": "ALTURA", "k_en": "ALTITUDE", "v": "1.650–2.050 msnm" },
+    { "k_es": "PROCESO", "k_en": "PROCESS", "v_es": "Lavado · Honey · Natural", "v_en": "Washed · Honey · Natural" },
+    { "k_es": "PRODUCTORES", "k_en": "PRODUCERS", "v": "5 fincas" }
+  ],
+  "faqs": [
+    {
+      "q_es": "¿Puedo pausar o cancelar?",
+      "q_en": "Can I pause or cancel?",
+      "a_es": "Sí. Son dos clics desde tu cuenta. No hay llamada de retención ni formulario de salida.",
+      "a_en": "Yes. Two clicks from your account. No retention call, no exit form."
+    },
+    {
+      "q_es": "Se me está acumulando el café. ¿Qué hago?",
+      "q_en": "Coffee is piling up. What do I do?",
+      "a_es": "Saltas el próximo envío. La suscripción sigue viva y el siguiente llega en la fecha normal.",
+      "a_en": "Skip the next shipment. The subscription stays active and the following one arrives on its usual date."
+    },
+    {
+      "q_es": "¿Puedo cambiar de café?",
+      "q_en": "Can I change coffees?",
+      "a_es": "Cuando quieras, hasta el día antes del envío. El precio de suscriptor es el mismo para todo el catálogo.",
+      "a_en": "Any time, up to the day before shipping. The subscriber price applies to the whole catalog."
+    },
+    {
+      "q_es": "¿De dónde viene el café?",
+      "q_en": "Where does the coffee come from?",
+      "a_es": "De cinco fincas en Risaralda, Huila, Cauca, Antioquia y Nariño. Cada bolsa trae productor, finca, altura, proceso y variedad.",
+      "a_en": "From five farms in Risaralda, Huila, Cauca, Antioquia and Nariño. Every bag lists producer, farm, altitude, process and variety."
+    },
+    {
+      "q_es": "¿Tengo que suscribirme?",
+      "q_en": "Do I have to subscribe?",
+      "a_es": "No. Puedes comprar una bolsa suelta. La suscripción sale más barata y trae bonos, pero la compra única sigue ahí.",
+      "a_en": "No. You can buy a single bag. Subscribing costs less and adds bonuses, but the one-time purchase is still there."
+    }
   ],
   "methods": [
     {
@@ -53,68 +256,128 @@
       "ratio": "1:10", "time": "5:00", "body_es": "Fuerte", "body_en": "Strong"
     }
   ],
-  "steps": [
-    { "n": "1", "t_es": "Regístrate", "t_en": "Sign up", "d_es": "Cuéntanos de ti. Sin franquicia ni cuotas ocultas. Te asignamos un asesor.", "d_en": "Tell us about you. No franchise or hidden fees. We assign you an advisor." },
-    { "n": "2", "t_es": "Elige tu plan", "t_en": "Choose your plan", "d_es": "Compra tus primeras libras a precio mayorista. Con tu marca o con la nuestra.", "d_en": "Buy your first pounds at wholesale price. With your brand or ours." },
-    { "n": "3", "t_es": "Capacítate", "t_en": "Get trained", "d_es": "Acceso gratuito a formación en café, tueste y estrategia de ventas.", "d_en": "Free access to training in coffee, roasting and sales strategy." }
-  ],
-  "benefits": [
-    { "icon": "trending-up", "t_es": "Buenas utilidades", "t_en": "Strong profits", "d_es": "Compras a precio mayorista y defines tu margen. Café premium con demanda real y recompra alta.", "d_en": "Buy at wholesale and set your margin. Premium coffee with real demand and high reorder rates." },
-    { "icon": "graduation-cap", "t_es": "Capacitación gratuita", "t_en": "Free training", "d_es": "Formación constante en café, tueste y catación. Aprende a vender con criterio, no improvisando.", "d_en": "Constant training in coffee, roasting and cupping. Learn to sell with knowledge, not guesswork." },
-    { "icon": "target", "t_es": "Apoyo en estrategia", "t_en": "Sales strategy support", "d_es": "Te acompañamos con tácticas de venta, precios y material para que cierres más clientes.", "d_en": "We support you with sales tactics, pricing and materials to close more clients." },
-    { "icon": "tag", "t_es": "Tu marca o la nuestra", "t_en": "Your brand or ours", "d_es": "Marca blanca disponible: vende con tu propio logo y nombre, o bajo el respaldo de Taza Maestra.", "d_en": "White-label available: sell under your own logo and name, or backed by Taza Maestra." },
-    { "icon": "shield-off", "t_es": "Sin franquicia", "t_en": "No franchise", "d_es": "Cero cuotas fijas ni inversión obligatoria en local. Empiezas con las libras que decidas.", "d_en": "Zero fixed fees or mandatory storefront investment. Start with the pounds you choose." }
-  ],
-  "testimonials": [
-    { "quote_es": "Empecé con 10 libras al mes. Hoy surto tres cafeterías y vivo de esto.", "quote_en": "I started with 10 pounds a month. Today I supply three cafés and live off this.", "name": "Laura Restrepo", "role_es": "Embajadora · Medellín", "role_en": "Ambassador · Medellín", "initial": "L" },
-    { "quote_es": "La capacitación en tueste me cambió la forma de vender. Mis clientes lo notan.", "quote_en": "The roasting training changed how I sell. My clients notice it.", "name": "Andrés Gómez", "role_es": "Cafetería · Bogotá", "role_en": "Café · Bogotá", "initial": "A" },
-    { "quote_es": "El recordatorio de recompra por WhatsApp me ahorra horas y no pierdo ventas.", "quote_en": "The WhatsApp reorder reminder saves me hours and I don't lose sales.", "name": "Valentina Cruz", "role_es": "Embajadora · Cali", "role_en": "Ambassador · Cali", "initial": "V" }
-  ],
-  "originFacts": [
-    { "k_es": "REGIONES", "k_en": "REGIONS", "v": "Huila · Nariño · Cauca" },
-    { "k_es": "ALTURA", "k_en": "ALTITUDE", "v": "1.600–2.000 msnm" },
-    { "k_es": "PROCESO", "k_en": "PROCESS", "v_es": "Lavado · Honey", "v_en": "Washed · Honey" },
-    { "k_es": "PUNTAJE SCA", "k_en": "SCA SCORE", "v": "84–88+" }
-  ],
-  "faqs": [
-    { "q_es": "¿Necesito experiencia o un local para ser embajador?", "q_en": "Do I need experience or a storefront to be an ambassador?", "a_es": "No. Muchos embajadores empiezan desde casa, vendiendo a su círculo cercano y por redes. Te damos la formación y el material para arrancar.", "a_en": "No. Many ambassadors start from home, selling to their close circle and via social media. We give you the training and materials to begin." },
-    { "q_es": "¿Puedo vender con mi propia marca?", "q_en": "Can I sell under my own brand?", "a_es": "Sí. Ofrecemos marca blanca: tú pones tu logo y nombre, nosotros el café de especialidad y el tueste. También puedes vender bajo Taza Maestra.", "a_en": "Yes. We offer white-label: you provide your logo and name, we provide the specialty coffee and roast. You can also sell under Taza Maestra." },
-    { "q_es": "¿Cuál es la inversión inicial?", "q_en": "What is the initial investment?", "a_es": "No hay franquicia ni cuota fija. Solo compras tu primer lote de café a precio mayorista; tú defines cuántas libras según tu meta.", "a_en": "There's no franchise or fixed fee. You only buy your first batch of coffee at wholesale price; you decide how many pounds based on your goal." },
-    { "q_es": "¿Cómo funciona el asistente IA de WhatsApp?", "q_en": "How does the WhatsApp AI assistant work?", "a_es": "Monitorea las fechas de tus pedidos y te avisa cuándo conviene recomprar o contactar a un cliente. También responde tus dudas sobre café y ventas 24/7.", "a_en": "It monitors your order dates and alerts you when it's a good time to reorder or contact a client. It also answers your coffee and sales questions 24/7." },
-    { "q_es": "¿El café siempre llega fresco?", "q_en": "Does the coffee always arrive fresh?", "a_es": "Tostamos por pedido cada semana. Verás la fecha de tueste en cada bolsa, con su ficha de origen y notas de catación.", "a_en": "We roast to order every week. You'll see the roast date on each bag, with its origin sheet and cupping notes." }
-  ],
   "blogFilters": [
     { "id": "todos", "label_es": "Todo", "label_en": "All" },
-    { "id": "sensorial", "label_es": "Cata & sensorial", "label_en": "Tasting & sensory" },
-    { "id": "cultivo", "label_es": "Cultivo & proceso", "label_en": "Growing & processing" },
-    { "id": "metodo", "label_es": "Métodos de preparación", "label_en": "Brewing methods" }
+    { "id": "historias", "label_es": "Historias", "label_en": "Stories" },
+    { "id": "origen", "label_es": "Origen", "label_en": "Origin" },
+    { "id": "preparacion", "label_es": "Preparación", "label_en": "Brewing" }
   ],
-  "blogFeatured": {
-    "kicker_es": "DESTACADO · VIDEO", "kicker_en": "FEATURED · VIDEO",
-    "badge_es": "VIDEO · SENSORIAL", "badge_en": "VIDEO · SENSORY",
-    "t_es": "Atributos sensoriales del café", "t_en": "Sensory attributes of coffee",
-    "d_es": "Aprende a identificar aroma, acidez, cuerpo y dulzor para hablar con propiedad del café que vendes.", "d_en": "Learn to identify aroma, acidity, body and sweetness so you can speak with authority about the coffee you sell.",
-    "cta_es": "Ver video ▶", "cta_en": "Watch video ▶",
-    "videoId": "kI6rHoPQUk0"
-  },
+  "blogFeatured": { "slug": "tres-de-la-tarde" },
   "blogPosts": [
-    { "tag": "VIDEO · CATACIÓN", "cat": "sensorial", "isVideo": true, "t_es": "Degustación y catación", "t_en": "Tasting and cupping", "d_es": "El protocolo de catación paso a paso para evaluar el café como un profesional.", "d_en": "The step-by-step cupping protocol to evaluate coffee like a professional.", "sw": "linear-gradient(140deg,#7E181C,#4A0B0F)", "videoId": "_Ll8foD4kao" },
-    { "tag": "VIDEO · CALIDAD", "cat": "sensorial", "isVideo": true, "t_es": "Defectos del café", "t_en": "Coffee defects", "d_es": "Identifica los defectos más comunes en el grano y cómo afectan la calidad de la taza.", "d_en": "Identify the most common bean defects and how they affect cup quality.", "sw": "linear-gradient(140deg,#B6893B,#8a6a2c)", "videoId": "BH07OqKr0KM" },
-    { "tag": "VIDEO · MÉTODO", "cat": "metodo", "isVideo": true, "t_es": "Método de preparación por inmersión", "t_en": "Immersion brewing method", "d_es": "Domina el método de inmersión paso a paso para extraer todo el sabor del café.", "d_en": "Master the immersion method step by step to extract all the coffee's flavor.", "sw": "linear-gradient(140deg,#2F5D3A,#1c3a24)", "videoId": "Gx5lYr7nIXc" },
-    { "tag": "VIDEO · VARIEDADES", "cat": "cultivo", "isVideo": true, "t_es": "Variedades de café", "t_en": "Coffee varieties", "d_es": "Conoce las principales variedades de café y cómo influyen en el perfil de la taza.", "d_en": "Discover the main coffee varieties and how they shape the cup profile.", "sw": "linear-gradient(140deg,#3A2418,#1f120b)", "videoId": "qOyAN0tmldY" },
-    { "tag": "VIDEO · COSECHA", "cat": "cultivo", "isVideo": true, "t_es": "Recolección y escala de maduración", "t_en": "Harvesting and the ripeness scale", "d_es": "Cómo se mide la maduración del fruto y por qué la recolección selectiva es clave para la calidad.", "d_en": "How fruit ripeness is measured and why selective picking is key to quality.", "sw": "linear-gradient(140deg,#E8731E,#b8550f)", "videoId": "Ae6f0EuYrVw" },
-    { "tag": "VIDEO · PROCESO", "cat": "cultivo", "isVideo": true, "t_es": "Clasificación de frutos y despulpado", "t_en": "Fruit classification and depulping", "d_es": "Cómo se clasifican los frutos de café y el proceso de despulpado tras la cosecha.", "d_en": "How coffee cherries are classified and the depulping process after harvest.", "sw": "linear-gradient(140deg,#5E4636,#3a2a1f)", "videoId": "gZ9Brq84hRY" }
-  ],
-  "calculator": {
-    "precioVenta": 45000,
-    "precioVenta_usd": 11,
-    "utilLibra": 7000,
-    "utilLibra_usd": 2,
-    "libras": { "min": 5, "max": 200, "step": 5, "default": 25 },
-    "formula": {
-      "utilMes": "utilLibra * libras",
-      "ventaTotal": "precioVenta * libras",
-      "porcentaje": "round(utilLibra / precioVenta * 100)"
+    {
+      "slug": "tres-de-la-tarde",
+      "cat": "historias",
+      "foto": null,
+      "sw": "linear-gradient(140deg,#7E181C,#4A0B0F)",
+      "cafeSlug": "la-esperanza",
+      "t_es": "Las tres de la tarde",
+      "t_en": "Three in the afternoon",
+      "d_es": "Marcela lleva once años en la misma oficina. Sabe exactamente a qué hora se le acaba el día por dentro.",
+      "d_en": "Marcela has spent eleven years in the same office. She knows exactly when her day runs out on the inside.",
+      "cuerpo_es": [
+        "Marcela entra a las siete. A las once ya despachó lo urgente. El problema no es la mañana.",
+        "El problema empieza a las tres. El almuerzo pesa, la pantalla cansa y todavía faltan dos horas. Nadie la está mirando. Podría bajar el ritmo y nadie lo notaría hasta el viernes.",
+        "Baja por agua, la pone a calentar y muele 15 gramos. Son cuatro minutos. No los toma como un descanso: los toma para poder volver.",
+        "El café que le sirve no la despierta de golpe. La acidez cítrica del lavado de Balboa sostiene la atención sin el bajón de las cinco. Eso es todo lo que necesita."
+      ],
+      "cuerpo_en": [
+        "Marcela clocks in at seven. By eleven the urgent work is done. The morning isn't the problem.",
+        "The problem starts at three. Lunch sits heavy, the screen wears on her, and two hours are still left. Nobody is watching. She could slow down and no one would notice until Friday.",
+        "She goes down for water, puts it on to heat and grinds 15 grams. It takes four minutes. She doesn't take them as a break: she takes them so she can go back.",
+        "The cup doesn't jolt her awake. The citric acidity of the Balboa washed lot holds her attention without the five o'clock crash. That's all she needs."
+      ]
+    },
+    {
+      "slug": "la-salida-a-produccion",
+      "cat": "historias",
+      "foto": null,
+      "sw": "linear-gradient(140deg,#3A2418,#1f120b)",
+      "cafeSlug": "el-descanso",
+      "t_es": "La salida a producción",
+      "t_en": "The release window",
+      "d_es": "El despliegue estaba planeado para las diez. A la medianoche Daniel seguía leyendo logs.",
+      "d_en": "The deploy was planned for ten. At midnight Daniel was still reading logs.",
+      "cuerpo_es": [
+        "El despliegue estaba planeado para las diez de la noche. A las once y media el equipo ya se había desconectado del canal.",
+        "Daniel se quedó. No por heroísmo: alguien tenía que mirar los logs y él era el que entendía esa parte del sistema.",
+        "A la medianoche preparó prensa francesa. Cuatro minutos de infusión, sin mirar el celular. Es el único momento de la noche en que no puede hacer nada más.",
+        "Un natural de Inzá aguanta bien esa hora: cuerpo alto, cacao, y no se pone ácido cuando se enfría en el escritorio. El error apareció a la 1:40. Era una variable de entorno."
+      ],
+      "cuerpo_en": [
+        "The deploy was scheduled for ten at night. By eleven thirty the team had already dropped off the channel.",
+        "Daniel stayed. Not out of heroism: someone had to watch the logs, and he was the one who understood that part of the system.",
+        "At midnight he made a French press. Four minutes of steeping, phone face down. It's the only moment of the night when he can't do anything else.",
+        "A natural from Inzá holds up at that hour: full body, cocoa, and it doesn't turn sour as it cools on the desk. The bug showed up at 1:40. It was an environment variable."
+      ]
+    },
+    {
+      "slug": "el-cafe-del-abuelo",
+      "cat": "historias",
+      "foto": null,
+      "sw": "linear-gradient(140deg,#2F5D3A,#1c3a24)",
+      "cafeSlug": "santa-rita",
+      "t_es": "El café de las cinco y veinte",
+      "t_en": "The five-twenty coffee",
+      "d_es": "Don Hernando trabajó cuarenta y un años. Ahora espera el café sentado, y esa es toda la agenda.",
+      "d_en": "Don Hernando worked for forty-one years. Now he waits for his coffee sitting down, and that's the whole agenda.",
+      "cuerpo_es": [
+        "Don Hernando se levanta a las cuatro y cuarenta. No tiene que hacerlo. Lo hizo durante cuarenta y un años y el cuerpo no aprendió a parar.",
+        "Pone el agua, espera, y se sienta. Antes ese rato era para alistarse. Ahora es solo el rato.",
+        "Dice que el café bueno se reconoce en que uno no le pone nada. El de Andes, Antioquia, tostado un poco más oscuro, se deja tomar así.",
+        "A las cinco y veinte la casa sigue en silencio. Él ya está despierto hace media hora, sin ningún lugar al que llegar."
+      ],
+      "cuerpo_en": [
+        "Don Hernando gets up at four forty. He doesn't have to. He did it for forty-one years and his body never learned to stop.",
+        "He puts the water on, waits, and sits down. That stretch of time used to be for getting ready. Now it's just the stretch of time.",
+        "He says you can tell good coffee because you don't add anything to it. The one from Andes, Antioquia, roasted a little darker, takes it well.",
+        "At five twenty the house is still quiet. He's been awake for half an hour, with nowhere to be."
+      ]
+    },
+    {
+      "slug": "por-que-la-altura-cambia-la-taza",
+      "cat": "origen",
+      "foto": null,
+      "sw": "linear-gradient(140deg,#E8731E,#b8550f)",
+      "cafeSlug": "la-cumbre",
+      "t_es": "Por qué la altura cambia la taza",
+      "t_en": "Why altitude changes the cup",
+      "d_es": "A 2.050 metros el fruto madura más lento. Eso se mide, no se opina.",
+      "d_en": "At 2,050 metres the cherry ripens more slowly. That gets measured, not argued.",
+      "cuerpo_es": [
+        "En Buesaco, Nariño, la finca de Jorge Eliécer Muñoz está a 2.050 metros. Las noches son frías y el fruto tarda más en madurar.",
+        "Ese retraso concentra azúcares y ácidos orgánicos en el grano. Por eso un café de altura suele tener acidez más marcada y notas más definidas.",
+        "No es una regla absoluta: el proceso y el tueste pueden borrar esa ventaja. Un lavado bien hecho la conserva; un tueste muy oscuro la tapa.",
+        "En La Cumbre el resultado son notas de jazmín y lima, con tueste claro. Si lo prepara en V60 a 93 °C, aparecen en los primeros sorbos."
+      ],
+      "cuerpo_en": [
+        "In Buesaco, Nariño, Jorge Eliécer Muñoz's farm sits at 2,050 metres. The nights are cold and the cherries take longer to ripen.",
+        "That delay concentrates sugars and organic acids in the bean. That's why high-grown coffee tends to have sharper acidity and more defined notes.",
+        "It isn't an absolute rule: processing and roasting can erase the advantage. A careful washed process keeps it; a very dark roast buries it.",
+        "In La Cumbre the result is jasmine and lime, with a light roast. Brew it in a V60 at 93 °C and they show up in the first sips."
+      ]
+    },
+    {
+      "slug": "moler-justo-antes",
+      "cat": "preparacion",
+      "foto": null,
+      "sw": "linear-gradient(140deg,#B6893B,#8a6a2c)",
+      "cafeSlug": "el-jardin",
+      "t_es": "Moler justo antes",
+      "t_en": "Grind right before",
+      "d_es": "Es el cambio más barato que puede hacer. También el que más se nota.",
+      "d_en": "It's the cheapest change you can make. It's also the one you notice most.",
+      "cuerpo_es": [
+        "El café molido pierde aromáticos en minutos. No en días: en minutos. Una bolsa abierta hace dos semanas ya no huele igual el primer día.",
+        "Moler justo antes de preparar cambia más la taza que subir de precio el café. Un molino manual sirve.",
+        "Para prensa francesa, molienda gruesa, como sal marina. Para V60, media. Para moka, fina, pero no en polvo.",
+        "Con un honey como el de Pitalito la diferencia se oye rápido: la panela y el durazno aparecen mientras se vierte el agua, no después."
+      ],
+      "cuerpo_en": [
+        "Ground coffee loses aromatics in minutes. Not days: minutes. A bag opened two weeks ago doesn't smell the way it did on day one.",
+        "Grinding right before brewing changes the cup more than paying more for the coffee does. A hand grinder is enough.",
+        "For French press, coarse, like sea salt. For V60, medium. For a moka pot, fine, but not powder.",
+        "With a honey process like the one from Pitalito the difference shows up fast: the panela and peach arrive while you're pouring, not after."
+      ]
     }
-  }
+  ]
 }

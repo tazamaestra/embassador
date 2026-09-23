@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/lib/nav";
-import { calculator } from "@/lib/content";
+import { calculator } from "@/lib/embajadores-content";
 import { formatPrice } from "@/lib/format";
 import type { Locale } from "@/lib/types";
 

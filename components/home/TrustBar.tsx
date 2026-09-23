@@ -1,9 +1,8 @@
-"use client";
+import { getTranslations } from "next-intl/server";
 
-import { useTranslations } from "next-intl";
-
-export default function TrustBar() {
-  const t = useTranslations();
+// Componente de servidor: cero JavaScript en el navegador.
+export default async function TrustBar() {
+  const t = await getTranslations();
   const items = t.raw("trustBar") as string[];
 
   return (

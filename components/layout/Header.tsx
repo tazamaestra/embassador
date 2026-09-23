@@ -8,14 +8,15 @@ import { Link, usePathname, useRouter } from "@/lib/nav";
 import ModeToggle from "./ModeToggle";
 import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
+import { FEATURE_AMBASSADORS, visibleNavKeys } from "@/lib/flags";
 import LocaleSwitcher from "./LocaleSwitcher";
 
-const NAV_KEYS = ["inicio", "tienda", "embajadores", "blog"] as const;
 const NAV_PATHS: Record<string, string> = {
   inicio: "/",
   tienda: "/tienda",
-  embajadores: "/embajadores",
+  suscripcion: "/suscripcion",
   blog: "/blog",
+  embajadores: "/embajadores",
 };
 
 export default function Header() {
@@ -29,6 +30,7 @@ export default function Header() {
   const { items, openCart } = useCartStore();
   const cartCount = items.reduce((s, i) => s + i.qty, 0);
   const { user, init, logout } = useAuthStore();
+  const navKeys = visibleNavKeys();
 
   useEffect(() => {
     init();
@@ -50,21 +52,23 @@ export default function Header() {
       className="sticky top-0 z-50 h-18.5 flex items-center border-b border-borde-header"
       style={{ background: "rgba(250,246,238,.92)", backdropFilter: "blur(10px)" }}
     >
-      <div className="w-full max-w-310 mx-auto px-5.5 flex items-center justify-between gap-4">
+      <div className="w-full max-w-310 mx-auto px-4 sm:px-5.5 flex items-center justify-between gap-2 sm:gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 focus-visible:rounded-btn">
+        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0 focus-visible:rounded-btn">
           <Image
             src="/logo-stacked.png"
             alt="Taza Maestra"
             width={38}
             height={46}
-            className="h-11.5 w-auto object-contain"
+            className="h-9 sm:h-11.5 w-auto object-contain shrink-0"
+            priority
           />
-          <div className="leading-tight">
-            <div className="font-display font-bold text-vino tracking-[.06em] text-[21px] leading-none">
+          <div className="leading-tight min-w-0">
+            <div className="font-display font-bold text-vino tracking-[.04em] sm:tracking-[.06em] text-[16px] sm:text-[21px] leading-none truncate">
               TAZA MAESTRA
             </div>
-            <div className="font-mono text-dorado text-[9px] tracking-[.34em] uppercase leading-tight mt-0.5">
+            {/* El descriptor no cabe junto al carrito en pantallas angostas. */}
+            <div className="hidden sm:block font-mono text-dorado text-[9px] tracking-[.34em] uppercase leading-tight mt-0.5">
               CAFÉ DE ESPECIALIDAD
             </div>
           </div>
@@ -72,7 +76,7 @@ export default function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1" aria-label="Navegación principal">
-          {NAV_KEYS.map((key) => (
+          {navKeys.map((key) => (
             <Link
               key={key}
               href={NAV_PATHS[key] as "/"}
@@ -86,12 +90,11 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Cart + Locale + Mode toggle + hamburger */}
+        {/* Cart + Locale + hamburger */}
         <div className="flex items-center gap-2">
-          {/* Language switcher */}
           <LocaleSwitcher />
 
-          {/* Account link (logged-in ambassadors only) */}
+          {/* Cuenta (solo con sesión) */}
           {user && (
             <Link
               href="/cuenta"
@@ -103,16 +106,16 @@ export default function Header() {
                 <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" />
               </svg>
               <span className="hidden sm:inline font-body font-600 text-sm max-w-28 truncate">
-                {user.nombre.split(" ")[0]}
+                {user.nombre ? user.nombre.split(" ")[0] : (es ? "Mi cuenta" : "Account")}
               </span>
             </Link>
           )}
 
-          {/* Cart button */}
+          {/* Carrito */}
           <button
             onClick={openCart}
             className="relative p-2 rounded-btn text-vino hover:bg-arena transition-colors"
-            aria-label={cartCount > 0 ? `Carrito, ${cartCount} libra${cartCount !== 1 ? "s" : ""}` : "Carrito vacío"}
+            aria-label={cartCount > 0 ? `Carrito, ${cartCount} bolsa${cartCount !== 1 ? "s" : ""}` : "Carrito vacío"}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
@@ -130,7 +133,7 @@ export default function Header() {
           </button>
 
           <div className="hidden sm:flex items-center gap-2">
-            <ModeToggle />
+            {FEATURE_AMBASSADORS && <ModeToggle />}
             {user ? (
               <button
                 onClick={handleLogout}
@@ -142,17 +145,17 @@ export default function Header() {
               </button>
             ) : (
               <Link
-                href={{ pathname: "/acceso", query: { tab: "login" } }}
+                href="/acceso"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-vino hover:bg-vino-900 text-crema-papel font-body font-600 text-sm transition-colors"
-                aria-label={es ? "Iniciar sesión" : "Log in"}
+                aria-label={es ? "Entrar" : "Log in"}
               >
                 <LogIn size={16} strokeWidth={1.8} aria-hidden="true" />
-                {es ? "Iniciar sesión" : "Log in"}
+                {es ? "Entrar" : "Log in"}
               </Link>
             )}
           </div>
 
-          {/* Hamburger */}
+          {/* Hamburguesa */}
           <button
             className="md:hidden p-2 rounded-btn text-vino hover:bg-arena transition-colors"
             aria-expanded={menuOpen}
@@ -174,10 +177,10 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Menú móvil */}
       {menuOpen && (
         <div className="absolute top-18.5 left-0 right-0 bg-fondo border-b border-borde shadow-md py-4 px-5.5 flex flex-col gap-3 md:hidden">
-          {NAV_KEYS.map((key) => (
+          {navKeys.map((key) => (
             <Link
               key={key}
               href={NAV_PATHS[key] as "/"}
@@ -191,7 +194,7 @@ export default function Header() {
             </Link>
           ))}
           <div className="pt-2 border-t border-borde flex items-center gap-2">
-            <ModeToggle />
+            {FEATURE_AMBASSADORS && <ModeToggle />}
             {user ? (
               <button
                 onClick={() => { setMenuOpen(false); handleLogout(); }}
@@ -203,13 +206,13 @@ export default function Header() {
               </button>
             ) : (
               <Link
-                href={{ pathname: "/acceso", query: { tab: "login" } }}
+                href="/acceso"
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-vino hover:bg-vino-900 text-crema-papel font-body font-600 text-sm transition-colors"
-                aria-label={es ? "Iniciar sesión" : "Log in"}
+                aria-label={es ? "Entrar" : "Log in"}
               >
                 <LogIn size={16} strokeWidth={1.8} aria-hidden="true" />
-                {es ? "Iniciar sesión" : "Log in"}
+                {es ? "Entrar" : "Log in"}
               </Link>
             )}
           </div>

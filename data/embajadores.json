@@ -1,0 +1,44 @@
+{
+  "_nota": "Contenido del programa de embajadores. DORMIDO detrás de FEATURE_AMBASSADORS (lib/flags.ts). Nada de esto se renderiza con el flag apagado; solo lo lee lib/embajadores-content.ts, que a su vez solo importan los componentes de /embajadores y el panel de embajador. Se conserva tal cual para poder volver a encender el programa.",
+  "heroStats": [
+    { "num": "100%", "label_es": "Café colombiano", "label_en": "Colombian coffee" },
+    { "num": "+20%", "label_es": "Margen embajador", "label_en": "Ambassador margin" },
+    { "num": "24/7", "label_es": "Asistente IA", "label_en": "AI assistant" }
+  ],
+  "steps": [
+    { "n": "1", "t_es": "Regístrate", "t_en": "Sign up", "d_es": "Cuéntanos de ti. Sin franquicia ni cuotas ocultas. Te asignamos un asesor.", "d_en": "Tell us about you. No franchise or hidden fees. We assign you an advisor." },
+    { "n": "2", "t_es": "Elige tu plan", "t_en": "Choose your plan", "d_es": "Compra tus primeras libras a precio mayorista. Con tu marca o con la nuestra.", "d_en": "Buy your first pounds at wholesale price. With your brand or ours." },
+    { "n": "3", "t_es": "Capacítate", "t_en": "Get trained", "d_es": "Acceso gratuito a formación en café, tueste y estrategia de ventas.", "d_en": "Free access to training in coffee, roasting and sales strategy." }
+  ],
+  "benefits": [
+    { "icon": "trending-up", "t_es": "Buenas utilidades", "t_en": "Strong profits", "d_es": "Compras a precio mayorista y defines tu margen. Café premium con demanda real y recompra alta.", "d_en": "Buy at wholesale and set your margin. Premium coffee with real demand and high reorder rates." },
+    { "icon": "graduation-cap", "t_es": "Capacitación gratuita", "t_en": "Free training", "d_es": "Formación constante en café, tueste y catación. Aprende a vender con criterio, no improvisando.", "d_en": "Constant training in coffee, roasting and cupping. Learn to sell with knowledge, not guesswork." },
+    { "icon": "target", "t_es": "Apoyo en estrategia", "t_en": "Sales strategy support", "d_es": "Te acompañamos con tácticas de venta, precios y material para que cierres más clientes.", "d_en": "We support you with sales tactics, pricing and materials to close more clients." },
+    { "icon": "tag", "t_es": "Tu marca o la nuestra", "t_en": "Your brand or ours", "d_es": "Marca blanca disponible: vende con tu propio logo y nombre, o bajo el respaldo de Taza Maestra.", "d_en": "White-label available: sell under your own logo and name, or backed by Taza Maestra." },
+    { "icon": "shield-off", "t_es": "Sin franquicia", "t_en": "No franchise", "d_es": "Cero cuotas fijas ni inversión obligatoria en local. Empiezas con las libras que decidas.", "d_en": "Zero fixed fees or mandatory storefront investment. Start with the pounds you choose." }
+  ],
+  "testimonials": [
+    { "quote_es": "Empecé con 10 libras al mes. Hoy surto tres cafeterías y vivo de esto.", "quote_en": "I started with 10 pounds a month. Today I supply three cafés and live off this.", "name": "Laura Restrepo", "role_es": "Embajadora · Medellín", "role_en": "Ambassador · Medellín", "initial": "L" },
+    { "quote_es": "La capacitación en tueste me cambió la forma de vender. Mis clientes lo notan.", "quote_en": "The roasting training changed how I sell. My clients notice it.", "name": "Andrés Gómez", "role_es": "Cafetería · Bogotá", "role_en": "Café · Bogotá", "initial": "A" },
+    { "quote_es": "El recordatorio de recompra por WhatsApp me ahorra horas y no pierdo ventas.", "quote_en": "The WhatsApp reorder reminder saves me hours and I don't lose sales.", "name": "Valentina Cruz", "role_es": "Embajadora · Cali", "role_en": "Ambassador · Cali", "initial": "V" }
+  ],
+  "faqs": [
+    { "q_es": "¿Necesito experiencia o un local para ser embajador?", "q_en": "Do I need experience or a storefront to be an ambassador?", "a_es": "No. Muchos embajadores empiezan desde casa, vendiendo a su círculo cercano y por redes. Te damos la formación y el material para arrancar.", "a_en": "No. Many ambassadors start from home, selling to their close circle and via social media. We give you the training and materials to begin." },
+    { "q_es": "¿Puedo vender con mi propia marca?", "q_en": "Can I sell under my own brand?", "a_es": "Sí. Ofrecemos marca blanca: tú pones tu logo y nombre, nosotros el café de especialidad y el tueste. También puedes vender bajo Taza Maestra.", "a_en": "Yes. We offer white-label: you provide your logo and name, we provide the specialty coffee and roast. You can also sell under Taza Maestra." },
+    { "q_es": "¿Cuál es la inversión inicial?", "q_en": "What is the initial investment?", "a_es": "No hay franquicia ni cuota fija. Solo compras tu primer lote de café a precio mayorista; tú defines cuántas libras según tu meta.", "a_en": "There's no franchise or fixed fee. You only buy your first batch of coffee at wholesale price; you decide how many pounds based on your goal." },
+    { "q_es": "¿Cómo funciona el asistente IA de WhatsApp?", "q_en": "How does the WhatsApp AI assistant work?", "a_es": "Monitorea las fechas de tus pedidos y te avisa cuándo conviene recomprar o contactar a un cliente. También responde tus dudas sobre café y ventas 24/7.", "a_en": "It monitors your order dates and alerts you when it's a good time to reorder or contact a client. It also answers your coffee and sales questions 24/7." },
+    { "q_es": "¿El café siempre llega fresco?", "q_en": "Does the coffee always arrive fresh?", "a_es": "Tostamos por pedido cada semana. Verás la fecha de tueste en cada bolsa, con su ficha de origen y notas de catación.", "a_en": "We roast to order every week. You'll see the roast date on each bag, with its origin sheet and cupping notes." }
+  ],
+  "calculator": {
+    "precioVenta": 45000,
+    "precioVenta_usd": 11,
+    "utilLibra": 7000,
+    "utilLibra_usd": 2,
+    "libras": { "min": 5, "max": 200, "step": 5, "default": 25 },
+    "formula": {
+      "utilMes": "utilLibra * libras",
+      "ventaTotal": "precioVenta * libras",
+      "porcentaje": "round(utilLibra / precioVenta * 100)"
+    }
+  }
+}

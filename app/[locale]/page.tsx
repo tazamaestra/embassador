@@ -1,23 +1,29 @@
-import { getLocale } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import Hero from "@/components/home/Hero";
 import TrustBar from "@/components/home/TrustBar";
-import MethodCarousel from "@/components/home/MethodCarousel";
+import MomentQuiz from "@/components/home/MomentQuiz";
+import Stories from "@/components/home/Stories";
 import HowItWorks from "@/components/home/HowItWorks";
 import Origins from "@/components/home/Origins";
-import Testimonials from "@/components/home/Testimonials";
 import type { Locale } from "@/lib/types";
 
-export default async function HomePage() {
-  const locale = (await getLocale()) as Locale;
+// Todo servidor menos MomentQuiz, que es la única isla cliente del home.
+export default async function HomePage({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
 
   return (
     <>
       <Hero locale={locale} />
       <TrustBar />
-      <MethodCarousel locale={locale} />
+      <MomentQuiz locale={locale} />
+      <Stories locale={locale} />
       <HowItWorks locale={locale} />
       <Origins locale={locale} />
-      <Testimonials locale={locale} />
     </>
   );
 }

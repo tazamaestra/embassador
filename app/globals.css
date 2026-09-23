@@ -13,6 +13,9 @@
   --color-crema-papel: #FBF3DD;
   --color-dorado: #B6893B;
   --color-dorado-claro: #F0C14B;
+  /* Precio de suscriptor y confirmaciones */
+  --color-verde: #2F5D3A;
+  --color-verde-claro: #E4EFE5;
 
   /* Surfaces */
   --color-fondo: #FAF6EE;
@@ -66,6 +69,74 @@
   0%   { opacity: 0; transform: translateY(6px) scaleY(.8); }
   40%  { opacity: .55; }
   100% { opacity: 0; transform: translateY(-18px) scaleY(1.3); }
+}
+
+/* La recomendación y las confirmaciones entran sin sobresaltos. */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Estados de carga: la taza se llena mientras se espera. */
+@keyframes llenando {
+  0%   { transform: scaleX(0); transform-origin: left; }
+  100% { transform: scaleX(1); transform-origin: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Aparición al hacer scroll ──────────────────────────────────────────
+   Solo opacity y transform, que el navegador compone sin repintar. El
+   escalonado se pasa por --tm-retraso desde el componente.
+   Sin JS (o con JS caído) el contenido se ve igual: el estado por defecto
+   solo se aplica cuando el observador marca el elemento con data-revelar. */
+
+[data-revelar] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity .5s cubic-bezier(.22,.61,.36,1) var(--tm-retraso, 0ms),
+    transform .5s cubic-bezier(.22,.61,.36,1) var(--tm-retraso, 0ms);
+  will-change: opacity, transform;
+}
+
+[data-revelar="visible"] {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+/* ── Pasos del formulario ───────────────────────────────────────────────
+   Entra el paso nuevo por el lado al que se avanza. El que sale se
+   desmonta de una: mantener dos pasos vivos complica el foco y el
+   lector de pantalla más de lo que aporta. */
+
+@keyframes pasoEntraAdelante {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes pasoEntraAtras {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.tm-paso-adelante { animation: pasoEntraAdelante .32s cubic-bezier(.22,.61,.36,1); }
+.tm-paso-atras    { animation: pasoEntraAtras .32s cubic-bezier(.22,.61,.36,1); }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-revelar] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 /* Global resets */

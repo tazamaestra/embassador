@@ -1,21 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { faqs } from "@/lib/content";
-import type { Locale } from "@/lib/types";
+import type { Faq, Locale } from "@/lib/types";
 
-export default function FaqAccordion({ locale }: { locale: Locale }) {
-  const t = useTranslations("ambassador");
+// Recibe las preguntas y los títulos por props, para que lo usen tanto la
+// página de suscripción como la de embajadores (dormida).
+export default function FaqAccordion({
+  faqs,
+  locale,
+  kicker,
+  titulo,
+}: {
+  faqs: Faq[];
+  locale: Locale;
+  kicker: string;
+  titulo: string;
+}) {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
     <section className="py-20 bg-arena">
       <div className="max-w-[780px] mx-auto px-[22px]">
         <div className="text-center mb-10">
-          <p className="font-mono text-[11px] tracking-[.2em] text-dorado uppercase mb-2">{t("faqKicker")}</p>
+          <p className="font-mono text-[11px] tracking-[.2em] text-dorado uppercase mb-2">{kicker}</p>
           <h2 className="font-display font-bold text-tinta" style={{ fontSize: "clamp(28px,4vw,44px)" }}>
-            {t("faqH2")}
+            {titulo}
           </h2>
         </div>
 

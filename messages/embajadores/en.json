@@ -1,0 +1,62 @@
+{
+  "nav": {
+    "embajadores": "Ambassadors"
+  },
+  "mode": {
+    "cliente": "Buy coffee",
+    "embajador": "I'm an ambassador",
+    "ariaLabel": "Visitor type"
+  },
+  "ambassador": {
+    "kicker": "AMBASSADOR PROGRAM",
+    "h1a": "Build a business with",
+    "h1b": "specialty coffee",
+    "sub": "Buy at wholesale, sell under your brand or ours, and grow with constant training. No franchise.",
+    "ctaCalc": "Calculate my profits",
+    "ctaCatalog": "See wholesale catalog",
+    "benefitsKicker": "WHY TAZA MAESTRA",
+    "benefitsH2": "More than coffee: a business with support",
+    "calcKicker": "SIMULATOR",
+    "calcH2": "Calculate your profits",
+    "calcSub": "Adjust how many pounds you sell per month. We'll show your estimated profit at a selling price of $45,000 per pound.",
+    "calcLabelLibras": "Pounds you sell per month",
+    "calcNote": "* Selling price: $45,000 /lb · Profit: 16%",
+    "calcResultLabel": "ESTIMATED PROFIT / MONTH",
+    "calcUtilLibra": "PROFIT/LB",
+    "calcPorcentaje": "PERCENTAGE",
+    "calcVentaTotal": "TOTAL SALES",
+    "calcCta": "Start with my first order →",
+    "faqKicker": "FREQUENT QUESTIONS",
+    "faqH2": "Before you start",
+    "panelTitulo": "Ambassador dashboard"
+  },
+  "ambassadorAccount": {
+    "loading": "Loading your account…",
+    "kicker": "MY ACCOUNT",
+    "greeting": "Hi, {name}! 👋",
+    "subtitle": "Here's the status of your ambassador account.",
+    "statusLabel": "STATUS",
+    "codeLabel": "YOUR REFERRAL CODE",
+    "codeHint": "Share it with your customers or new ambassadors.",
+    "copy": "Copy",
+    "copied": "Copied! ✓",
+    "shopCta": "Go to the shop to place your first order →",
+    "calcCta": "See my profit calculator →",
+    "logout": "Log out",
+    "ordersTitle": "Your order",
+    "ordersEmpty": "You haven't added any pounds to your order yet. Go to the shop and pick your coffee.",
+    "colProducto": "Product",
+    "colLibras": "Pounds",
+    "colPrecio": "Retail price/lb",
+    "colUtilidadLb": "Profit/lb",
+    "colUtilidadTotal": "Total profit",
+    "colAcciones": "Actions",
+    "totalLabel": "Total",
+    "editLibras": "Edit pounds",
+    "deleteItem": "Remove product",
+    "save": "Save",
+    "cancel": "Cancel",
+    "deleteError": "Couldn't delete. Please try again.",
+    "editError": "Couldn't update. Please try again."
+  }
+}

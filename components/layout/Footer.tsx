@@ -17,7 +17,7 @@ export default function Footer() {
   }
 
   const shopLinks = t.raw("shopLinks") as string[];
-  const ambLinks = t.raw("ambLinks") as string[];
+  const subLinks = t.raw("subLinks") as string[];
 
   return (
     <footer className="bg-footer text-[#C9A977]">
@@ -51,7 +51,7 @@ export default function Footer() {
             <h3 className="font-mono text-[11px] tracking-[.2em] text-crema mb-4">{t("shopTitle")}</h3>
             <ul className="space-y-2">
               {shopLinks.map((link, i) => {
-                const filters = ["todos", "afrutado", "dulce"];
+                const filters = ["todos", "tres-pm", "madrugada"];
                 const href = i === 0 ? "/tienda" : `/tienda?filter=${filters[i]}`;
                 return (
                   <li key={i}>
@@ -62,12 +62,12 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Embajadores */}
+          {/* Suscripción */}
           <div>
-            <h3 className="font-mono text-[11px] tracking-[.2em] text-crema mb-4">{t("ambTitle")}</h3>
+            <h3 className="font-mono text-[11px] tracking-[.2em] text-crema mb-4">{t("subTitle")}</h3>
             <ul className="space-y-2">
-              {ambLinks.map((link, i) => {
-                const hrefs = ["/embajadores#beneficios", "/embajadores#tm-calc", "/blog"];
+              {subLinks.map((link, i) => {
+                const hrefs = ["/suscripcion", "/suscripcion#planes", "/blog"];
                 return (
                   <li key={i}>
                     <Link href={hrefs[i]} className="font-body text-sm hover:text-crema transition-colors">{link}</Link>

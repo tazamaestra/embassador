@@ -1,52 +1,48 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useLocale } from "next-intl";
+import { useEffect, useRef } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/lib/nav";
 import { useCartStore } from "@/lib/cart-store";
-import { useAuthStore } from "@/lib/auth-store";
-import { guardarCarritoComoPedido } from "@/lib/pedidos";
+import { findProduct } from "@/lib/content";
+import { compararPrecios } from "@/lib/suscripcion";
 import { formatPrice } from "@/lib/format";
 import type { Locale } from "@/lib/types";
 
 export default function CartDrawer() {
   const locale = useLocale() as Locale;
   const es = locale !== "en";
+  const t = useTranslations("cart");
   const router = useRouter();
   const { items, open, closeCart, setQty, removeItem, clear } = useCartStore();
-  const { user, loading: authLoading, init } = useAuthStore();
   const closeRef = useRef<HTMLButtonElement>(null);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(false);
 
-  useEffect(() => {
-    init();
-  }, [init]);
-
-  async function handleCheckout() {
-    if (authLoading || saving) return;
-    if (!user) {
-      closeCart();
-      router.push({ pathname: "/acceso", query: { next: "/cuenta" } });
-      return;
-    }
-    setSaving(true);
-    setSaveError(false);
-    try {
-      await guardarCarritoComoPedido(user.id, items);
-      clear();
-      closeCart();
-      router.push("/cuenta");
-    } catch {
-      setSaveError(true);
-    } finally {
-      setSaving(false);
-    }
+  // El carrito lleva al checkout de una pantalla. Ahí se decide si es compra
+  // única o suscripción, y ahí se paga.
+  function irAPagar() {
+    const primero = items[0];
+    closeCart();
+    router.push({
+      pathname: "/checkout",
+      query: primero
+        ? { cafe: primero.id, tipo: "unico" }
+        : {},
+    });
   }
 
   const total = items.reduce((s, i) => s + i.price * i.qty, 0);
   const totalUsd = items.reduce((s, i) => s + (i.priceUsd ?? 0) * i.qty, 0);
   const count = items.reduce((s, i) => s + i.qty, 0);
+
+  // Cuánto se ahorraría suscrito, con el mismo contenido del carrito.
+  const ahorroSuscrito = items.reduce((suma, item) => {
+    const producto = findProduct(item.id);
+    if (!producto) return suma;
+    return (
+      suma +
+      compararPrecios(producto, item.qty).ahorro
+    );
+  }, 0);
 
   // Close on Escape
   useEffect(() => {
@@ -96,7 +92,7 @@ export default function CartDrawer() {
             </h2>
             {count > 0 && (
               <span className="font-mono text-[10px] tracking-[.1em] bg-arena text-tinta-suave px-2 py-0.5 rounded-pill">
-                {count} lb{count !== 1 ? "s" : ""}
+                {count}
               </span>
             )}
           </div>
@@ -148,7 +144,7 @@ export default function CartDrawer() {
                       {item.name}
                     </p>
                     <p className="font-mono text-[10px] tracking-[.1em] text-tinta-suave mt-0.5">
-                      {formatPrice(item.price, item.priceUsd, locale)} / lb
+                      {formatPrice(item.price, item.priceUsd, locale)}
                     </p>
 
                     {/* Qty controls */}
@@ -156,7 +152,7 @@ export default function CartDrawer() {
                       <button
                         onClick={() => setQty(item.id, item.qty - 1)}
                         className="w-7 h-7 rounded-full border border-borde flex items-center justify-center text-tinta-suave hover:border-vino hover:text-vino transition-colors text-base font-bold leading-none"
-                        aria-label={es ? "Quitar una libra" : "Remove one pound"}
+                        aria-label={es ? "Quitar una bolsa" : "Remove one bag"}
                       >
                         −
                       </button>
@@ -169,11 +165,11 @@ export default function CartDrawer() {
                       <button
                         onClick={() => setQty(item.id, item.qty + 1)}
                         className="w-7 h-7 rounded-full border border-borde flex items-center justify-center text-tinta-suave hover:border-vino hover:text-vino transition-colors text-base font-bold leading-none"
-                        aria-label={es ? "Añadir una libra" : "Add one pound"}
+                        aria-label={es ? "Añadir una bolsa" : "Add one bag"}
                       >
                         +
                       </button>
-                      <span className="font-mono text-[10px] text-tinta-suave">lb</span>
+                      <span className="font-mono text-[10px] text-tinta-suave">{es ? "bolsas" : "bags"}</span>
                     </div>
                   </div>
 
@@ -210,19 +206,18 @@ export default function CartDrawer() {
             <p className="font-body text-tinta-suave text-xs mb-4">
               {es ? "Envío calculado al finalizar el pedido" : "Shipping calculated at checkout"}
             </p>
-            {saveError && (
-              <p role="alert" className="font-body text-xs text-vino mb-2">
-                {es ? "No pudimos guardar tu pedido. Intenta de nuevo." : "We couldn't save your order. Please try again."}
+            {ahorroSuscrito > 0 && (
+              <p className="font-body text-verde text-xs mb-3">
+                {t("ahorroSuscrito", {
+                  ahorro: formatPrice(ahorroSuscrito, undefined, locale),
+                })}
               </p>
             )}
             <button
-              onClick={handleCheckout}
-              disabled={saving}
-              className="w-full bg-vino hover:bg-vino-900 disabled:opacity-60 text-crema-papel font-body font-semibold text-base py-3.5 rounded-btn transition-colors duration-150 mb-2"
+              onClick={irAPagar}
+              className="w-full bg-vino hover:bg-vino-900 text-crema-papel font-body font-semibold text-base py-3.5 rounded-btn transition-colors duration-150 mb-2"
             >
-              {saving
-                ? (es ? "Guardando…" : "Saving…")
-                : (es ? "Proceder al pago →" : "Proceed to checkout →")}
+              {t("checkout")} →
             </button>
             <button
               onClick={clear}
