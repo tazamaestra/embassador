@@ -1,245 +1,33 @@
 {
-  "_nota": "Toda la economía de la suscripción vive aquí. Niveles, frecuencias, prepagos, consumo y regalo son datos, no código. Cambiar un precio es editar este archivo.",
-  "moneda": "COP",
-  "redondeoCop": 100,
-  "diasPreparacion": 2,
-  "cobroDia": 1,
-  "despachoDia": 5,
-  "gramosPorLibra": 450,
-  "operacion": {
-    "_nota": "Puente con el software de gestión. `productoId` es el UUID de la tabla `productos` de Supabase al que se cargan las libras. `canal` tiene un CHECK en la base y solo acepta: otro, tienda, mayorista, online. Para distinguir las suscripciones, el origen va escrito al principio de `notas`.",
-    "productoId": "df499576-64ce-49f1-8dc2-44efa6cdb0d5",
-    "productoNombre": "TazaMaestra Natural",
-    "canal": "online",
-    "prefijoPedido": "SUB"
-  },
-  "suelta": {
-    "_nota": "Referencia para la comparativa. El envío es un supuesto: confirmar la tarifa real antes de publicar.",
-    "precioLibraCop": 49000,
-    "envioCop": 12000
-  },
-  "consumo": {
-    "diasMes": 30,
-    "_nota": "Gramos por taza según el método. Espresso usa dosis doble."
-  },
-  "metodos": [
-    {
-      "id": "filtro",
-      "gramosPorTaza": 8,
-      "label_es": "Filtro",
-      "label_en": "Pour over",
-      "nota_es": "V60, Chemex, goteo.",
-      "nota_en": "V60, Chemex, drip."
-    },
-    {
-      "id": "greca",
-      "gramosPorTaza": 8,
-      "label_es": "Greca",
-      "label_en": "Moka pot",
-      "nota_es": "La de toda la vida.",
-      "nota_en": "The stovetop one."
-    },
-    {
-      "id": "prensa",
-      "gramosPorTaza": 8,
-      "label_es": "Prensa francesa",
-      "label_en": "French press",
-      "nota_es": "Inmersión, cuerpo alto.",
-      "nota_en": "Immersion, full body."
-    },
-    {
-      "id": "espresso",
-      "gramosPorTaza": 14,
-      "label_es": "Espresso",
-      "label_en": "Espresso",
-      "nota_es": "Máquina con portafiltro.",
-      "nota_en": "Machine with portafilter."
-    }
-  ],
-  "niveles": [
-    {
-      "id": "1-libra",
-      "libras": 1,
-      "gramos": 450,
-      "precioCop": 45000,
-      "orden": 1,
-      "label_es": "1 libra",
-      "label_en": "1 pound",
-      "incluye_es": [
-        "1 libra de café Taza Maestra"
-      ],
-      "incluye_en": [
-        "1 pound of Taza Maestra coffee"
-      ],
-      "nota_es": "Una o dos tazas al día.",
-      "nota_en": "One or two cups a day."
-    },
-    {
-      "id": "2-libras",
-      "libras": 2,
-      "gramos": 900,
-      "precioCop": 85000,
-      "orden": 2,
-      "label_es": "2 libras",
-      "label_en": "2 pounds",
-      "incluye_es": [
-        "1 libra Taza Maestra",
-        "1 libra del origen del mes"
-      ],
-      "incluye_en": [
-        "1 pound Taza Maestra",
-        "1 pound of the origin of the month"
-      ],
-      "nota_es": "Dos o tres tazas al día, o dos personas.",
-      "nota_en": "Two or three cups a day, or two people."
-    },
-    {
-      "id": "3-libras",
-      "libras": 3,
-      "gramos": 1350,
-      "precioCop": 120000,
-      "orden": 3,
-      "label_es": "3 libras",
-      "label_en": "3 pounds",
-      "incluye_es": [
-        "2 libras Taza Maestra",
-        "1 libra del origen del mes"
-      ],
-      "incluye_en": [
-        "2 pounds Taza Maestra",
-        "1 pound of the origin of the month"
-      ],
-      "nota_es": "Casa con varios cafeteros, u oficina pequeña.",
-      "nota_en": "A household of coffee drinkers, or a small office."
-    }
-  ],
-  "frecuencias": [
-    {
-      "id": "mensual",
-      "cadaDias": 30,
-      "orden": 1,
-      "label_es": "Cada mes",
-      "label_en": "Every month",
-      "nota_es": "Lo normal si tomas café a diario.",
-      "nota_en": "The usual if you drink coffee daily."
-    },
-    {
-      "id": "bimestral",
-      "cadaDias": 60,
-      "orden": 2,
-      "label_es": "Cada 2 meses",
-      "label_en": "Every 2 months",
-      "nota_es": "Si te sobra café al final del mes.",
-      "nota_en": "If you have coffee left at the end of the month."
-    }
-  ],
-  "prepagos": [
-    {
-      "id": "mes-a-mes",
-      "meses": 1,
-      "descuentoPct": 0,
-      "orden": 1,
-      "label_es": "Mes a mes",
-      "label_en": "Month to month",
-      "nota_es": "Se cobra cada envío. Cancelas cuando quieras.",
-      "nota_en": "Charged each shipment. Cancel whenever."
-    },
-    {
-      "id": "trimestre",
-      "meses": 3,
-      "descuentoPct": 5,
-      "orden": 2,
-      "label_es": "3 meses",
-      "label_en": "3 months",
-      "nota_es": "Pagas los tres de una y ahorras 5%.",
-      "nota_en": "Pay all three up front and save 5%."
-    },
-    {
-      "id": "semestre",
-      "meses": 6,
-      "descuentoPct": 10,
-      "orden": 3,
-      "label_es": "6 meses",
-      "label_en": "6 months",
-      "nota_es": "Pagas los seis de una y ahorras 10%.",
-      "nota_en": "Pay all six up front and save 10%."
-    }
-  ],
-  "moliendas": [
-    {
-      "id": "grano",
-      "label_es": "En grano",
-      "label_en": "Whole bean",
-      "nota_es": "Muele justo antes de preparar.",
-      "nota_en": "Grind right before brewing."
-    },
-    {
-      "id": "molido",
-      "label_es": "Molido",
-      "label_en": "Ground",
-      "nota_es": "Lo molemos para tu método.",
-      "nota_en": "We grind it for your method."
-    }
-  ],
-  "perfiles": [
-    {
-      "id": "suave",
-      "label_es": "Suave",
-      "label_en": "Mild",
-      "desc_es": "Acidez alta, cuerpo ligero. Floral y cítrico.",
-      "desc_en": "High acidity, light body. Floral and citric."
-    },
-    {
-      "id": "balanceado",
-      "label_es": "Balanceado",
-      "label_en": "Balanced",
-      "desc_es": "Punto medio. Panela, fruta y nuez.",
-      "desc_en": "Middle ground. Panela, fruit and nut."
-    },
-    {
-      "id": "intenso",
-      "label_es": "Intenso",
-      "label_en": "Bold",
-      "desc_es": "Cuerpo alto, poca acidez. Cacao y madera.",
-      "desc_en": "Full body, low acidity. Cocoa and wood."
-    }
-  ],
-  "regalo": {
-    "mesesSeguidos": 6,
-    "libras": 1,
-    "label_es": "Libra de regalo",
-    "label_en": "Free pound",
-    "desc_es": "Seis envíos seguidos sin cancelar y el séptimo lleva una libra más.",
-    "desc_en": "Six shipments in a row without cancelling and the seventh carries an extra pound."
-  },
+  "_nota": "Solo textos. Precios, planes, frecuencias, moliendas, perfiles, prepagos y reglas viven en Supabase (supabase/sql/fase1_suscripciones.sql) y se editan allá.",
   "beneficios": [
     {
       "id": "envio",
       "label_es": "Envío incluido",
       "label_en": "Shipping included",
-      "desc_es": "Una libra suelta cuesta $49.000 más envío. Suscrito, el envío no se cobra.",
-      "desc_en": "A single pound costs $49,000 plus shipping. Subscribed, shipping is free."
+      "desc_es": "El precio de cada plan ya trae el envío. No hay cobros aparte.",
+      "desc_en": "Each plan price already includes shipping. No extra charges."
     },
     {
       "id": "tueste",
-      "label_es": "Tostado la semana del despacho",
-      "label_en": "Roasted the week it ships",
-      "desc_es": "Se tuesta entre el día 1 y el 5. Sale con menos de una semana de tostado.",
-      "desc_en": "Roasted between the 1st and the 5th. It leaves with under a week of rest."
+      "label_es": "Tostado antes de cada envío",
+      "label_en": "Roasted before each shipment",
+      "desc_es": "Se tuesta en los días previos al despacho. Sale con menos de una semana de tostado.",
+      "desc_en": "Roasted in the days before it ships. It leaves with under a week of rest."
     },
     {
       "id": "origen",
-      "label_es": "Origen del mes",
-      "label_en": "Origin of the month",
-      "desc_es": "Desde el plan de 2 libras entra un café de otro productor, con finca, altura y proceso en la etiqueta.",
-      "desc_en": "From the 2-pound plan on, a different producer's coffee, with farm, altitude and process on the label."
+      "label_es": "Café invitado",
+      "label_en": "Guest coffee",
+      "desc_es": "El plan Jornada trae, además del de la finca, un café de otro productor, con finca, altura y proceso en la etiqueta.",
+      "desc_en": "The Jornada plan adds a coffee from another producer, with farm, altitude and process on the label."
     },
     {
       "id": "regalo",
-      "label_es": "Una libra de regalo a los 6 meses",
-      "label_en": "A free pound at 6 months",
-      "desc_es": "Seis meses seguidos y el séptimo envío lleva una libra más.",
-      "desc_en": "Six months in a row and the seventh shipment carries an extra pound."
+      "label_es": "Una bolsa de regalo",
+      "label_en": "A free bag",
+      "desc_es": "Después de una racha de envíos seguidos, el siguiente lleva una bolsa más. El avance se ve en tu cuenta.",
+      "desc_en": "After a run of shipments in a row, the next one carries an extra bag. You can track it in your account."
     },
     {
       "id": "microlotes",
@@ -257,10 +45,10 @@
     },
     {
       "id": "control",
-      "label_es": "Saltar o pausar un mes",
-      "label_en": "Skip or pause a month",
-      "desc_es": "Sin penalidad y sin llamar a nadie. Dos clics desde tu cuenta.",
-      "desc_en": "No penalty, no phone call. Two clicks from your account."
+      "label_es": "Saltar o pausar",
+      "label_en": "Skip or pause",
+      "desc_es": "Un clic desde tu cuenta. Sin penalidad y sin llamar a nadie.",
+      "desc_en": "One click from your account. No penalty, no phone call."
     },
     {
       "id": "bienvenida",
@@ -310,32 +98,44 @@
     {
       "q_es": "¿Cuándo me cobran?",
       "q_en": "When am I charged?",
-      "a_es": "El día 1 de cada mes. Si te suscribes después del 1, el primer cobro es ese mismo día y el siguiente ya cae el día 1.",
-      "a_en": "On the 1st of each month. If you subscribe later, the first charge is that same day and the next one falls on the 1st."
+      "a_es": "El primer cobro es el día que te suscribes. Después, unos días antes de cada envío, para tostarlo fresco. La fecha del próximo cobro está siempre en tu cuenta.",
+      "a_en": "The first charge is the day you subscribe. After that, a few days before each shipment, so it is roasted fresh. The next charge date is always in your account."
     },
     {
-      "q_es": "¿Cuándo llega?",
-      "q_en": "When does it arrive?",
-      "a_es": "Despachamos el día 5. En las ciudades principales llega entre el 6 y el 8; al resto del país, hasta el 10.",
-      "a_en": "We ship on the 5th. In major cities it arrives between the 6th and 8th; elsewhere, by the 10th."
+      "q_es": "¿Cada cuánto llega?",
+      "q_en": "How often does it arrive?",
+      "a_es": "Cada semana, cada 15 días o cada mes, como elijas. Lo cambias desde tu cuenta y aplica desde el siguiente envío.",
+      "a_en": "Every week, every 2 weeks or every month, your choice. Change it from your account and it applies from the next shipment."
     },
     {
-      "q_es": "¿Puedo saltar un mes?",
-      "q_en": "Can I skip a month?",
-      "a_es": "Sí, desde tu cuenta, antes del día 1. El envío se corre al siguiente ciclo y no se cobra.",
-      "a_en": "Yes, from your account, before the 1st. The shipment moves to the next cycle and isn't charged."
+      "q_es": "¿Puedo saltar un envío?",
+      "q_en": "Can I skip a shipment?",
+      "a_es": "Sí, con un clic desde tu cuenta, mientras ese envío no se haya cobrado. Se corre al siguiente y no se cobra.",
+      "a_en": "Yes, with one click from your account, as long as that shipment has not been charged. It moves to the next one and is not charged."
     },
     {
       "q_es": "¿Puedo cancelar?",
       "q_en": "Can I cancel?",
-      "a_es": "Cuando quieras, en dos clics. No hay permanencia, ni llamada de retención, ni encuesta de salida.",
-      "a_en": "Whenever you want, in two clicks. No commitment, no retention call, no exit survey."
+      "a_es": "Cuando quieras, desde tu cuenta. Antes te mostramos otras opciones y te preguntamos por qué, pero puedes pasarlas de largo. Sin permanencia.",
+      "a_en": "Whenever you want, from your account. We show you other options first and ask why, but you can skip past them. No commitment."
+    },
+    {
+      "q_es": "¿Qué pasa si prepago y cancelo?",
+      "q_en": "What if I prepay and then cancel?",
+      "a_es": "Los envíos que ya pagaste te llegan igual, en sus fechas.",
+      "a_en": "The shipments you already paid for still arrive, on their dates."
     },
     {
       "q_es": "¿Grano o molido?",
       "q_en": "Whole bean or ground?",
-      "a_es": "Como prefieras, y lo cambias cuando quieras. Si lo pides molido, lo molemos para tu método el día del despacho.",
-      "a_en": "Either, and you can change it anytime. If you choose ground, we grind for your method on shipping day."
+      "a_es": "Como prefieras: en grano, o molido para V60, prensa francesa, espresso o moka. Lo cambias desde tu cuenta.",
+      "a_en": "Your choice: whole bean, or ground for pour over, French press, espresso or moka. Change it from your account."
+    },
+    {
+      "q_es": "¿Cómo pago?",
+      "q_en": "How do I pay?",
+      "a_es": "Con tarjeta o con Nequi. Los datos de la tarjeta los guarda Wompi, no nosotros.",
+      "a_en": "By card or Nequi. Card details are stored by Wompi, not by us."
     },
     {
       "q_es": "¿A qué ciudades llega?",

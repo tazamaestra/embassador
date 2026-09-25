@@ -1,20 +1,40 @@
 // Núcleo de la suscripción: funciones puras sobre objetos planos.
 //
-// Nada de red y nada de precios en el código: todo sale de
-// data/suscripcion.json. lib/suscripcion-db.ts se limita a persistir lo que
-// estas funciones devuelven.
+// Nada de red y ningún número del negocio en el código: precios, días y
+// reglas llegan en el Catalogo que lee lib/catalogo.ts desde Supabase. Los
+// route handlers llaman a estas funciones y solo persisten lo que devuelven.
 //
-// El plan tiene dos ejes: el nivel (cuánto café) y la frecuencia (cada
-// cuánto). El prepago es un tercero, opcional, que solo descuenta.
+// ── Máquina de estados ─────────────────────────────────────────────────────
+//
+//   (alta) ─────────────► pago_pendiente
+//   pago_pendiente ─────► activa          cobro aprobado
+//   pago_pendiente ─────► cancelada       reintentos agotados, o el cliente cancela
+//   activa ─────────────► pausada         el cliente pausa 1 o 2 meses
+//   activa ─────────────► pago_pendiente  cobro de ciclo rechazado
+//   activa ─────────────► cancelada       el cliente cancela
+//   pausada ────────────► activa          llega la fecha, o el cliente reanuda
+//   pausada ────────────► cancelada       el cliente cancela
+//   cancelada                             terminal
+//
+// Saltar un envío y cambiar plan, frecuencia, molienda o perfil no cambian
+// el estado.
+//
+// ── Ciclos ─────────────────────────────────────────────────────────────────
+//
+// `proximoEnvio` apunta siempre al siguiente envío que NO se ha resuelto.
+// Se resuelve `diasCobroAntesEnvio` días antes: se cobra, se descuenta de un
+// prepago o, si el cliente lo saltó, se corre. Por eso cualquier cambio hecho
+// antes de esa fecha entra en ese envío, y uno hecho después (ya resuelto)
+// entra en el siguiente. Cada envío resuelto guarda su propia foto.
 
 import type {
-  EstadoSuscripcion, Frecuencia, Nivel, Prepago, Product, Suscripcion,
-  SuscripcionConfig,
+  CambiosPendientes, Catalogo, EstadoSuscripcion, Frecuencia, OrigenCobro,
+  Plan, Prepago, Product, ReglasSuscripcion, Suscripcion,
 } from "./types";
 
 // ── Fechas ─────────────────────────────────────────────────────────────────
-// Se trabaja con cadenas ISO de solo fecha (YYYY-MM-DD) en UTC, para que la
-// zona horaria del navegador no corra un envío un día.
+// Cadenas ISO de solo fecha (YYYY-MM-DD) en UTC, para que la zona horaria
+// del navegador no corra un envío un día.
 
 export function hoyISO(ahora: Date = new Date()): string {
   return ahora.toISOString().slice(0, 10);
@@ -26,71 +46,27 @@ export function sumarDias(iso: string, dias: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Meses completos entre dos fechas. */
-export function mesesEntre(desde: string, hasta: string): number {
-  const a = new Date(`${desde}T00:00:00Z`);
-  const b = new Date(`${hasta}T00:00:00Z`);
-  let meses =
-    (b.getUTCFullYear() - a.getUTCFullYear()) * 12 +
-    (b.getUTCMonth() - a.getUTCMonth());
-  if (b.getUTCDate() < a.getUTCDate()) meses -= 1;
-  return meses;
-}
-
-/** El próximo día `dia` del mes, contando desde hoy. */
-export function proximoDiaDelMes(dia: number, hoy: string = hoyISO()): string {
-  const d = new Date(`${hoy}T00:00:00Z`);
-  if (d.getUTCDate() >= dia) d.setUTCMonth(d.getUTCMonth() + 1);
-  d.setUTCDate(dia);
+/** Suma meses de calendario. El 31 de enero + 1 mes es el 28 (o 29) de febrero. */
+export function sumarMeses(iso: string, meses: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  const dia = d.getUTCDate();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() + meses);
+  const ultimo = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+  d.setUTCDate(Math.min(dia, ultimo));
   return d.toISOString().slice(0, 10);
 }
 
-/** Se cobra el día 1 y se despacha el día 5 del mismo ciclo. */
-export function proximoCobro(config: SuscripcionConfig, hoy: string = hoyISO()): string {
-  return proximoDiaDelMes(config.cobroDia, hoy);
+const maxFecha = (a: string, b: string) => (a > b ? a : b);
+
+/** Día en que se resuelve (cobra) el próximo envío. */
+export function fechaCobro(s: Pick<Suscripcion, "proximoEnvio">, reglas: ReglasSuscripcion): string {
+  return sumarDias(s.proximoEnvio, -reglas.diasCobroAntesEnvio);
 }
 
-export function proximoDespacho(config: SuscripcionConfig, hoy: string = hoyISO()): string {
-  const cobro = proximoCobro(config, hoy);
-  return sumarDias(cobro, config.despachoDia - config.cobroDia);
-}
-
-// ── Consumo ────────────────────────────────────────────────────────────────
-// La calculadora responde una sola pregunta: cuánto café se toma al mes.
-
-export function gramosPorTaza(metodoId: string, config: SuscripcionConfig): number {
-  return config.metodos.find((m) => m.id === metodoId)?.gramosPorTaza ?? 0;
-}
-
-/** Tazas al día × gramos del método × días del mes. */
-export function consumoMensual(
-  tazasDia: number,
-  metodoId: string,
-  config: SuscripcionConfig
-): number {
-  const gramos = gramosPorTaza(metodoId, config);
-  if (tazasDia <= 0 || gramos <= 0) return 0;
-  return tazasDia * gramos * config.consumo.diasMes;
-}
-
-/**
- * El nivel más pequeño que cubre el consumo. Si se pasa del más grande,
- * se sugiere ese: no hay nivel por encima.
- */
-export function nivelSugerido(gramosAlMes: number, config: SuscripcionConfig): Nivel {
-  const porTamano = [...config.niveles].sort((a, b) => a.gramos - b.gramos);
-  return porTamano.find((n) => gramosAlMes <= n.gramos) ?? porTamano[porTamano.length - 1];
-}
-
-/** Para cuántas tazas alcanza un nivel con ese método. */
-export function tazasQueRinde(
-  nivel: Nivel,
-  metodoId: string,
-  config: SuscripcionConfig
-): number {
-  const gramos = gramosPorTaza(metodoId, config);
-  if (gramos <= 0) return 0;
-  return Math.floor(nivel.gramos / gramos);
+/** Primer envío de un alta que se paga hoy. */
+export function primerEnvio(reglas: ReglasSuscripcion, hoy: string = hoyISO()): string {
+  return sumarDias(hoy, reglas.diasPreparacion);
 }
 
 // ── Precios ────────────────────────────────────────────────────────────────
@@ -100,68 +76,514 @@ function redondear(valor: number, paso: number): number {
   return Math.round(valor / paso) * paso;
 }
 
-export interface CobroPrepago {
+/**
+ * Cuántos envíos cubre un prepago con esa frecuencia: los que caben en los
+ * meses pagados, contando meses de 30 días. 3 meses cada semana = 12.
+ * Un prepago de 1 mes es "pago por envío": cubre uno solo, sea cual sea la
+ * frecuencia.
+ */
+export function enviosDelPrepago(prepago: Prepago, frecuencia: Frecuencia): number {
+  if (prepago.meses <= 1) return 1;
+  return Math.max(1, Math.floor((prepago.meses * 30) / frecuencia.dias));
+}
+
+export interface MontoCobro {
   /** Lo que se cobra de una. */
   total: number;
-  /** Lo que sale cada mes, ya con el descuento repartido. */
-  porMes: number;
-  meses: number;
+  /** Envíos que paga. */
+  envios: number;
+  /** Lo que sale cada envío, ya con el descuento. */
+  porEnvio: number;
+  /** Frente a pagar envío por envío. */
   ahorro: number;
 }
 
-/** Lo que se cobra según cuántos meses se paguen por adelantado. */
-export function cobroPrepago(
-  nivel: Nivel,
+export function montoCobro(
+  plan: Plan,
+  frecuencia: Frecuencia,
   prepago: Prepago,
-  config: SuscripcionConfig
-): CobroPrepago {
-  const sinDescuento = nivel.precioCop * prepago.meses;
-  const total = redondear(
-    sinDescuento * (1 - prepago.descuentoPct / 100),
-    config.redondeoCop
-  );
+  reglas: ReglasSuscripcion
+): MontoCobro {
+  const envios = enviosDelPrepago(prepago, frecuencia);
+  const sinDescuento = plan.precioEnvioCop * envios;
+  const total = redondear(sinDescuento * (1 - prepago.descuentoPct / 100), reglas.redondeoCop);
   return {
     total,
-    porMes: redondear(total / prepago.meses, config.redondeoCop),
-    meses: prepago.meses,
+    envios,
+    porEnvio: redondear(total / envios, reglas.redondeoCop),
     ahorro: sinDescuento - total,
   };
 }
 
-export interface ComparacionSuelta {
-  /** Comprar las mismas libras sueltas, más el envío. */
-  suelta: number;
-  suscrito: number;
-  ahorro: number;
-  ahorroPct: number;
+/** Lo que cuesta al mes, para comparar frecuencias en pantalla. */
+export function costoMensual(plan: Plan, frecuencia: Frecuencia, reglas: ReglasSuscripcion): number {
+  return redondear((plan.precioEnvioCop * 30) / frecuencia.dias, reglas.redondeoCop);
 }
 
-/** Cuánto se ahorra frente a comprar esas mismas libras sueltas. */
-export function compararConSuelta(
-  nivel: Nivel,
-  config: SuscripcionConfig
-): ComparacionSuelta {
-  const suelta = nivel.libras * config.suelta.precioLibraCop + config.suelta.envioCop;
-  const ahorro = suelta - nivel.precioCop;
+// ── Regalo ─────────────────────────────────────────────────────────────────
+
+/** Bolsas del próximo envío: las del plan más las de regalo si toca. */
+export function bolsasDelEnvio(
+  s: Pick<Suscripcion, "enviosHechos">,
+  plan: Plan,
+  reglas: ReglasSuscripcion
+): { bolsas: number; regalo: boolean } {
+  const { cadaEnvios, bolsas } = reglas.regalo;
+  const siguiente = s.enviosHechos + 1;
+  const regalo = cadaEnvios > 0 && siguiente > cadaEnvios && (siguiente - 1) % cadaEnvios === 0;
+  return { bolsas: plan.bolsas + (regalo ? bolsas : 0), regalo };
+}
+
+export interface ProgresoRegalo {
+  hechos: number;
+  meta: number;
+  faltan: number;
+  /** 0 a 100, para la barra. */
+  pct: number;
+}
+
+export function progresoRegalo(
+  s: Pick<Suscripcion, "enviosHechos" | "estado">,
+  reglas: ReglasSuscripcion
+): ProgresoRegalo {
+  const meta = reglas.regalo.cadaEnvios;
+  if (meta <= 0) return { hechos: 0, meta: 0, faltan: 0, pct: 0 };
+  const hechos = s.estado === "cancelada" ? 0 : s.enviosHechos % meta;
+  return { hechos, meta, faltan: meta - hechos, pct: Math.round((hechos / meta) * 100) };
+}
+
+// ── Máquina de estados ─────────────────────────────────────────────────────
+
+export const TRANSICIONES: Record<EstadoSuscripcion, readonly EstadoSuscripcion[]> = {
+  pago_pendiente: ["activa", "cancelada"],
+  activa: ["pausada", "pago_pendiente", "cancelada"],
+  pausada: ["activa", "cancelada"],
+  cancelada: [],
+};
+
+export function puedeTransitar(de: EstadoSuscripcion, a: EstadoSuscripcion): boolean {
+  return TRANSICIONES[de].includes(a);
+}
+
+export class TransicionInvalida extends Error {
+  constructor(public readonly codigo: string, mensaje: string) {
+    super(mensaje);
+    this.name = "TransicionInvalida";
+  }
+}
+
+function cambiarEstado(s: Suscripcion, a: EstadoSuscripcion, accion: string): Suscripcion {
+  if (!puedeTransitar(s.estado, a)) {
+    throw new TransicionInvalida("estado", `No se puede ${accion} una suscripción ${s.estado}.`);
+  }
+  return { ...s, estado: a };
+}
+
+/** Qué ofrecer en pantalla según el estado. */
+export function accionesDisponibles(
+  s: Pick<Suscripcion, "estado">,
+  cobroEnCurso = false
+): { pausar: boolean; reanudar: boolean; saltar: boolean; cambiar: boolean; cancelar: boolean; pagar: boolean } {
   return {
-    suelta,
-    suscrito: nivel.precioCop,
-    ahorro,
-    ahorroPct: suelta > 0 ? Math.round((ahorro / suelta) * 100) : 0,
+    pausar: s.estado === "activa" && !cobroEnCurso,
+    reanudar: s.estado === "pausada",
+    saltar: s.estado === "activa" && !cobroEnCurso,
+    cambiar: s.estado !== "cancelada",
+    cancelar: s.estado !== "cancelada",
+    pagar: s.estado === "pago_pendiente" && !cobroEnCurso,
   };
 }
 
-/** El mayor ahorro entre todos los niveles, para el "ahorras hasta X". */
-export function mejorAhorroSuelta(config: SuscripcionConfig): ComparacionSuelta {
-  return config.niveles
-    .map((n) => compararConSuelta(n, config))
-    .reduce((mejor, actual) => (actual.ahorro > mejor.ahorro ? actual : mejor));
+// ── Acciones del cliente ───────────────────────────────────────────────────
+
+export function pausar(
+  s: Suscripcion,
+  meses: number,
+  reglas: ReglasSuscripcion,
+  cobroEnCurso: boolean,
+  hoy: string = hoyISO()
+): Suscripcion {
+  if (!reglas.mesesPausa.includes(meses)) {
+    throw new TransicionInvalida("pausa_invalida", `No se ofrece una pausa de ${meses} meses.`);
+  }
+  if (cobroEnCurso) {
+    throw new TransicionInvalida("cobro_en_curso", "Hay un cobro en curso; se puede pausar cuando termine.");
+  }
+  return {
+    ...cambiarEstado(s, "pausada", "pausar"),
+    pausadaEn: hoy,
+    pausadaHasta: sumarMeses(hoy, meses),
+  };
+}
+
+/**
+ * Vuelve a activa. Si el envío guardado ya no alcanza a cobrarse con el
+ * margen de siempre, se corre para que lo haga.
+ */
+export function reanudar(s: Suscripcion, reglas: ReglasSuscripcion, hoy: string = hoyISO()): Suscripcion {
+  return {
+    ...cambiarEstado(s, "activa", "reanudar"),
+    pausadaEn: null,
+    pausadaHasta: null,
+    proximoEnvio: maxFecha(s.proximoEnvio, sumarDias(hoy, reglas.diasCobroAntesEnvio)),
+  };
+}
+
+export function debeReanudarse(s: Suscripcion, hoy: string = hoyISO()): boolean {
+  return s.estado === "pausada" && s.pausadaHasta !== null && s.pausadaHasta <= hoy;
+}
+
+export interface ResultadoSalto {
+  suscripcion: Suscripcion;
+  /** El envío que queda registrado como saltado. */
+  envio: { numero: number; fecha: string };
+}
+
+/** Salta el próximo envío: no se cobra ni se descuenta del prepago. */
+export function saltarEnvio(s: Suscripcion, frecuencia: Frecuencia, cobroEnCurso: boolean): ResultadoSalto {
+  if (s.estado !== "activa") {
+    throw new TransicionInvalida("estado", `No se puede saltar el envío de una suscripción ${s.estado}.`);
+  }
+  if (cobroEnCurso) {
+    throw new TransicionInvalida("cobro_en_curso", "Ese envío ya se está cobrando; puedes saltar el siguiente cuando termine.");
+  }
+  return {
+    suscripcion: {
+      ...s,
+      ciclo: s.ciclo + 1,
+      enviosSaltados: s.enviosSaltados + 1,
+      proximoEnvio: sumarDias(s.proximoEnvio, frecuencia.dias),
+    },
+    envio: { numero: s.ciclo + 1, fecha: s.proximoEnvio },
+  };
+}
+
+export interface Cambios {
+  planId?: string;
+  frecuenciaId?: string;
+  prepagoId?: string;
+  moliendaId?: string;
+  perfilId?: string;
+}
+
+/**
+ * Molienda y perfil entran de una en el próximo envío sin resolver. Plan,
+ * frecuencia y prepago también, salvo que queden envíos prepagados: esos ya
+ * se pagaron con un precio, así que el cambio espera a la renovación.
+ */
+export function cambiar(s: Suscripcion, cambios: Cambios, catalogo: Catalogo): Suscripcion {
+  if (s.estado === "cancelada") {
+    throw new TransicionInvalida("estado", "No se puede cambiar una suscripción cancelada.");
+  }
+  const existe = (lista: { id: string }[], id?: string) => id === undefined || lista.some((x) => x.id === id);
+  if (
+    !existe(catalogo.planes, cambios.planId) ||
+    !existe(catalogo.frecuencias, cambios.frecuenciaId) ||
+    !existe(catalogo.prepagos, cambios.prepagoId) ||
+    !existe(catalogo.moliendas, cambios.moliendaId) ||
+    !existe(catalogo.perfiles, cambios.perfilId)
+  ) {
+    throw new TransicionInvalida("opcion_desconocida", "Esa opción no existe.");
+  }
+
+  const siguiente: Suscripcion = {
+    ...s,
+    moliendaId: cambios.moliendaId ?? s.moliendaId,
+    perfilId: cambios.perfilId ?? s.perfilId,
+  };
+
+  const deCobro: CambiosPendientes = {};
+  if (cambios.planId !== undefined) deCobro.planId = cambios.planId;
+  if (cambios.frecuenciaId !== undefined) deCobro.frecuenciaId = cambios.frecuenciaId;
+  if (cambios.prepagoId !== undefined) deCobro.prepagoId = cambios.prepagoId;
+
+  if (s.enviosPrepagadosRestantes > 0) {
+    return { ...siguiente, cambiosPendientes: { ...s.cambiosPendientes, ...deCobro } };
+  }
+  return aplicarPendientes({ ...siguiente, cambiosPendientes: { ...s.cambiosPendientes, ...deCobro } });
+}
+
+/** Lleva los cambios en espera a la suscripción y vacía la lista. */
+export function aplicarPendientes(s: Suscripcion): Suscripcion {
+  const p = s.cambiosPendientes;
+  return {
+    ...s,
+    planId: p.planId ?? s.planId,
+    frecuenciaId: p.frecuenciaId ?? s.frecuenciaId,
+    prepagoId: p.prepagoId ?? s.prepagoId,
+    cambiosPendientes: {},
+  };
+}
+
+export function cancelar(s: Suscripcion, hoy: string = hoyISO()): Suscripcion {
+  return {
+    ...cambiarEstado(s, "cancelada", "cancelar"),
+    canceladaEn: hoy,
+    pausadaHasta: null,
+    proximoReintento: null,
+    cambiosPendientes: {},
+    enviosPrepagadosRestantes: 0,
+  };
+}
+
+/**
+ * Envíos ya pagados que se despachan aunque el cliente cancele: el prepago
+ * no se pierde. Fechas desde el próximo envío, según la frecuencia.
+ */
+export function enviosPrepagadosAlCancelar(
+  s: Suscripcion,
+  frecuencia: Frecuencia
+): { numero: number; fecha: string }[] {
+  return Array.from({ length: s.enviosPrepagadosRestantes }, (_, i) => ({
+    numero: s.ciclo + 1 + i,
+    fecha: sumarDias(s.proximoEnvio, frecuencia.dias * i),
+  }));
+}
+
+// ── Retención ──────────────────────────────────────────────────────────────
+
+export type OfertaRetencion =
+  | { tipo: "pausar"; meses: number }
+  | { tipo: "frecuencia"; frecuenciaId: string }
+  | { tipo: "plan"; planId: string }
+  | { tipo: "perfil" };
+
+/**
+ * Lo que se muestra antes de confirmar la cancelación. Solo ofertas que
+ * cambian algo: si ya está en la frecuencia más espaciada o en el plan más
+ * chico, esa oferta no sale.
+ */
+export function ofertasRetencion(s: Suscripcion, catalogo: Catalogo): OfertaRetencion[] {
+  const ofertas: OfertaRetencion[] = [];
+
+  if (s.estado === "activa") {
+    for (const meses of catalogo.reglas.mesesPausa) ofertas.push({ tipo: "pausar", meses });
+  }
+
+  const actual = catalogo.frecuencias.find((f) => f.id === s.frecuenciaId);
+  const masEspaciada = [...catalogo.frecuencias]
+    .filter((f) => actual && f.dias > actual.dias)
+    .sort((a, b) => a.dias - b.dias)[0];
+  if (masEspaciada) ofertas.push({ tipo: "frecuencia", frecuenciaId: masEspaciada.id });
+
+  const plan = catalogo.planes.find((p) => p.id === s.planId);
+  const menor = [...catalogo.planes]
+    .filter((p) => plan && p.bolsas < plan.bolsas)
+    .sort((a, b) => a.bolsas - b.bolsas)[0];
+  if (menor) ofertas.push({ tipo: "plan", planId: menor.id });
+
+  if (catalogo.perfiles.length > 1) ofertas.push({ tipo: "perfil" });
+
+  return ofertas;
+}
+
+// ── Cobros ─────────────────────────────────────────────────────────────────
+
+export interface CobroPlaneado {
+  ciclo: number;
+  origen: OrigenCobro;
+  montoCop: number;
+  enviosCubiertos: number;
+  detalle: {
+    planId: string;
+    frecuenciaId: string;
+    prepagoId: string;
+    moliendaId: string;
+    perfilId: string;
+    bolsas: number;
+  };
+}
+
+function resolver<T extends { id: string }>(lista: T[], id: string, que: string): T {
+  const x = lista.find((y) => y.id === id);
+  if (!x) throw new TransicionInvalida("catalogo", `El ${que} "${id}" ya no existe en el catálogo.`);
+  return x;
+}
+
+/** Lo que hay que cobrarle a una suscripción por su siguiente ciclo. */
+export function planearCobro(s: Suscripcion, catalogo: Catalogo, origen: OrigenCobro): CobroPlaneado {
+  const plan = resolver(catalogo.planes, s.planId, "plan");
+  const frecuencia = resolver(catalogo.frecuencias, s.frecuenciaId, "frecuencia");
+  const prepago = resolver(catalogo.prepagos, s.prepagoId, "prepago");
+  const monto = montoCobro(plan, frecuencia, prepago, catalogo.reglas);
+  return {
+    ciclo: s.ciclo + 1,
+    origen,
+    montoCop: monto.total,
+    enviosCubiertos: monto.envios,
+    detalle: {
+      planId: plan.id,
+      frecuenciaId: frecuencia.id,
+      prepagoId: prepago.id,
+      moliendaId: s.moliendaId,
+      perfilId: s.perfilId,
+      bolsas: plan.bolsas,
+    },
+  };
+}
+
+export type DecisionCiclo =
+  | { tipo: "nada" }
+  | { tipo: "consumir_prepago"; suscripcion: Suscripcion; envio: EnvioPlaneado }
+  | { tipo: "cobrar"; suscripcion: Suscripcion; cobro: CobroPlaneado };
+
+export interface EnvioPlaneado {
+  numero: number;
+  fecha: string;
+  bolsas: number;
+  regalo: boolean;
+  planId: string;
+  moliendaId: string;
+  perfilId: string;
+}
+
+/**
+ * Qué hace el cron hoy con una suscripción activa. Nunca cobra dos veces:
+ * con un cobro en vuelo no hace nada, y el índice cobros_uno_en_curso lo
+ * respalda en la base.
+ */
+export function decidirCiclo(
+  s: Suscripcion,
+  catalogo: Catalogo,
+  cobroEnCurso: boolean,
+  hoy: string = hoyISO()
+): DecisionCiclo {
+  if (s.estado !== "activa" || cobroEnCurso) return { tipo: "nada" };
+  if (hoy < fechaCobro(s, catalogo.reglas)) return { tipo: "nada" };
+
+  const frecuencia = resolver(catalogo.frecuencias, s.frecuenciaId, "frecuencia");
+
+  if (s.enviosPrepagadosRestantes > 0) {
+    const plan = resolver(catalogo.planes, s.planId, "plan");
+    const { bolsas, regalo } = bolsasDelEnvio(s, plan, catalogo.reglas);
+    return {
+      tipo: "consumir_prepago",
+      suscripcion: {
+        ...s,
+        ciclo: s.ciclo + 1,
+        enviosHechos: s.enviosHechos + 1,
+        enviosPrepagadosRestantes: s.enviosPrepagadosRestantes - 1,
+        proximoEnvio: sumarDias(s.proximoEnvio, frecuencia.dias),
+      },
+      envio: {
+        numero: s.ciclo + 1,
+        fecha: s.proximoEnvio,
+        bolsas,
+        regalo,
+        planId: plan.id,
+        moliendaId: s.moliendaId,
+        perfilId: s.perfilId,
+      },
+    };
+  }
+
+  // Sin prepago vigente: es una renovación. Entran los cambios en espera y,
+  // si la regla lo dice, un prepago acabado pasa a cobro por envío.
+  let renovada = aplicarPendientes(s);
+  if (catalogo.reglas.prepagoRenovacion === "ciclo") {
+    const porEnvio = catalogo.prepagos.find((p) => p.meses === 1);
+    if (porEnvio) renovada = { ...renovada, prepagoId: porEnvio.id };
+  }
+
+  return { tipo: "cobrar", suscripcion: renovada, cobro: planearCobro(renovada, catalogo, "automatico") };
+}
+
+/** ¿Toca reintentar hoy un cobro fallido? Sin medio de pago, no hay con qué. */
+export function debeReintentar(s: Suscripcion, cobroEnCurso: boolean, hoy: string = hoyISO()): boolean {
+  return (
+    s.estado === "pago_pendiente" &&
+    !cobroEnCurso &&
+    s.metodoPagoId !== null &&
+    s.proximoReintento !== null &&
+    s.proximoReintento <= hoy
+  );
+}
+
+export interface ResultadoAprobado {
+  suscripcion: Suscripcion;
+  envio: EnvioPlaneado;
+}
+
+/**
+ * Cobro aprobado: arranca o reanuda la suscripción y deja el envío listo.
+ * Devuelve null si ese ciclo ya estaba resuelto (evento repetido) o si la
+ * suscripción se canceló mientras el cobro estaba en vuelo: eso lo revisa
+ * una persona, no el código.
+ */
+export function aplicarCobroAprobado(
+  s: Suscripcion,
+  cobro: Pick<CobroPlaneado, "ciclo" | "enviosCubiertos" | "detalle">,
+  catalogo: Catalogo,
+  hoy: string = hoyISO()
+): ResultadoAprobado | null {
+  if (cobro.ciclo <= s.ciclo || s.estado === "cancelada") return null;
+
+  const frecuencia = resolver(catalogo.frecuencias, s.frecuenciaId, "frecuencia");
+  const plan = catalogo.planes.find((p) => p.id === cobro.detalle.planId) ?? resolver(catalogo.planes, s.planId, "plan");
+
+  // Si el pago llegó tarde (reintentos), el envío no puede salir antes de
+  // lo que toma tostarlo.
+  const fecha = maxFecha(s.proximoEnvio, sumarDias(hoy, catalogo.reglas.diasPreparacion));
+  const { bolsas, regalo } = bolsasDelEnvio(s, plan, catalogo.reglas);
+
+  const base = s.estado === "activa" ? s : cambiarEstado(s, "activa", "activar");
+  return {
+    suscripcion: {
+      ...base,
+      ciclo: cobro.ciclo,
+      enviosHechos: s.enviosHechos + 1,
+      enviosPrepagadosRestantes: cobro.enviosCubiertos - 1,
+      intentosFallidos: 0,
+      proximoReintento: null,
+      proximoEnvio: sumarDias(fecha, frecuencia.dias),
+    },
+    envio: {
+      numero: cobro.ciclo,
+      fecha,
+      bolsas,
+      regalo,
+      planId: plan.id,
+      moliendaId: cobro.detalle.moliendaId,
+      perfilId: cobro.detalle.perfilId,
+    },
+  };
+}
+
+/**
+ * Cobro rechazado. Los automáticos cuentan contra `reintentosDias`: con
+ * [2, 4, 7] se reintenta a los 2, 4 y 7 días de cada fallo, y si el tercer
+ * reintento también falla, se cancela. Un intento manual (el cliente puso
+ * otra tarjeta) no gasta reintentos: fallar ahí no debe acercarlo a perder
+ * la suscripción.
+ */
+export function aplicarCobroRechazado(
+  s: Suscripcion,
+  origen: OrigenCobro,
+  reglas: ReglasSuscripcion,
+  hoy: string = hoyISO()
+): { suscripcion: Suscripcion; cancelada: boolean } {
+  if (s.estado === "cancelada") return { suscripcion: s, cancelada: false };
+
+  const pendiente = s.estado === "pago_pendiente" ? s : cambiarEstado(s, "pago_pendiente", "marcar sin pago");
+  if (origen === "manual") return { suscripcion: pendiente, cancelada: false };
+
+  const intentos = s.intentosFallidos + 1;
+  if (intentos > reglas.reintentosDias.length) {
+    return { suscripcion: { ...cancelar(pendiente, hoy), intentosFallidos: intentos }, cancelada: true };
+  }
+  return {
+    suscripcion: {
+      ...pendiente,
+      intentosFallidos: intentos,
+      proximoReintento: sumarDias(hoy, reglas.reintentosDias[intentos - 1]),
+    },
+    cancelada: false,
+  };
 }
 
 // ── Precio de la tienda ────────────────────────────────────────────────────
 // La tienda vende bolsas sueltas de origen: otra oferta, distinta de los
-// planes mensuales. Cada bolsa trae su propio precio de suscriptor en el
-// catálogo, sin descuentos encima.
+// planes. Cada bolsa trae su propio precio de suscriptor en el catálogo.
 
 export interface ComparacionBolsa {
   unico: number;
@@ -170,10 +592,7 @@ export interface ComparacionBolsa {
   ahorroPct: number;
 }
 
-export function compararPrecios(
-  producto: Product,
-  cantidad = 1
-): ComparacionBolsa {
+export function compararPrecios(producto: Product, cantidad = 1): ComparacionBolsa {
   const unico = producto.precioCop * cantidad;
   const suscriptor = producto.precioSuscriptorCop * cantidad;
   const ahorro = unico - suscriptor;
@@ -188,206 +607,4 @@ export function compararPrecios(
 /** Alias para las fichas, que solo muestran una bolsa. */
 export function mejorAhorro(producto: Product): ComparacionBolsa {
   return compararPrecios(producto, 1);
-}
-
-// ── Racha y regalo ─────────────────────────────────────────────────────────
-
-export interface ProgresoRegalo {
-  enviosHechos: number;
-  meta: number;
-  faltan: number;
-  /** 0 a 100, para la barra. */
-  pct: number;
-  ganado: boolean;
-}
-
-/**
- * Cuánto falta para la libra de regalo. Saltar un envío no rompe la racha
- * —el cliente sigue suscrito— pero tampoco la adelanta.
- */
-export function progresoRegalo(
-  suscripcion: Suscripcion,
-  config: SuscripcionConfig
-): ProgresoRegalo {
-  const meta = config.regalo.mesesSeguidos;
-  const hechos = suscripcion.estado === "cancelada" ? 0 : suscripcion.enviosHechos;
-  const dentroDelCiclo = meta > 0 ? hechos % meta : 0;
-  const ganado = meta > 0 && hechos > 0 && dentroDelCiclo === 0;
-
-  return {
-    enviosHechos: hechos,
-    meta,
-    faltan: ganado ? 0 : meta - dentroDelCiclo,
-    pct: meta > 0 ? Math.round(((ganado ? meta : dentroDelCiclo) / meta) * 100) : 0,
-    ganado,
-  };
-}
-
-/** Libras que van en un envío: las del nivel más la de regalo si toca. */
-export function librasDelEnvio(
-  suscripcion: Suscripcion,
-  nivel: Nivel,
-  config: SuscripcionConfig
-): number {
-  const meta = config.regalo.mesesSeguidos;
-  const siguiente = suscripcion.enviosHechos + 1;
-  const tocaRegalo = meta > 0 && siguiente > meta && (siguiente - 1) % meta === 0;
-  return nivel.libras + (tocaRegalo ? config.regalo.libras : 0);
-}
-
-/** Tazas que han acompañado a alguien, para el contador del panel. */
-export function tazasAcompanadas(
-  suscripcion: Suscripcion,
-  nivel: Nivel | undefined,
-  config: SuscripcionConfig
-): number {
-  const gramos = gramosPorTaza(suscripcion.metodo, config);
-  if (!nivel || gramos <= 0) return 0;
-  return Math.floor((suscripcion.enviosHechos * nivel.gramos) / gramos);
-}
-
-// ── Transiciones de estado ─────────────────────────────────────────────────
-// Reciben una suscripción y devuelven la siguiente. No tocan la red.
-// Cancelar no pide pasos intermedios: cancela.
-
-class TransicionInvalida extends Error {
-  constructor(accion: string, estado: EstadoSuscripcion) {
-    super(`No se puede ${accion} una suscripción ${estado}.`);
-    this.name = "TransicionInvalida";
-  }
-}
-
-export function pausar(
-  suscripcion: Suscripcion,
-  hoy: string = hoyISO()
-): Suscripcion {
-  if (suscripcion.estado !== "activa") {
-    throw new TransicionInvalida("pausar", suscripcion.estado);
-  }
-  return { ...suscripcion, estado: "pausada", pausadaEn: hoy };
-}
-
-export function reanudar(
-  suscripcion: Suscripcion,
-  config: SuscripcionConfig,
-  hoy: string = hoyISO()
-): Suscripcion {
-  if (suscripcion.estado !== "pausada") {
-    throw new TransicionInvalida("reanudar", suscripcion.estado);
-  }
-  // Si la fecha guardada ya pasó mientras estuvo en pausa, se reprograma
-  // dejando margen para tostar y despachar.
-  const proximoEnvio =
-    suscripcion.proximoEnvio > hoy
-      ? suscripcion.proximoEnvio
-      : sumarDias(hoy, config.diasPreparacion);
-  return { ...suscripcion, estado: "activa", pausadaEn: null, proximoEnvio };
-}
-
-export function saltarEnvio(
-  suscripcion: Suscripcion,
-  frecuencia: Frecuencia
-): Suscripcion {
-  if (suscripcion.estado !== "activa") {
-    throw new TransicionInvalida("saltar el envío de", suscripcion.estado);
-  }
-  return {
-    ...suscripcion,
-    proximoEnvio: sumarDias(suscripcion.proximoEnvio, frecuencia.cadaDias),
-    enviosSaltados: suscripcion.enviosSaltados + 1,
-  };
-}
-
-/** Cambiar de nivel: aplica desde el siguiente envío, sin recalcular fechas. */
-export function cambiarNivel(
-  suscripcion: Suscripcion,
-  nivel: Nivel
-): Suscripcion {
-  if (suscripcion.estado === "cancelada") {
-    throw new TransicionInvalida("cambiar el plan de", suscripcion.estado);
-  }
-  return { ...suscripcion, nivelId: nivel.id };
-}
-
-export function cambiarFrecuencia(
-  suscripcion: Suscripcion,
-  frecuencia: Frecuencia,
-  hoy: string = hoyISO()
-): Suscripcion {
-  if (suscripcion.estado === "cancelada") {
-    throw new TransicionInvalida("cambiar la frecuencia de", suscripcion.estado);
-  }
-  // El próximo envío se recalcula desde el último, con la nueva frecuencia.
-  const ultimo = suscripcion.proximoEnvio > hoy ? hoy : suscripcion.proximoEnvio;
-  return {
-    ...suscripcion,
-    frecuenciaId: frecuencia.id,
-    proximoEnvio: sumarDias(ultimo, frecuencia.cadaDias),
-  };
-}
-
-/** Grano o molido, método y perfil. No mueven fechas ni precio. */
-export function cambiarPreferencias(
-  suscripcion: Suscripcion,
-  cambios: Partial<Pick<Suscripcion, "molienda" | "metodo" | "perfil">>
-): Suscripcion {
-  if (suscripcion.estado === "cancelada") {
-    throw new TransicionInvalida("cambiar las preferencias de", suscripcion.estado);
-  }
-  return { ...suscripcion, ...cambios };
-}
-
-export function cancelar(
-  suscripcion: Suscripcion,
-  hoy: string = hoyISO()
-): Suscripcion {
-  if (suscripcion.estado === "cancelada") {
-    throw new TransicionInvalida("cancelar", suscripcion.estado);
-  }
-  return { ...suscripcion, estado: "cancelada", canceladaEn: hoy };
-}
-
-/** Primer cobro confirmado: la suscripción arranca y cuenta su primer envío. */
-export function activar(
-  suscripcion: Suscripcion,
-  frecuencia: Frecuencia,
-  hoy: string = hoyISO()
-): Suscripcion {
-  return {
-    ...suscripcion,
-    estado: "activa",
-    enviosHechos: 1,
-    proximoEnvio: sumarDias(hoy, frecuencia.cadaDias),
-  };
-}
-
-/** Tras despachar un envío. Lo usa el proceso de cobro, no la interfaz. */
-export function registrarEnvio(
-  suscripcion: Suscripcion,
-  frecuencia: Frecuencia
-): Suscripcion {
-  return {
-    ...suscripcion,
-    enviosHechos: suscripcion.enviosHechos + 1,
-    proximoEnvio: sumarDias(suscripcion.proximoEnvio, frecuencia.cadaDias),
-  };
-}
-
-/** Acciones que tiene sentido ofrecer en pantalla, según el estado. */
-export function accionesDisponibles(suscripcion: Suscripcion): {
-  pausar: boolean;
-  reanudar: boolean;
-  saltar: boolean;
-  cambiar: boolean;
-  cancelar: boolean;
-} {
-  const activa = suscripcion.estado === "activa";
-  const pausada = suscripcion.estado === "pausada";
-  return {
-    pausar: activa,
-    reanudar: pausada,
-    saltar: activa,
-    cambiar: activa || pausada,
-    cancelar: activa || pausada,
-  };
 }

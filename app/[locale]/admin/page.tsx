@@ -1,10 +1,12 @@
 import { setRequestLocale } from "next-intl/server";
-import AdminFincas from "@/components/admin/AdminFincas";
+import AdminPanel from "@/components/admin/AdminPanel";
+import { obtenerCatalogo } from "@/lib/catalogo";
 import type { Locale } from "@/lib/types";
 
 // Panel interno: depende de la sesión y no debe quedar en ninguna caché,
 // así que se arma en cada visita. Quién puede entrar lo decide Postgres
-// (función es_equipo, ver supabase/sql/finca_fotos.sql), no esta página.
+// (función es_equipo, ver supabase/sql/finca_fotos.sql) y lo vuelven a
+// comprobar las rutas de /api/admin, no esta página.
 export const dynamic = "force-dynamic";
 
 export const metadata = {
@@ -20,5 +22,5 @@ export default async function AdminPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <AdminFincas locale={locale} />;
+  return <AdminPanel locale={locale} catalogo={await obtenerCatalogo()} />;
 }

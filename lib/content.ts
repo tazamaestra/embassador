@@ -3,7 +3,7 @@ import rawSuscripcion from "../data/suscripcion.json";
 import type {
   Product, ProductFilter, Method, Step, OriginFact, Faq,
   BlogFilter, BlogPost, BlogPostRaw, HeroStat, Momento, MomentoId,
-  SuscripcionConfig, Nivel, Frecuencia, Prepago, MetodoPreparacion,
+  SuscripcionEditorial,
 } from "./types";
 
 const c = rawContent as unknown as {
@@ -60,44 +60,13 @@ export function productsByMomento(id: MomentoId): Product[] {
 }
 
 // ── Suscripción ────────────────────────────────────────────────────────────
+// Solo los textos. Precios y reglas vienen de Supabase: ver lib/catalogo.ts.
 
-export const suscripcionConfig = rawSuscripcion as unknown as SuscripcionConfig;
-
-const porOrden = <T extends { orden: number }>(lista: T[]): T[] =>
-  [...lista].sort((a, b) => a.orden - b.orden);
-
-export const niveles: Nivel[] = porOrden(suscripcionConfig.niveles);
-export const frecuencias: Frecuencia[] = porOrden(suscripcionConfig.frecuencias);
-export const prepagos: Prepago[] = porOrden(suscripcionConfig.prepagos);
+export const suscripcionEditorial = rawSuscripcion as unknown as SuscripcionEditorial;
 
 export const {
-  metodos: metodosPreparacion,
-  moliendas,
-  perfiles,
   beneficios,
   origenDelMes,
   ciudades,
-  regalo,
   faqs: faqsSuscripcion,
-} = suscripcionConfig;
-
-export function findNivel(id: string): Nivel | undefined {
-  return niveles.find((n) => n.id === id);
-}
-
-export function findFrecuencia(id: string): Frecuencia | undefined {
-  return frecuencias.find((f) => f.id === id);
-}
-
-export function findPrepago(id: string): Prepago | undefined {
-  return prepagos.find((p) => p.id === id);
-}
-
-export function findMetodo(id: string): MetodoPreparacion | undefined {
-  return metodosPreparacion.find((m) => m.id === id);
-}
-
-/** Lo que trae marcado el formulario si el cliente no toca nada. */
-export const nivelPorDefecto: Nivel = niveles[0];
-export const frecuenciaPorDefecto: Frecuencia = frecuencias[0];
-export const prepagoPorDefecto: Prepago = prepagos[0];
+} = suscripcionEditorial;

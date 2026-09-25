@@ -1,192 +1,239 @@
 import { describe, expect, it } from "vitest";
 import {
-  accionesDisponibles, activar, cambiarFrecuencia, cambiarNivel,
-  cambiarPreferencias, cancelar, pausar, reanudar, registrarEnvio, saltarEnvio,
+  TRANSICIONES, accionesDisponibles, aplicarCobroAprobado, aplicarCobroRechazado,
+  cambiar, cancelar, debeReanudarse, debeReintentar, enviosPrepagadosAlCancelar,
+  ofertasRetencion, pausar, planearCobro, puedeTransitar, reanudar, saltarEnvio,
 } from "@/lib/suscripcion";
-import type { Frecuencia, Nivel, Suscripcion, SuscripcionConfig } from "@/lib/types";
+import { catalogoPrueba, suscripcionPrueba } from "@/lib/catalogo.fixture";
+import type { EstadoSuscripcion } from "@/lib/types";
 
-const vacio = { label_es: "", label_en: "", nota_es: "", nota_en: "" };
+const catalogo = catalogoPrueba();
+const { reglas } = catalogo;
+const quince = catalogo.frecuencias[1];
 
-const quincenal: Frecuencia = { id: "quincenal", cadaDias: 15, orden: 1, ...vacio };
-const mensual: Frecuencia = { id: "mensual", cadaDias: 30, orden: 2, ...vacio };
+describe("máquina de estados", () => {
+  it("cancelada es terminal", () => {
+    expect(TRANSICIONES.cancelada).toEqual([]);
+  });
 
-const nivel1: Nivel = {
-  id: "1-libra", libras: 1, gramos: 450, precioCop: 45000, orden: 1,
-  incluye_es: [], incluye_en: [], ...vacio,
-};
-const nivel2: Nivel = { ...nivel1, id: "2-libras", libras: 2, gramos: 900, precioCop: 85000, orden: 2 };
-
-const config = {
-  moneda: "COP", redondeoCop: 100, diasPreparacion: 2,
-  cobroDia: 1, despachoDia: 5, gramosPorLibra: 450,
-  operacion: {
-    productoId: "00000000-0000-0000-0000-000000000000",
-    productoNombre: "Producto de prueba",
-    canal: "prueba",
-    prefijoPedido: "TEST",
-  },
-  suelta: { precioLibraCop: 49000, envioCop: 12000 },
-  consumo: { diasMes: 30 },
-  metodos: [{ id: "filtro", gramosPorTaza: 8, ...vacio }],
-  niveles: [nivel1, nivel2],
-  frecuencias: [quincenal, mensual],
-  prepagos: [{ id: "mes", meses: 1, descuentoPct: 0, orden: 1, ...vacio }],
-  moliendas: [], perfiles: [],
-  regalo: { mesesSeguidos: 6, libras: 1, label_es: "", label_en: "", desc_es: "", desc_en: "" },
-  beneficios: [],
-  origenDelMes: {
-    mes_es: "", mes_en: "", productor: "", finca: "", region: "", altura: "",
-    variedad: "", proceso_es: "", proceso_en: "", notas_es: "", notas_en: "",
-    foto: null, swatch: "",
-  },
-  ciudades: [], faqs: [],
-} satisfies SuscripcionConfig;
-
-const activa: Suscripcion = {
-  id: "s1", clienteId: "c1", nivelId: nivel1.id, frecuenciaId: quincenal.id,
-  prepagoId: "mes", molienda: "grano", metodo: "filtro", perfil: "balanceado",
-  estado: "activa", proximoEnvio: "2026-10-01",
-  enviosHechos: 2, enviosSaltados: 0,
-  creadaEn: "2026-08-01", pausadaEn: null, canceladaEn: null, direccionId: null,
-};
+  it("solo permite las transiciones documentadas", () => {
+    const validas: [EstadoSuscripcion, EstadoSuscripcion][] = [
+      ["pago_pendiente", "activa"], ["pago_pendiente", "cancelada"],
+      ["activa", "pausada"], ["activa", "pago_pendiente"], ["activa", "cancelada"],
+      ["pausada", "activa"], ["pausada", "cancelada"],
+    ];
+    const estados: EstadoSuscripcion[] = ["activa", "pausada", "pago_pendiente", "cancelada"];
+    for (const de of estados) {
+      for (const a of estados) {
+        const esperada = validas.some(([x, y]) => x === de && y === a);
+        expect(puedeTransitar(de, a), `${de} → ${a}`).toBe(esperada);
+      }
+    }
+  });
+});
 
 describe("pausar y reanudar", () => {
-  it("pausa en un paso y guarda la fecha", () => {
-    const s = pausar(activa, "2026-09-22");
+  it("pausa uno o dos meses y guarda cuándo vuelve", () => {
+    const s = pausar(suscripcionPrueba(), 2, reglas, false, "2026-10-05");
     expect(s.estado).toBe("pausada");
-    expect(s.pausadaEn).toBe("2026-09-22");
+    expect(s.pausadaHasta).toBe("2026-12-05");
   });
 
-  it("no altera la suscripción original", () => {
-    pausar(activa, "2026-09-22");
-    expect(activa.estado).toBe("activa");
+  it("no ofrece pausas que no estén configuradas", () => {
+    expect(() => pausar(suscripcionPrueba(), 3, reglas, false)).toThrow();
   });
 
-  it("reanuda conservando la fecha si todavía no ha pasado", () => {
-    const s = reanudar(pausar(activa, "2026-09-22"), config, "2026-09-25");
-    expect(s.estado).toBe("activa");
-    expect(s.pausadaEn).toBeNull();
-    expect(s.proximoEnvio).toBe("2026-10-01");
+  it("no pausa con un cobro en vuelo", () => {
+    expect(() => pausar(suscripcionPrueba(), 1, reglas, true)).toThrow(/cobro/);
   });
 
-  it("reprograma con margen si la fecha quedó atrás durante la pausa", () => {
-    const s = reanudar(pausar(activa, "2026-09-22"), config, "2026-11-10");
-    expect(s.proximoEnvio).toBe("2026-11-12"); // 2 días de preparación
+  it("no pausa una suscripción sin pago", () => {
+    expect(() => pausar(suscripcionPrueba({ estado: "pago_pendiente" }), 1, reglas, false)).toThrow();
   });
 
-  it("no pausa algo que ya está pausado", () => {
-    expect(() => pausar(pausar(activa, "2026-09-22"), "2026-09-23")).toThrow();
+  it("se reanuda sola al llegar la fecha", () => {
+    const s = suscripcionPrueba({ estado: "pausada", pausadaHasta: "2026-12-05" });
+    expect(debeReanudarse(s, "2026-12-04")).toBe(false);
+    expect(debeReanudarse(s, "2026-12-05")).toBe(true);
   });
 
-  it("no reanuda algo que nunca se pausó", () => {
-    expect(() => reanudar(activa, config, "2026-09-22")).toThrow();
-  });
-});
-
-describe("saltar un envío", () => {
-  it("corre la fecha una frecuencia hacia adelante", () => {
-    const s = saltarEnvio(activa, quincenal);
-    expect(s.proximoEnvio).toBe("2026-10-16");
-    expect(s.enviosSaltados).toBe(1);
+  it("al reanudar corre un envío que quedó en el pasado", () => {
+    const s = suscripcionPrueba({ estado: "pausada", proximoEnvio: "2026-10-20", pausadaHasta: "2026-12-05" });
+    const r = reanudar(s, reglas, "2026-12-05");
+    expect(r.estado).toBe("activa");
+    expect(r.pausadaHasta).toBeNull();
+    expect(r.proximoEnvio).toBe("2026-12-08");
   });
 
-  it("no cuenta como envío hecho", () => {
-    expect(saltarEnvio(activa, quincenal).enviosHechos).toBe(activa.enviosHechos);
-  });
-
-  it("no se puede saltar estando pausada", () => {
-    expect(() => saltarEnvio(pausar(activa, "2026-09-22"), quincenal)).toThrow();
+  it("al reanudar respeta un envío que todavía está lejos", () => {
+    const s = suscripcionPrueba({ estado: "pausada", proximoEnvio: "2027-01-10" });
+    expect(reanudar(s, reglas, "2026-12-05").proximoEnvio).toBe("2027-01-10");
   });
 });
 
-describe("cambiar nivel, frecuencia y preferencias", () => {
-  it("cambia de nivel estando activa", () => {
-    expect(cambiarNivel(activa, nivel2).nivelId).toBe("2-libras");
+describe("saltar", () => {
+  it("corre el próximo envío una frecuencia y lo deja registrado", () => {
+    const r = saltarEnvio(suscripcionPrueba(), quince, false);
+    expect(r.suscripcion.proximoEnvio).toBe("2026-11-04");
+    expect(r.suscripcion.enviosSaltados).toBe(1);
+    expect(r.envio).toEqual({ numero: 3, fecha: "2026-10-20" });
   });
 
-  it("también lo cambia estando pausada", () => {
-    const pausada = pausar(activa, "2026-09-22");
-    expect(cambiarNivel(pausada, nivel2).nivelId).toBe("2-libras");
+  it("no gasta envíos prepagados", () => {
+    const r = saltarEnvio(suscripcionPrueba({ enviosPrepagadosRestantes: 3 }), quince, false);
+    expect(r.suscripcion.enviosPrepagadosRestantes).toBe(3);
   });
 
-  it("no lo cambia si ya canceló", () => {
-    expect(() => cambiarNivel(cancelar(activa, "2026-09-22"), nivel2)).toThrow();
+  it("no salta un envío que ya se está cobrando", () => {
+    expect(() => saltarEnvio(suscripcionPrueba(), quince, true)).toThrow(/cobrando/);
+  });
+});
+
+describe("cambiar", () => {
+  it("sin prepago, todo entra en el próximo envío", () => {
+    const s = cambiar(suscripcionPrueba(), { planId: "dos", frecuenciaId: "siete", moliendaId: "fina" }, catalogo);
+    expect(s).toMatchObject({ planId: "dos", frecuenciaId: "siete", moliendaId: "fina", cambiosPendientes: {} });
   });
 
-  it("cambiar de nivel no mueve la fecha del próximo envío", () => {
-    expect(cambiarNivel(activa, nivel2).proximoEnvio).toBe(activa.proximoEnvio);
+  it("no mueve la fecha del próximo envío", () => {
+    const s = cambiar(suscripcionPrueba(), { frecuenciaId: "treinta" }, catalogo);
+    expect(s.proximoEnvio).toBe("2026-10-20");
   });
 
-  it("recalcula la fecha con la nueva frecuencia", () => {
-    const s = cambiarFrecuencia(activa, mensual, "2026-09-22");
-    expect(s.frecuenciaId).toBe("mensual");
-    expect(s.proximoEnvio).toBe("2026-10-22");
+  it("con prepago, plan y frecuencia esperan a la renovación; molienda y perfil no", () => {
+    const s = cambiar(
+      suscripcionPrueba({ enviosPrepagadosRestantes: 4, prepagoId: "tres" }),
+      { planId: "dos", frecuenciaId: "siete", perfilId: "choco" },
+      catalogo
+    );
+    expect(s.planId).toBe("uno");
+    expect(s.frecuenciaId).toBe("quince");
+    expect(s.perfilId).toBe("choco");
+    expect(s.cambiosPendientes).toEqual({ planId: "dos", frecuenciaId: "siete" });
   });
 
-  it("cambia grano/molido y método sin tocar fechas", () => {
-    const s = cambiarPreferencias(activa, { molienda: "molido", metodo: "greca" });
-    expect(s.molienda).toBe("molido");
-    expect(s.metodo).toBe("greca");
-    expect(s.proximoEnvio).toBe(activa.proximoEnvio);
+  it("rechaza opciones que no existen", () => {
+    expect(() => cambiar(suscripcionPrueba(), { planId: "gigante" }, catalogo)).toThrow();
   });
 
-  it("no cambia preferencias si ya canceló", () => {
-    const cancelada = cancelar(activa, "2026-09-22");
-    expect(() => cambiarPreferencias(cancelada, { molienda: "molido" })).toThrow();
+  it("no cambia una suscripción cancelada", () => {
+    expect(() => cambiar(suscripcionPrueba({ estado: "cancelada" }), { perfilId: "choco" }, catalogo)).toThrow();
   });
 });
 
 describe("cancelar", () => {
-  it("cancela de una, sin pasos intermedios", () => {
-    const s = cancelar(activa, "2026-09-22");
-    expect(s.estado).toBe("cancelada");
-    expect(s.canceladaEn).toBe("2026-09-22");
-  });
-
-  it("cancela también desde pausada", () => {
-    expect(cancelar(pausar(activa, "2026-09-22"), "2026-09-23").estado).toBe("cancelada");
+  it("cancela desde activa, pausada o sin pago", () => {
+    for (const estado of ["activa", "pausada", "pago_pendiente"] as const) {
+      expect(cancelar(suscripcionPrueba({ estado }), "2026-10-01").estado).toBe("cancelada");
+    }
   });
 
   it("no se cancela dos veces", () => {
-    expect(() => cancelar(cancelar(activa, "2026-09-22"), "2026-09-23")).toThrow();
+    expect(() => cancelar(suscripcionPrueba({ estado: "cancelada" }))).toThrow();
   });
 
-  it("es terminal: no se reanuda", () => {
-    expect(() => reanudar(cancelar(activa, "2026-09-22"), config)).toThrow();
-  });
-});
-
-describe("ciclo de cobro", () => {
-  it("activa cuenta el primer envío y programa el siguiente", () => {
-    const pendiente: Suscripcion = { ...activa, estado: "pendiente", enviosHechos: 0 };
-    const s = activar(pendiente, quincenal, "2026-09-22");
-    expect(s.estado).toBe("activa");
-    expect(s.enviosHechos).toBe(1);
-    expect(s.proximoEnvio).toBe("2026-10-07");
-  });
-
-  it("registrar un envío suma uno y corre la fecha", () => {
-    const s = registrarEnvio(activa, quincenal);
-    expect(s.enviosHechos).toBe(3);
-    expect(s.proximoEnvio).toBe("2026-10-16");
+  it("los envíos ya prepagados se despachan igual", () => {
+    const s = suscripcionPrueba({ enviosPrepagadosRestantes: 2, ciclo: 4, proximoEnvio: "2026-10-20" });
+    expect(enviosPrepagadosAlCancelar(s, quince)).toEqual([
+      { numero: 5, fecha: "2026-10-20" },
+      { numero: 6, fecha: "2026-11-04" },
+    ]);
   });
 });
 
-describe("acciones que se ofrecen en pantalla", () => {
-  it("activa: pausar, saltar, cambiar y cancelar", () => {
-    expect(accionesDisponibles(activa)).toEqual({
-      pausar: true, reanudar: false, saltar: true, cambiar: true, cancelar: true,
-    });
+describe("retención", () => {
+  it("ofrece pausar, espaciar, bajar a una bolsa y cambiar de perfil", () => {
+    const ofertas = ofertasRetencion(suscripcionPrueba({ planId: "dos", frecuenciaId: "siete" }), catalogo);
+    expect(ofertas).toEqual([
+      { tipo: "pausar", meses: 1 },
+      { tipo: "pausar", meses: 2 },
+      { tipo: "frecuencia", frecuenciaId: "quince" },
+      { tipo: "plan", planId: "uno" },
+      { tipo: "perfil" },
+    ]);
   });
 
-  it("pausada: reanudar, cambiar y cancelar", () => {
-    expect(accionesDisponibles(pausar(activa, "2026-09-22"))).toEqual({
-      pausar: false, reanudar: true, saltar: false, cambiar: true, cancelar: true,
+  it("no ofrece lo que no cambia nada", () => {
+    const ofertas = ofertasRetencion(suscripcionPrueba({ planId: "uno", frecuenciaId: "treinta" }), catalogo);
+    expect(ofertas.map((o) => o.tipo)).toEqual(["pausar", "pausar", "perfil"]);
+  });
+});
+
+describe("resultado de un cobro", () => {
+  it("el alta aprobada activa la suscripción y programa el primer envío", () => {
+    const alta = suscripcionPrueba({ estado: "pago_pendiente", ciclo: 0, enviosHechos: 0, proximoEnvio: "2026-10-05" });
+    const cobro = planearCobro({ ...alta, prepagoId: "tres" }, catalogo, "alta");
+    const r = aplicarCobroAprobado(alta, cobro, catalogo, "2026-10-01");
+    expect(r).not.toBeNull();
+    expect(r!.suscripcion).toMatchObject({
+      estado: "activa", ciclo: 1, enviosHechos: 1, enviosPrepagadosRestantes: 5,
+      proximoEnvio: "2026-10-20",
     });
+    expect(r!.envio).toMatchObject({ numero: 1, fecha: "2026-10-05" });
   });
 
-  it("cancelada: ninguna", () => {
-    const acciones = accionesDisponibles(cancelar(activa, "2026-09-22"));
-    expect(Object.values(acciones).every((v) => v === false)).toBe(true);
+  it("un evento repetido no cuenta dos veces", () => {
+    const s = suscripcionPrueba({ ciclo: 3 });
+    const cobro = { ciclo: 3, enviosCubiertos: 1, detalle: planearCobro(s, catalogo, "automatico").detalle };
+    expect(aplicarCobroAprobado(s, cobro, catalogo)).toBeNull();
+  });
+
+  it("no revive una suscripción cancelada", () => {
+    const s = suscripcionPrueba({ estado: "cancelada" });
+    expect(aplicarCobroAprobado(s, planearCobro(s, catalogo, "manual"), catalogo)).toBeNull();
+  });
+
+  it("un pago que llega tarde no promete un envío antes de poder tostarlo", () => {
+    const s = suscripcionPrueba({ estado: "pago_pendiente", proximoEnvio: "2026-10-20" });
+    const r = aplicarCobroAprobado(s, planearCobro(s, catalogo, "reintento"), catalogo, "2026-10-25");
+    expect(r!.envio.fecha).toBe("2026-10-29");
+    expect(r!.suscripcion.proximoEnvio).toBe("2026-11-13");
+    expect(r!.suscripcion.intentosFallidos).toBe(0);
+  });
+
+  it("un rechazo programa reintentos a los días configurados", () => {
+    let s = suscripcionPrueba();
+    const hoy = "2026-10-17";
+
+    let r = aplicarCobroRechazado(s, "automatico", reglas, hoy);
+    expect(r.suscripcion).toMatchObject({ estado: "pago_pendiente", intentosFallidos: 1, proximoReintento: "2026-10-19" });
+    s = r.suscripcion;
+
+    r = aplicarCobroRechazado(s, "reintento", reglas, "2026-10-19");
+    expect(r.suscripcion).toMatchObject({ intentosFallidos: 2, proximoReintento: "2026-10-23" });
+    s = r.suscripcion;
+
+    r = aplicarCobroRechazado(s, "reintento", reglas, "2026-10-23");
+    expect(r.suscripcion).toMatchObject({ intentosFallidos: 3, proximoReintento: "2026-10-30" });
+    expect(r.cancelada).toBe(false);
+    s = r.suscripcion;
+
+    r = aplicarCobroRechazado(s, "reintento", reglas, "2026-10-30");
+    expect(r.cancelada).toBe(true);
+    expect(r.suscripcion.estado).toBe("cancelada");
+  });
+
+  it("un intento manual fallido no gasta reintentos", () => {
+    const s = suscripcionPrueba({ estado: "pago_pendiente", intentosFallidos: 2, proximoReintento: "2026-10-23" });
+    const r = aplicarCobroRechazado(s, "manual", reglas, "2026-10-21");
+    expect(r.suscripcion.intentosFallidos).toBe(2);
+    expect(r.suscripcion.proximoReintento).toBe("2026-10-23");
+  });
+
+  it("reintenta solo si hay medio de pago y ya es la fecha", () => {
+    const s = suscripcionPrueba({ estado: "pago_pendiente", proximoReintento: "2026-10-19" });
+    expect(debeReintentar(s, false, "2026-10-18")).toBe(false);
+    expect(debeReintentar(s, false, "2026-10-19")).toBe(true);
+    expect(debeReintentar(s, true, "2026-10-19")).toBe(false);
+    expect(debeReintentar({ ...s, metodoPagoId: null }, false, "2026-10-19")).toBe(false);
+  });
+});
+
+describe("acciones en pantalla", () => {
+  it("cambian con el estado y con un cobro en vuelo", () => {
+    expect(accionesDisponibles({ estado: "activa" })).toMatchObject({ pausar: true, saltar: true, pagar: false });
+    expect(accionesDisponibles({ estado: "activa" }, true)).toMatchObject({ pausar: false, saltar: false });
+    expect(accionesDisponibles({ estado: "pago_pendiente" })).toMatchObject({ pagar: true, pausar: false });
+    expect(accionesDisponibles({ estado: "cancelada" })).toMatchObject({ cambiar: false, cancelar: false });
   });
 });

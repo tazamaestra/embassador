@@ -1,17 +1,19 @@
 import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/lib/nav";
-import { faqsSuscripcion, niveles, suscripcionConfig } from "@/lib/content";
-import { mejorAhorroSuelta } from "@/lib/suscripcion";
+import { faqsSuscripcion } from "@/lib/content";
+import { obtenerCatalogo } from "@/lib/catalogo";
 import { formatCOP } from "@/lib/format";
 import Revelar from "@/components/shared/Revelar";
 import FaqAccordion from "@/components/shared/FaqAccordion";
 import ComoFunciona from "@/components/suscripcion/ComoFunciona";
-import Calculadora from "@/components/suscripcion/Calculadora";
 import Planes from "@/components/suscripcion/Planes";
-import Comparativa from "@/components/suscripcion/Comparativa";
 import Beneficios from "@/components/suscripcion/Beneficios";
 import OrigenDelMes from "@/components/suscripcion/OrigenDelMes";
 import type { Locale } from "@/lib/types";
+
+// Los precios vienen de la base: se lee en cada visita para que un cambio en
+// el panel de Supabase se vea de una.
+export const dynamic = "force-dynamic";
 
 export default async function SuscripcionPage({
   params,
@@ -22,8 +24,8 @@ export default async function SuscripcionPage({
   setRequestLocale(locale);
   const es = locale !== "en";
 
-  const ahorro = mejorAhorroSuelta(suscripcionConfig);
-  const desde = Math.min(...niveles.map((n) => n.precioCop));
+  const catalogo = await obtenerCatalogo();
+  const desde = Math.min(...catalogo.planes.map((p) => p.precioEnvioCop));
 
   return (
     <>
@@ -48,18 +50,18 @@ export default async function SuscripcionPage({
             </h1>
             <p className="font-body text-crema/75 text-base md:text-lg leading-relaxed mb-8 max-w-[520px]">
               {es
-                ? `Desde ${formatCOP(desde)} al mes con envío incluido. Se tuesta la semana del despacho. Saltas o cancelas en dos clics.`
-                : `From ${formatCOP(desde)} a month, shipping included. Roasted the week it ships. Skip or cancel in two clicks.`}
+                ? `Desde ${formatCOP(desde)} por envío, con el envío incluido. Cada semana, cada 15 días o cada mes. Saltas o pausas con un clic.`
+                : `From ${formatCOP(desde)} per shipment, shipping included. Weekly, every 2 weeks or monthly. Skip or pause with one click.`}
             </p>
           </Revelar>
 
           <Revelar retrasoMs={90}>
             <div className="flex flex-wrap gap-3">
               <a
-                href="#calculadora"
+                href="#quiz"
                 className="bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-6 py-3 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0"
               >
-                {es ? "Calcular mi plan" : "Work out my plan"}
+                {es ? "Encontrar mi plan" : "Find my plan"}
               </a>
               <a
                 href="#planes"
@@ -72,36 +74,34 @@ export default async function SuscripcionPage({
         </div>
       </section>
 
-      <ComoFunciona locale={locale} />
+      <ComoFunciona locale={locale} reglas={catalogo.reglas} />
 
-      {/* Calculadora */}
-      <section id="calculadora" className="py-20 bg-fondo scroll-mt-20">
-        <div className="max-w-[1240px] mx-auto px-[22px]">
+      {/* Quiz */}
+      <section id="quiz" className="py-20 bg-fondo scroll-mt-20">
+        <div className="max-w-[720px] mx-auto px-[22px] text-center">
           <Revelar>
             <p className="font-mono text-[11px] tracking-[.2em] text-dorado uppercase mb-2">
-              {es ? "LA CALCULADORA" : "THE CALCULATOR"}
+              {es ? "60 SEGUNDOS" : "60 SECONDS"}
             </p>
-            <h2
-              className="font-display font-bold text-tinta mb-3"
-              style={{ fontSize: "clamp(28px,4vw,44px)" }}
-            >
-              {es ? "¿Cuánto café gastas?" : "How much coffee do you use?"}
+            <h2 className="font-display font-bold text-tinta mb-3" style={{ fontSize: "clamp(28px,4vw,44px)" }}>
+              {es ? "¿No sabes cuál te sirve?" : "Not sure which one fits?"}
             </h2>
-            <p className="font-body text-tinta-suave text-base max-w-[560px] mb-10">
+            <p className="font-body text-tinta-suave text-base mb-8">
               {es
-                ? "Dos preguntas y sale el plan que te sirve. Si te queda corto o largo, lo cambias después."
-                : "Two questions and out comes the plan that fits. If it's short or long, change it later."}
+                ? "Cinco preguntas —cómo lo preparas, si le echas leche, qué sabor buscas, cuántas tazas y cuántos en la casa— y sale el plan, la frecuencia y la molienda."
+                : "Five questions —how you brew, milk or not, which flavor, how many cups and how many people— and out come the plan, frequency and grind."}
             </p>
-          </Revelar>
-
-          <Revelar retrasoMs={80}>
-            <Calculadora locale={locale} />
+            <Link
+              href="/quiz"
+              className="inline-block bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-8 py-3.5 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0"
+            >
+              {es ? "Hacer el quiz" : "Take the quiz"}
+            </Link>
           </Revelar>
         </div>
       </section>
 
-      <Planes locale={locale} />
-      <Comparativa locale={locale} />
+      <Planes locale={locale} catalogo={catalogo} />
       <Beneficios locale={locale} />
       <OrigenDelMes locale={locale} />
 
@@ -124,8 +124,8 @@ export default async function SuscripcionPage({
             </h2>
             <p className="font-body text-crema/75 text-base mb-8">
               {es
-                ? `Ahorras hasta ${formatCOP(ahorro.ahorro)} por envío frente a comprarlo suelto. Sin permanencia.`
-                : `Save up to ${formatCOP(ahorro.ahorro)} per shipment versus buying loose. No commitment.`}
+                ? "Sin permanencia. Pausas, saltas o cancelas desde tu cuenta."
+                : "No commitment. Pause, skip or cancel from your account."}
             </p>
             <Link
               href="/checkout"

@@ -52,67 +52,205 @@ export interface ProductFilter {
 }
 
 // ── Suscripción ────────────────────────────────────────────────────────────
-// El plan tiene dos ejes independientes: cuánto café (nivel) y cada cuánto
-// (frecuencia). El prepago es un tercero, opcional, que solo descuenta.
+// Precios, frecuencias, moliendas, perfiles, prepagos y reglas viven en
+// Supabase (supabase/sql/fase1_suscripciones.sql). lib/catalogo.ts los lee y
+// los entrega con estos tipos. Aquí no hay un solo número del negocio.
 
-/** Cuánto café llega en cada envío. Precio fijo, envío incluido. */
-export interface Nivel {
+/** Lo que llega en cada envío. Precio por envío, envío incluido. */
+export interface Plan {
   id: string;
-  libras: number;
-  gramos: number;
-  precioCop: number;
-  orden: number;
   label_es: string;
   label_en: string;
-  /** Qué trae la caja, línea por línea. */
+  desc_es: string;
+  desc_en: string;
+  bolsas: number;
+  gramosBolsa: number;
+  precioEnvioCop: number;
   incluye_es: string[];
   incluye_en: string[];
-  nota_es: string;
-  nota_en: string;
+  frecuenciaDefectoId: string | null;
+  orden: number;
 }
 
 /** Cada cuánto se repite el envío. */
 export interface Frecuencia {
   id: string;
-  cadaDias: number;
-  orden: number;
+  dias: number;
   label_es: string;
   label_en: string;
-  nota_es: string;
-  nota_en: string;
+  orden: number;
 }
 
-/** Pagar varios meses por adelantado a cambio de un descuento. */
+/** Molienda o perfil de sabor: una opción con nombre y descripción. */
+export interface OpcionCatalogo {
+  id: string;
+  label_es: string;
+  label_en: string;
+  desc_es: string;
+  desc_en: string;
+  orden: number;
+}
+
+/** Pagar varios meses de una a cambio de un descuento. */
 export interface Prepago {
   id: string;
   meses: number;
   descuentoPct: number;
+  label_es: string;
+  label_en: string;
   orden: number;
-  label_es: string;
-  label_en: string;
-  nota_es: string;
-  nota_en: string;
 }
 
-/** Método de preparación. Define los gramos por taza de la calculadora. */
-export interface MetodoPreparacion {
+export interface ReglasSuscripcion {
+  /** Días antes del envío en que se cobra. Es también el corte de cambios. */
+  diasCobroAntesEnvio: number;
+  /** Días entre el alta pagada y el primer envío. */
+  diasPreparacion: number;
+  /** Reintentos tras un fallo, en días desde el fallo anterior. */
+  reintentosDias: number[];
+  /** Pausas que se ofrecen, en meses. */
+  mesesPausa: number[];
+  redondeoCop: number;
+  /** Qué pasa al acabarse un prepago. */
+  prepagoRenovacion: "mismo" | "ciclo";
+  /** Cada `cadaEnvios` envíos seguidos, el siguiente lleva `bolsas` de regalo. */
+  regalo: { cadaEnvios: number; bolsas: number };
+}
+
+/** Puente con el software de gestión, que lee la tabla `pedidos`. */
+export interface Operacion {
+  productoId: string;
+  productoNombre: string;
+  canal: string;
+  prefijoPedido: string;
+  gramosPorLibra: number;
+}
+
+export interface MetodoQuiz {
   id: string;
+  label_es: string;
+  label_en: string;
+  moliendaId: string;
   gramosPorTaza: number;
-  label_es: string;
-  label_en: string;
-  nota_es: string;
-  nota_en: string;
 }
 
-export interface OpcionSimple {
-  id: string;
-  label_es: string;
-  label_en: string;
-  nota_es?: string;
-  nota_en?: string;
-  desc_es?: string;
-  desc_en?: string;
+export interface ReglasQuiz {
+  /** 1 = el plan debe cubrir todo el consumo; 0.9 acepta quedarse un 10% corto. */
+  factorCobertura: number;
+  tazasOpciones: number[];
+  personasOpciones: number[];
+  metodos: MetodoQuiz[];
+  /** Perfil elegido → perfil recomendado cuando se toma con leche. */
+  perfilConLeche: Record<string, string>;
 }
+
+export interface Catalogo {
+  planes: Plan[];
+  frecuencias: Frecuencia[];
+  moliendas: OpcionCatalogo[];
+  perfiles: OpcionCatalogo[];
+  prepagos: Prepago[];
+  reglas: ReglasSuscripcion;
+  quiz: ReglasQuiz;
+  operacion: Operacion;
+}
+
+export type EstadoSuscripcion = "activa" | "pausada" | "pago_pendiente" | "cancelada";
+
+/** Cambios que esperan a que se acabe el prepago para aplicarse. */
+export interface CambiosPendientes {
+  planId?: string;
+  frecuenciaId?: string;
+  prepagoId?: string;
+}
+
+export interface Suscripcion {
+  id: string;
+  clienteId: string;
+  planId: string;
+  frecuenciaId: string;
+  prepagoId: string;
+  moliendaId: string;
+  perfilId: string;
+  estado: EstadoSuscripcion;
+  /** Fecha ISO (YYYY-MM-DD) del próximo envío que todavía no se ha resuelto. */
+  proximoEnvio: string;
+  /** Con pausa, el día en que se reanuda sola. */
+  pausadaHasta: string | null;
+  cambiosPendientes: CambiosPendientes;
+  metodoPagoId: string | null;
+  /** Envíos ya pagados por un prepago que faltan por despachar. */
+  enviosPrepagadosRestantes: number;
+  intentosFallidos: number;
+  proximoReintento: string | null;
+  /** Último ciclo resuelto: pagado, prepagado o saltado. */
+  ciclo: number;
+  enviosHechos: number;
+  enviosSaltados: number;
+  direccionId: string | null;
+  creadaEn: string;
+  pausadaEn: string | null;
+  canceladaEn: string | null;
+}
+
+export type EstadoCobro = "CREANDO" | "PENDING" | "APPROVED" | "DECLINED" | "VOIDED" | "ERROR";
+export type OrigenCobro = "alta" | "automatico" | "reintento" | "manual";
+
+export interface Cobro {
+  id: string;
+  suscripcionId: string;
+  referencia: string;
+  ciclo: number;
+  origen: OrigenCobro;
+  enviosCubiertos: number;
+  montoCop: number;
+  estado: EstadoCobro;
+  motivo: string | null;
+  creadoEn: string;
+}
+
+export interface EnvioSuscripcion {
+  id: string;
+  suscripcionId: string;
+  numero: number;
+  fechaProgramada: string;
+  estado: "programado" | "saltado" | "enviado" | "cobrado";
+  planId: string | null;
+  bolsas: number;
+  molienda: string;
+  regalo: boolean;
+  origen: string;
+  totalCop: number;
+}
+
+export interface Direccion {
+  id: string;
+  clienteId: string;
+  nombre: string;
+  telefono: string;
+  linea: string;
+  ciudad: string;
+  departamento: string;
+  notas: string;
+  esPrincipal: boolean;
+}
+
+export interface MetodoPago {
+  id: string;
+  tipo: "CARD" | "NEQUI";
+  marca: string;
+  ultimos4: string;
+  telefono: string;
+}
+
+export const MOTIVOS_CANCELACION = [
+  "precio", "mucho_cafe", "sabor", "envios", "otra_marca", "temporal", "otro",
+  "prefiero_no_decir",
+] as const;
+export type MotivoCancelacion = (typeof MOTIVOS_CANCELACION)[number] | "pago_fallido";
+
+// ── Contenido editorial de la suscripción ──────────────────────────────────
+// Textos que no mueven dinero: siguen en data/suscripcion.json.
 
 export interface BeneficioSuscriptor {
   id: string;
@@ -122,7 +260,7 @@ export interface BeneficioSuscriptor {
   desc_en: string;
 }
 
-/** El café de otro productor que entra desde el plan de 2 libras. */
+/** El café invitado que entra en el plan Jornada. */
 export interface OrigenDelMes {
   mes_es: string;
   mes_en: string;
@@ -139,94 +277,11 @@ export interface OrigenDelMes {
   swatch: string;
 }
 
-export interface SuscripcionConfig {
-  moneda: string;
-  redondeoCop: number;
-  /** Días entre reanudar y el siguiente envío, para tostar y despachar. */
-  diasPreparacion: number;
-  /** Día del mes en que se cobra y día en que sale el despacho. */
-  cobroDia: number;
-  despachoDia: number;
-  gramosPorLibra: number;
-  /** Puente con el software de gestión que lee la tabla `pedidos`. */
-  operacion: {
-    /** UUID de la fila en `productos` a la que se cargan las libras. */
-    productoId: string;
-    productoNombre: string;
-    canal: string;
-    prefijoPedido: string;
-  };
-  /** Referencia para la comparativa contra comprar suelto. */
-  suelta: { precioLibraCop: number; envioCop: number };
-  consumo: { diasMes: number };
-  metodos: MetodoPreparacion[];
-  niveles: Nivel[];
-  frecuencias: Frecuencia[];
-  prepagos: Prepago[];
-  moliendas: OpcionSimple[];
-  perfiles: OpcionSimple[];
-  regalo: {
-    mesesSeguidos: number;
-    libras: number;
-    label_es: string;
-    label_en: string;
-    desc_es: string;
-    desc_en: string;
-  };
+export interface SuscripcionEditorial {
   beneficios: BeneficioSuscriptor[];
   origenDelMes: OrigenDelMes;
   ciudades: string[];
   faqs: Faq[];
-}
-
-export type EstadoSuscripcion = "pendiente" | "activa" | "pausada" | "cancelada";
-
-export interface Suscripcion {
-  id: string;
-  clienteId: string;
-  /** Cuánto café: 1, 2 o 3 libras. */
-  nivelId: string;
-  /** Cada cuánto llega. */
-  frecuenciaId: string;
-  /** Cuántos meses se pagaron por adelantado. */
-  prepagoId: string;
-  molienda: string;
-  metodo: string;
-  perfil: string;
-  estado: EstadoSuscripcion;
-  /** Fecha ISO (YYYY-MM-DD) del próximo envío. */
-  proximoEnvio: string;
-  enviosHechos: number;
-  enviosSaltados: number;
-  creadaEn: string;
-  pausadaEn: string | null;
-  canceladaEn: string | null;
-  direccionId: string | null;
-}
-
-export interface EnvioSuscripcion {
-  id: string;
-  suscripcionId: string;
-  numero: number;
-  fechaProgramada: string;
-  estado: "programado" | "saltado" | "enviado" | "cobrado";
-  /** Qué café llegó ese mes, para el historial del panel. */
-  cafe: string;
-  /** Si ese envío llevó la libra de regalo. */
-  regalo: boolean;
-  totalCop: number;
-}
-
-export interface Direccion {
-  id: string;
-  clienteId: string;
-  nombre: string;
-  telefono: string;
-  linea: string;
-  ciudad: string;
-  departamento: string;
-  notas: string;
-  esPrincipal: boolean;
 }
 
 // ── Blog ───────────────────────────────────────────────────────────────────

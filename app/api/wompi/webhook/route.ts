@@ -1,14 +1,16 @@
-// Webhook de Wompi: confirma el pago y activa la suscripción.
+// Webhook de Wompi: el estado final de cada transacción.
 //
-// Llega sin sesión del usuario, así que usa la service key. Lo primero que
-// hace es validar el checksum del evento; si no cuadra, no toca la base.
+// Llega sin sesión, así que usa la service key. Lo primero es validar el
+// checksum; si no cuadra, no se toca la base. Wompi reintenta un evento
+// hasta que recibe 200 (a los 30 min, 3 h y 24 h): por eso cada evento se
+// registra por su checksum y los repetidos se ignoran, y por eso resolverCobro
+// es idempotente.
 
 import { NextResponse } from "next/server";
 import { crearClienteAdmin } from "@/lib/supabase-admin";
-import { findFrecuencia, findNivel, suscripcionConfig } from "@/lib/content";
-import { activar, cobroPrepago, hoyISO, librasDelEnvio } from "@/lib/suscripcion";
+import { obtenerCatalogo } from "@/lib/catalogo";
 import { eventoValido, type EventoWompi } from "@/lib/wompi";
-import type { Suscripcion } from "@/lib/types";
+import { resolverCobro } from "@/lib/servidor/suscripciones";
 
 export async function POST(request: Request) {
   let evento: EventoWompi;
@@ -22,103 +24,51 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "firma_invalida" }, { status: 401 });
   }
 
+  const db = crearClienteAdmin();
   const transaccion = evento.data?.transaction;
-  if (!transaccion?.reference) {
-    return NextResponse.json({ ok: true, ignorado: "sin_referencia" });
+
+  const { error: repetido } = await db.from("wompi_eventos").insert({
+    checksum: evento.signature.checksum,
+    evento: evento.event,
+    transaccion_id: transaccion?.id ?? null,
+    estado: transaccion?.status ?? null,
+    referencia: transaccion?.reference ?? null,
+    payload: evento,
+  });
+  if (repetido?.code === "23505") return NextResponse.json({ ok: true, ignorado: "repetido" });
+
+  // nequi_token.updated: la pantalla ya consulta el token hasta que el
+  // cliente aprueba en su app. Queda registrado y no hay más que hacer.
+  if (evento.event !== "transaction.updated" || !transaccion?.reference) {
+    return NextResponse.json({ ok: true, ignorado: evento.event });
   }
 
-  const supabase = crearClienteAdmin();
   const referencia = transaccion.reference;
   const aprobada = transaccion.status === "APPROVED";
 
-  // ── Compra única ────────────────────────────────────────────────────────
-  if (referencia.startsWith("UNI-")) {
-    await supabase
-      .from("pedidos_unicos")
-      .update({ estado: aprobada ? "pagado" : "fallido" })
-      .eq("wompi_referencia", referencia);
-    return NextResponse.json({ ok: true });
+  try {
+    // ── Compra única (Web Checkout) ───────────────────────
+    if (referencia.startsWith("UNI-")) {
+      const { error } = await db
+        .from("pedidos_unicos")
+        .update({ estado: aprobada ? "pagado" : "fallido" })
+        .eq("wompi_referencia", referencia);
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+
+    // ── Cobro de suscripción ──────────────────────────────
+    const resultado = await resolverCobro(db, await obtenerCatalogo(db), referencia, transaccion.status, {
+      transaccionId: transaccion.id,
+      montoEnCentavos: transaccion.amount_in_cents,
+      motivo: (transaccion as { status_message?: string | null }).status_message ?? null,
+    });
+    return NextResponse.json({ ok: true, resultado });
+  } catch (e) {
+    // Se borra el registro del evento para que el reintento de Wompi entre
+    // de nuevo, y se responde 500 para que Wompi reintente.
+    console.error(`[webhook] Falló ${referencia}:`, e);
+    await db.from("wompi_eventos").delete().eq("checksum", evento.signature.checksum);
+    return NextResponse.json({ error: "procesando" }, { status: 500 });
   }
-
-  // ── Suscripción ─────────────────────────────────────────────────────────
-  const { data: fila } = await supabase
-    .from("suscripciones")
-    .select("id, cliente_id, nivel_id, frecuencia_id, prepago_id, molienda, metodo, perfil, estado, proximo_envio, envios_hechos, envios_saltados, direccion_id, creada_en, pausada_en, cancelada_en")
-    .eq("wompi_referencia", referencia)
-    .maybeSingle();
-
-  if (!fila) {
-    return NextResponse.json({ ok: true, ignorado: "referencia_desconocida" });
-  }
-
-  if (!aprobada) {
-    // El pago no pasó: la suscripción se queda pendiente y no cobra nada.
-    return NextResponse.json({ ok: true, estado: transaccion.status });
-  }
-
-  // Idempotencia: Wompi puede reenviar el mismo evento.
-  if (fila.estado === "activa") {
-    return NextResponse.json({ ok: true, ignorado: "ya_activa" });
-  }
-
-  const nivel = findNivel(fila.nivel_id);
-  const frecuencia = findFrecuencia(fila.frecuencia_id);
-  const prepago = suscripcionConfig.prepagos.find((p) => p.id === fila.prepago_id);
-  if (!nivel || !frecuencia || !prepago) {
-    return NextResponse.json({ error: "catalogo_desincronizado" }, { status: 500 });
-  }
-
-  const hoy = hoyISO();
-  const suscripcion: Suscripcion = {
-    id: fila.id,
-    clienteId: fila.cliente_id,
-    nivelId: fila.nivel_id,
-    frecuenciaId: fila.frecuencia_id,
-    prepagoId: fila.prepago_id,
-    molienda: fila.molienda,
-    metodo: fila.metodo,
-    perfil: fila.perfil,
-    estado: fila.estado,
-    proximoEnvio: fila.proximo_envio,
-    enviosHechos: fila.envios_hechos,
-    enviosSaltados: fila.envios_saltados,
-    direccionId: fila.direccion_id,
-    creadaEn: String(fila.creada_en).slice(0, 10),
-    pausadaEn: null,
-    canceladaEn: null,
-  };
-
-  const activada = activar(suscripcion, frecuencia, hoy);
-
-  await supabase
-    .from("suscripciones")
-    .update({
-      estado: activada.estado,
-      envios_hechos: activada.enviosHechos,
-      proximo_envio: activada.proximoEnvio,
-      wompi_payment_source_id: transaccion.payment_source_id
-        ? String(transaccion.payment_source_id)
-        : null,
-    })
-    .eq("id", activada.id);
-
-  // Primer envío. El total cobrado es el del prepago: si pagó 3 o 6 meses,
-  // se cobró todo de una y los envíos siguientes ya van pagos.
-  const { total } = cobroPrepago(nivel, prepago, suscripcionConfig);
-  const libras = librasDelEnvio(suscripcion, nivel, suscripcionConfig);
-
-  await supabase.from("suscripcion_envios").upsert(
-    {
-      suscripcion_id: activada.id,
-      numero: 1,
-      fecha_programada: hoy,
-      estado: "cobrado",
-      cafe: nivel.label_es,
-      regalo: libras > nivel.libras,
-      total_cop: total,
-    },
-    { onConflict: "suscripcion_id,numero" }
-  );
-
-  return NextResponse.json({ ok: true });
 }

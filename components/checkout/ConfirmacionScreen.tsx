@@ -5,17 +5,19 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/lib/nav";
 import { useAuthStore } from "@/lib/auth-store";
-import { FEATURE_PAGOS } from "@/lib/flags";
-import { obtenerSuscripcion } from "@/lib/suscripcion-db";
-import type { Locale, Suscripcion } from "@/lib/types";
+import { llamarApi } from "@/lib/pago";
+import type { Cobro, Locale, Suscripcion } from "@/lib/types";
 
-type Estado = "esperando" | "lista" | "pendiente" | "unico";
+type Estado = "esperando" | "lista" | "pendiente" | "rechazado" | "unico";
 
-// Wompi devuelve al usuario aquí; quien activa la suscripción es el webhook,
-// así que se consulta un par de veces antes de dar una respuesta.
+// Aquí llega el cliente tras el alta (o tras el Web Checkout de una compra
+// única). Quien activa la suscripción es el cobro aprobado —por la respuesta
+// de Wompi o por el webhook—, así que se consulta un par de veces antes de
+// dar una respuesta.
 export default function ConfirmacionScreen({ locale }: { locale: Locale }) {
   const t = useTranslations("confirmacion");
   const tc = useTranslations("checkout");
+  const es = locale !== "en";
   const searchParams = useSearchParams();
   const referencia = searchParams.get("ref") ?? "";
   const { user, init } = useAuthStore();
@@ -41,20 +43,24 @@ export default function ConfirmacionScreen({ locale }: { locale: Locale }) {
     async function revisar() {
       if (cancelado || !user) return;
       intentos += 1;
-      try {
-        const s = await obtenerSuscripcion(user.id);
-        if (cancelado) return;
-        if (s && s.estado === "activa") {
-          setSuscripcion(s);
-          setEstado("lista");
-          return;
-        }
-      } catch {
-        // Si la consulta falla se reintenta; el webhook manda.
+      const r = await llamarApi<{ suscripcion: Suscripcion | null; cobros: Cobro[] }>("/api/suscripciones/mia");
+      if (cancelado) return;
+
+      const s = r.ok ? r.data.suscripcion : null;
+      if (s?.estado === "activa") {
+        setSuscripcion(s);
+        setEstado("lista");
+        return;
       }
-      if (intentos < 5) {
-        setTimeout(revisar, 1500);
-      } else if (!cancelado) {
+      const ultimo = r.ok ? r.data.cobros[0] : undefined;
+      if (s?.estado === "pago_pendiente" && ultimo && ["DECLINED", "ERROR", "VOIDED"].includes(ultimo.estado)) {
+        setEstado("rechazado");
+        return;
+      }
+
+      if (intentos < 6) {
+        setTimeout(revisar, 2000);
+      } else {
         setEstado("pendiente");
       }
     }
@@ -79,9 +85,9 @@ export default function ConfirmacionScreen({ locale }: { locale: Locale }) {
             </div>
           </>
         ) : (
-          <div className="animate-[fadeUp_.3s_ease-out]">
+          <div className="animate-[fadeUp_.3s_ease-out]" role="status">
             <h1 className="font-display font-bold text-tinta text-4xl mb-3">
-              {t("h1")}
+              {estado === "rechazado" ? (es ? "Falta el pago" : "Payment pending") : t("h1")}
             </h1>
 
             <p className="font-body text-tinta-suave text-base mb-3">
@@ -89,17 +95,18 @@ export default function ConfirmacionScreen({ locale }: { locale: Locale }) {
                 ? t("suscripcion", { fecha: suscripcion.proximoEnvio })
                 : estado === "unico"
                   ? t("unico")
-                  : t("pendiente")}
+                  : estado === "rechazado"
+                    ? es
+                      ? "El banco no aprobó el pago. Tu suscripción quedó guardada: prueba con otra tarjeta o con Nequi desde tu cuenta."
+                      : "The bank didn't approve the payment. Your subscription is saved: try another card or Nequi from your account."
+                    : t("pendiente")}
             </p>
 
-            {/* Con la pasarela apagada, el cliente tiene que saber que el
-                cobro se coordina aparte. No dejarlo claro sería engañarlo. */}
-            {estado === "lista" && (
-              <p className="font-body text-tinta-suave text-sm mb-8">
-                {FEATURE_PAGOS ? t("correoEnviado") : t("sinPago")}
-              </p>
+            {estado === "lista" ? (
+              <p className="font-body text-tinta-suave text-sm mb-8">{t("correoEnviado")}</p>
+            ) : (
+              <div className="mb-8" />
             )}
-            {estado !== "lista" && <div className="mb-8" />}
 
             <Link
               href="/cuenta"

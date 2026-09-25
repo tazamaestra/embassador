@@ -81,10 +81,11 @@ export async function enviarCorreo(correo: Correo): Promise<ResultadoCorreo> {
 export interface DatosBienvenida {
   nombre: string;
   plan: string;
-  libras: number;
+  bolsas: number;
+  gramosBolsa: number;
   frecuencia: string;
   molienda: string;
-  metodo: string;
+  perfil: string;
   proximoDespacho: string;
   direccion: string;
   totalCop: number;
@@ -106,10 +107,10 @@ export function correoBienvenida(d: DatosBienvenida): Correo {
   const saludo = d.nombre ? `Hola, ${d.nombre.split(" ")[0]}.` : "Hola.";
 
   const filas: [string, string][] = [
-    ["Plan", `${d.plan} · ${d.libras} ${d.libras === 1 ? "libra" : "libras"}`],
+    ["Plan", `${d.plan} · ${d.bolsas} ${d.bolsas === 1 ? "bolsa" : "bolsas"} de ${d.gramosBolsa} g`],
     ["Cada cuánto", d.frecuencia],
     ["Molienda", d.molienda],
-    ["Método", d.metodo],
+    ["Perfil", d.perfil],
     ["Primer despacho", d.proximoDespacho],
     ["Envío a", d.direccion],
   ];
@@ -120,10 +121,10 @@ export function correoBienvenida(d: DatosBienvenida): Correo {
     "Tu suscripción quedó lista. Esto es lo que pediste:",
     "",
     ...filas.map(([k, v]) => `${k}: ${v}`),
-    `Total: ${COP(d.totalCop)} al mes, envío incluido`,
+    `Cobrado hoy: ${COP(d.totalCop)}, envío incluido`,
     "",
     "Se tuesta la semana del despacho y sale para tu ciudad.",
-    "Pausas, saltas un mes o cancelas desde tu cuenta, en dos clics:",
+    "Pausas, saltas un envío o cancelas desde tu cuenta, con un clic:",
     d.urlCuenta,
     "",
     "Taza Maestra · Café de especialidad",
@@ -154,17 +155,17 @@ export function correoBienvenida(d: DatosBienvenida): Correo {
           )
           .join("\n        ")}
         <tr>
-          <td style="padding:14px 16px;font-size:15px;color:#2A1A12;">Total</td>
+          <td style="padding:14px 16px;font-size:15px;color:#2A1A12;">Cobrado hoy</td>
           <td style="padding:14px 16px;font-size:20px;font-weight:700;text-align:right;color:#6E1417;">
-            ${COP(d.totalCop)}<span style="font-size:11px;color:#6B5547;font-weight:400;"> al mes</span>
+            ${COP(d.totalCop)}
           </td>
         </tr>
       </tbody>
     </table>
 
     <p style="font-size:15px;line-height:1.6;color:#6B5547;margin:24px 0;">
-      Se tuesta la semana del despacho y sale para tu ciudad. Pausas, saltas un mes
-      o cancelas desde tu cuenta, en dos clics.
+      Se tuesta la semana del despacho y sale para tu ciudad. Pausas, saltas un envío
+      o cancelas desde tu cuenta, con un clic.
     </p>
 
     <a href="${esc(d.urlCuenta)}"
