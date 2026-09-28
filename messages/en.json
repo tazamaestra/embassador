@@ -22,7 +22,14 @@
     "h1a": "For the hour",
     "h1b": "that drags",
     "sub": "Coffee from five Colombian farms, by subscription. It arrives before the bag runs out.",
-    "cta": "Start"
+    "cta": "Start",
+    "carrusel": "Coffees from the five farms",
+    "anterior": "Previous coffee",
+    "siguiente": "Next coffee",
+    "pausar": "Pause the carousel",
+    "reanudar": "Resume the carousel",
+    "irA": "Show {cafe}",
+    "verCafe": "Meet {cafe} →"
   },
   "quiz": {
     "pregunta": "Which hour of your day is hardest?",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  blogFeatured, blogFilters, blogPosts, momentos, productFilters,
+  blogFeatured, blogFilters, blogPosts, heroSlides, momentos, productFilters,
   products, productsByMomento,
 } from "@/lib/content";
 import rawContent from "@/data/content.json";
@@ -128,5 +128,26 @@ describe("tono del copy", () => {
   it("no abusa de los signos de exclamación", () => {
     const conExclamacion = textos.filter((t) => t.includes("!") || t.includes("¡"));
     expect(conExclamacion).toEqual([]);
+  });
+});
+
+describe("carrusel del hero", () => {
+  it("trae un slide por cada café, sin repetir", () => {
+    const ids = heroSlides.map((s) => s.cafeId);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect([...ids].sort()).toEqual(products.map((p) => p.id).sort());
+  });
+
+  it("cada slide tiene su historia en los dos idiomas", () => {
+    for (const s of heroSlides) {
+      for (const texto of [s.titulo_es, s.titulo_en, s.destacado_es, s.destacado_en, s.relato_es, s.relato_en]) {
+        expect(texto.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("las bolsas no se repiten: cada café se ve distinto", () => {
+    const bolsas = heroSlides.map((s) => `${s.bolsa.fondo}|${s.bolsa.patron}`);
+    expect(new Set(bolsas).size).toBe(bolsas.length);
   });
 });

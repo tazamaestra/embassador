@@ -12,6 +12,79 @@
     { "num": "5", "label_es": "Fincas", "label_en": "Farms" },
     { "num": "454 g", "label_es": "Por bolsa", "label_en": "Per bag" },
     { "num": "48 h", "label_es": "Del tueste al envío", "label_en": "Roast to shipping" }
+  ],
+  "_notaHeroSlides": "Carrusel del hero: un café por slide. 'bolsa' pinta el mockup SVG mientras no hay fotos reales de cada bolsa.",
+  "heroSlides": [
+    {
+      "cafeId": "la-esperanza",
+      "bolsa": {
+        "fondo": "#6E1417",
+        "acento": "#F0A24B",
+        "patron": "puntos"
+      },
+      "titulo_es": "El café contra el que",
+      "destacado_es": "comparas los demás",
+      "relato_es": "Es nuestra finca, en Balboa. La cereza se seca entera al sol y la taza sale con arándano y uva. Lo tostamos para que sea tu punto de partida: pruébalo y reconoces un café de especialidad.",
+      "titulo_en": "The coffee you",
+      "destacado_en": "measure the rest against",
+      "relato_en": "Our own farm, in Balboa. The cherry dries whole in the sun and the cup comes out tasting of blueberry and grape. We roast it as your reference point: taste it and you'll know specialty coffee."
+    },
+    {
+      "cafeId": "el-jardin",
+      "bolsa": {
+        "fondo": "#B6893B",
+        "acento": "#FBF3DD",
+        "patron": "ondas"
+      },
+      "titulo_es": "Dulce como la panela",
+      "destacado_es": "de las tres de la tarde",
+      "relato_es": "Ana Milena Quiceno despulpa el grano y lo seca con parte de su miel, a 1.850 metros en Pitalito. El proceso honey le deja la panela y un final de mandarina que sostiene la tarde.",
+      "titulo_en": "Sweet as panela",
+      "destacado_en": "at three in the afternoon",
+      "relato_en": "Ana Milena Quiceno pulps the bean and dries it with part of its honey, 1,850 metres up in Pitalito. The honey process leaves panela sweetness and a mandarin finish that carries the afternoon."
+    },
+    {
+      "cafeId": "el-descanso",
+      "bolsa": {
+        "fondo": "#3A2418",
+        "acento": "#C9486B",
+        "patron": "rayas"
+      },
+      "titulo_es": "Mora y cacao",
+      "destacado_es": "para la noche larga",
+      "relato_es": "La familia Ipia lo cultiva a 1.900 metros, entre las montañas de Inzá. La cereza se seca entera y el grano se queda con la mora y el vino tinto. Cuerpo alto para cuando todavía falta.",
+      "titulo_en": "Blackberry and cacao",
+      "destacado_en": "for the long night",
+      "relato_en": "The Ipia family grows it 1,900 metres up in the mountains of Inzá. The cherry dries whole and the bean keeps the blackberry and red wine. Full body for when there's still work ahead."
+    },
+    {
+      "cafeId": "santa-rita",
+      "bolsa": {
+        "fondo": "#2F5D3A",
+        "acento": "#F0C14B",
+        "patron": "hojas"
+      },
+      "titulo_es": "Chocolate y almendra",
+      "destacado_es": "para arrancar temprano",
+      "relato_es": "Gilberto Ramírez lava cada lote en su finca de Andes, Antioquia. Sale una taza limpia y redonda, de chocolate, almendra y un toque de naranja, que no pelea con nadie a las cinco de la mañana.",
+      "titulo_en": "Chocolate and almond",
+      "destacado_en": "for an early start",
+      "relato_en": "Gilberto Ramírez washes every lot on his farm in Andes, Antioquia. The result is a clean, round cup of chocolate, almond and a hint of orange that picks no fights at five in the morning."
+    },
+    {
+      "cafeId": "la-cumbre",
+      "bolsa": {
+        "fondo": "#E8731E",
+        "acento": "#2A1A12",
+        "patron": "montanas"
+      },
+      "titulo_es": "El más alto de los cinco",
+      "destacado_es": "para un domingo sin afán",
+      "relato_es": "A 2.050 metros, en Buesaco, el frío de Nariño hace que el grano madure despacio. Jorge Eliécer Muñoz cultiva bourbon rosado, una variedad escasa que da jazmín, lima y miel. Pide tomarse sin prisa.",
+      "titulo_en": "The highest of the five",
+      "destacado_en": "for an unhurried Sunday",
+      "relato_en": "At 2,050 metres in Buesaco, the Nariño cold makes the bean ripen slowly. Jorge Eliécer Muñoz grows pink bourbon, a rare variety that gives jasmine, lime and honey. It asks to be drunk slowly."
+    }
   ],
   "momentos": [
     {
@@ -180,11 +253,6 @@
     { "id": "antes-del-deploy", "label_es": "Antes del deploy", "label_en": "Before the deploy" },
     { "id": "madrugada", "label_es": "La madrugada", "label_en": "Before dawn" },
     { "id": "domingo-tranquilo", "label_es": "El domingo lento", "label_en": "A slow Sunday" }
-  ],
-  "steps": [
-    { "n": "1", "t_es": "Responde una pregunta", "t_en": "Answer one question", "d_es": "Cuál es tu hora más difícil. Con eso elegimos el café.", "d_en": "Which hour is hardest for you. That's how we pick the coffee." },
-    { "n": "2", "t_es": "Elige cada cuánto", "t_en": "Choose how often", "d_es": "Cada 15 o cada 30 días. Se cambia después sin pedir permiso.", "d_en": "Every 15 or every 30 days. You can change it later without asking." },
-    { "n": "3", "t_es": "Pagas una vez", "t_en": "Pay once", "d_es": "El resto llega solo. Pausas, saltas un envío o cancelas cuando quieras.", "d_en": "The rest arrives on its own. Pause, skip a shipment or cancel whenever." }
   ],
   "originFacts": [
     { "k_es": "REGIONES", "k_en": "REGIONS", "v": "Risaralda · Huila · Cauca · Antioquia · Nariño" },

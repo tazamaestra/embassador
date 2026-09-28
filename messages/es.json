@@ -22,7 +22,14 @@
     "h1a": "Para la hora",
     "h1b": "que se hace larga",
     "sub": "Café de cinco fincas colombianas, por suscripción. Llega antes de que se acabe la bolsa.",
-    "cta": "Empezar"
+    "cta": "Empezar",
+    "carrusel": "Los cafés de las cinco fincas",
+    "anterior": "Café anterior",
+    "siguiente": "Café siguiente",
+    "pausar": "Pausar el carrusel",
+    "reanudar": "Reanudar el carrusel",
+    "irA": "Ver {cafe}",
+    "verCafe": "Conocer {cafe} →"
   },
   "quiz": {
     "pregunta": "¿Cuál es tu hora más difícil del día?",

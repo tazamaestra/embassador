@@ -1,21 +1,10 @@
 import Revelar from "@/components/shared/Revelar";
+import { pasosSuscripcion } from "@/lib/pasos-suscripcion";
 import type { Locale, ReglasSuscripcion } from "@/lib/types";
 
 export default function ComoFunciona({ locale, reglas }: { locale: Locale; reglas: ReglasSuscripcion }) {
   const es = locale !== "en";
-  const dias = reglas.diasCobroAntesEnvio;
-
-  const pasos = es
-    ? [
-        { n: "01", t: "Eliges plan y ritmo", d: "Cinco preguntas en el quiz y sale el plan, la frecuencia y la molienda. Lo ajustas si quieres." },
-        { n: "02", t: `Cobramos ${dias} días antes`, d: "Cada envío se cobra unos días antes de salir. Hasta ese momento lo saltas o lo pausas con un clic." },
-        { n: "03", t: "Tostamos y despachamos", d: "Se tuesta en esos días y sale para tu ciudad, molido para tu método o en grano." },
-      ]
-    : [
-        { n: "01", t: "Pick a plan and a pace", d: "Five quiz questions give you the plan, frequency and grind. Adjust them if you like." },
-        { n: "02", t: `We charge ${dias} days before`, d: "Each shipment is charged a few days before it leaves. Until then, skip or pause it with one click." },
-        { n: "03", t: "We roast and ship", d: "Roasted in those days and sent to your city, ground for your method or whole bean." },
-      ];
+  const pasos = pasosSuscripcion(es, reglas.diasCobroAntesEnvio);
 
   return (
     <section className="py-20 bg-arena">

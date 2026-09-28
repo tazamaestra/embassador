@@ -48,16 +48,14 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
   const recomendacion = respuestas ? recomendar(respuestas, quiz, planes, frecuencias) : null;
 
   // Al terminar, la recomendación arranca como selección y el cliente la ajusta.
-  useEffect(() => {
-    if (recomendacion && !ajuste) {
-      setAjuste({
-        planId: recomendacion.planId,
-        frecuenciaId: recomendacion.frecuenciaId,
-        moliendaId: recomendacion.moliendaId,
-        perfilId: recomendacion.perfilId,
-      });
-    }
-  }, [recomendacion, ajuste]);
+  // Se deriva en el mismo render: si esperara un efecto, el quiz quedaría en
+  // blanco un instante al responder la última pregunta.
+  const seleccion = ajuste ?? (recomendacion && {
+    planId: recomendacion.planId,
+    frecuenciaId: recomendacion.frecuenciaId,
+    moliendaId: recomendacion.moliendaId,
+    perfilId: recomendacion.perfilId,
+  });
 
   function responder(cambio: Partial<RespuestasQuiz>) {
     setR((previo) => ({ ...previo, ...cambio }));
@@ -110,7 +108,7 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
   };
 
   function suscribirme() {
-    if (!respuestas || !ajuste) return;
+    if (!respuestas || !seleccion) return;
     try {
       window.sessionStorage.setItem(QUIZ_GUARDADO, JSON.stringify(respuestas));
     } catch {
@@ -122,10 +120,10 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
     router.push({
       pathname: "/checkout",
       query: {
-        plan: ajuste.planId,
-        frecuencia: ajuste.frecuenciaId,
-        molienda: ajuste.moliendaId,
-        perfil: ajuste.perfilId,
+        plan: seleccion.planId,
+        frecuencia: seleccion.frecuenciaId,
+        molienda: seleccion.moliendaId,
+        perfil: seleccion.perfilId,
       },
     });
   }
@@ -154,6 +152,9 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
           <div className="h-full bg-vino rounded-pill origin-left transition-transform duration-300" style={{ transform: `scaleX(${(paso + 1) / PREGUNTAS.length})`, width: "100%" }} />
         </div>
 
+        {/* key por pregunta: tazas y personas tienen las mismas opciones, y sin
+            remontar los botones la pregunta 5 parecía no haber aparecido. */}
+        <div key={actual} className="animate-[fadeUp_.3s_ease-out]">
         <h2 ref={tituloRef} tabIndex={-1} className="font-display font-bold text-tinta text-3xl mb-6 focus:outline-none">
           {p.titulo}
         </h2>
@@ -167,6 +168,7 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
             </button>
           ))}
         </div>
+        </div>
 
         {paso > 0 && (
           <button type="button" onClick={() => setPaso((x) => x - 1)} className="mt-6 font-body text-sm text-tinta-suave underline hover:text-vino">
@@ -177,18 +179,18 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
     );
   }
 
-  if (!recomendacion || !ajuste) return null;
+  if (!recomendacion || !seleccion) return null;
 
-  const plan = planes.find((p) => p.id === ajuste.planId) ?? planes[0];
-  const frecuencia = frecuencias.find((f) => f.id === ajuste.frecuenciaId) ?? frecuencias[0];
+  const plan = planes.find((p) => p.id === seleccion.planId) ?? planes[0];
+  const frecuencia = frecuencias.find((f) => f.id === seleccion.frecuenciaId) ?? frecuencias[0];
   const ajustado =
-    ajuste.planId !== recomendacion.planId || ajuste.frecuenciaId !== recomendacion.frecuenciaId ||
-    ajuste.moliendaId !== recomendacion.moliendaId || ajuste.perfilId !== recomendacion.perfilId;
+    seleccion.planId !== recomendacion.planId || seleccion.frecuenciaId !== recomendacion.frecuenciaId ||
+    seleccion.moliendaId !== recomendacion.moliendaId || seleccion.perfilId !== recomendacion.perfilId;
 
   const selector = (
     titulo: string,
     lista: { id: string; label_es: string; label_en: string }[],
-    clave: keyof typeof ajuste
+    clave: keyof typeof seleccion
   ) => (
     <div>
       <p className="font-mono text-[10px] tracking-[.15em] text-tinta-suave uppercase mb-2">{titulo}</p>
@@ -198,10 +200,10 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
             key={o.id}
             type="button"
             role="radio"
-            aria-checked={ajuste[clave] === o.id}
-            onClick={() => setAjuste({ ...ajuste, [clave]: o.id })}
+            aria-checked={seleccion[clave] === o.id}
+            onClick={() => setAjuste({ ...seleccion, [clave]: o.id })}
             className={`font-body font-600 text-sm px-4 py-2 rounded-pill border transition-colors ${
-              ajuste[clave] === o.id ? "bg-vino text-crema-papel border-vino" : "bg-white text-tinta-cafe border-borde hover:border-vino"
+              seleccion[clave] === o.id ? "bg-vino text-crema-papel border-vino" : "bg-white text-tinta-cafe border-borde hover:border-vino"
             }`}
           >
             {es ? o.label_es : o.label_en}

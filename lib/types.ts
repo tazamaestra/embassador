@@ -390,3 +390,18 @@ export interface CalculatorConfig {
 
 export type Mode = "cliente" | "embajador";
 export type Locale = "es" | "en";
+
+/** Dibujo de la bolsa mientras no hay foto real de cada café. */
+export type PatronBolsa = "puntos" | "ondas" | "rayas" | "hojas" | "montanas";
+
+/** Un slide del carrusel del hero: un café y su historia corta. */
+export interface HeroSlide {
+  cafeId: string;
+  bolsa: { fondo: string; acento: string; patron: PatronBolsa };
+  titulo_es: string;
+  titulo_en: string;
+  destacado_es: string;
+  destacado_en: string;
+  relato_es: string;
+  relato_en: string;
+}

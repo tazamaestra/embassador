@@ -1,12 +1,13 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/lib/nav";
-import { steps } from "@/lib/content";
+import { pasosSuscripcion } from "@/lib/pasos-suscripcion";
 import type { Locale } from "@/lib/types";
 
-// Tres pasos hasta pagar. Componente de servidor.
+// Los mismos tres pasos de /suscripcion. Componente de servidor.
 export default async function HowItWorks({ locale }: { locale: Locale }) {
   const t = await getTranslations("how");
   const es = locale !== "en";
+  const pasos = pasosSuscripcion(es);
 
   return (
     <section className="py-20" style={{ background: "linear-gradient(150deg,#7E181C,#4A0B0F)" }}>
@@ -24,7 +25,7 @@ export default async function HowItWorks({ locale }: { locale: Locale }) {
         </div>
 
         <ol className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {steps.map((step) => (
+          {pasos.map((step) => (
             <li
               key={step.n}
               className="rounded-card border border-white/10 p-6"
@@ -34,10 +35,10 @@ export default async function HowItWorks({ locale }: { locale: Locale }) {
                 {step.n}
               </span>
               <h3 className="font-display font-bold text-crema-papel text-xl mb-2">
-                {es ? step.t_es : step.t_en}
+                {step.t}
               </h3>
               <p className="font-body text-crema/70 text-sm leading-relaxed">
-                {es ? step.d_es : step.d_en}
+                {step.d}
               </p>
             </li>
           ))}

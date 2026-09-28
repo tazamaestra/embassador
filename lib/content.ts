@@ -1,18 +1,18 @@
 import rawContent from "../data/content.json";
 import rawSuscripcion from "../data/suscripcion.json";
 import type {
-  Product, ProductFilter, Method, Step, OriginFact, Faq,
-  BlogFilter, BlogPost, BlogPostRaw, HeroStat, Momento, MomentoId,
+  Product, ProductFilter, Method, OriginFact, Faq,
+  BlogFilter, BlogPost, BlogPostRaw, HeroSlide, HeroStat, Momento, MomentoId,
   SuscripcionEditorial,
 } from "./types";
 
 const c = rawContent as unknown as {
   brand: { name: string; tagline_es: string; tagline_en: string; country: string; currency: string; locale: string };
   heroStats: HeroStat[];
+  heroSlides: HeroSlide[];
   momentos: Momento[];
   products: (Product & { _disabled?: boolean })[];
   productFilters: ProductFilter[];
-  steps: Step[];
   originFacts: OriginFact[];
   faqs: Faq[];
   methods: (Method & { _disabled?: boolean })[];
@@ -21,7 +21,7 @@ const c = rawContent as unknown as {
   blogPosts: BlogPostRaw[];
 };
 
-export const { brand, heroStats, momentos, productFilters, steps,
+export const { brand, heroStats, heroSlides, momentos, productFilters,
   originFacts, faqs, blogFilters } = c;
 
 export const products = c.products.filter((p) => !p._disabled);
