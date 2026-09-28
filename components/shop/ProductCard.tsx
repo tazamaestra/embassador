@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import BolsaMockup from "@/components/shared/BolsaMockup";
+import { srcImagen } from "@/lib/cafes";
 import { Link } from "@/lib/nav";
 import { useTranslations } from "next-intl";
 import { formatPrice } from "@/lib/format";
@@ -48,11 +50,11 @@ export default function ProductCard({
           className="absolute top-3 left-3 font-mono text-[9px] tracking-[.15em] text-white px-2 py-1 rounded-btn uppercase z-10"
           style={{ background: "rgba(0,0,0,.28)" }}
         >
-          {tueste}
+          {t("tostion", { tueste: tueste.toLowerCase() })}
         </span>
         {product.img ? (
           <Image
-            src={`/${product.img.replace("assets/", "")}`}
+            src={srcImagen(product.img)}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -60,10 +62,16 @@ export default function ProductCard({
             className="object-contain object-center p-6 drop-shadow-md transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="absolute inset-0 flex items-end justify-center pb-3">
-            <span className="font-mono text-[10px] text-white/60 tracking-widest">
-              [ foto: {product.name} ]
-            </span>
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <BolsaMockup
+              id={`card-${product.id}`}
+              nombre={product.name}
+              region={product.region}
+              proceso={locale === "en" ? product.proceso_en : product.proceso_es}
+              {...product.bolsa}
+              decorativa
+              className="h-full w-auto drop-shadow-md transition-transform duration-300 group-hover:scale-105"
+            />
           </div>
         )}
       </Link>

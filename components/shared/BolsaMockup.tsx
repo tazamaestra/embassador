@@ -1,7 +1,7 @@
 import type { PatronBolsa } from "@/lib/types";
 
 // Mockup de la bolsa mientras no hay foto de cada café: misma silueta, color
-// y dibujo propios. Cuando lleguen las fotos se cambia por <Image> en el hero.
+// y dibujo propios. Donde el café tiene foto (product.img) se usa la foto.
 
 interface Props {
   id: string;
@@ -12,6 +12,8 @@ interface Props {
   acento: string;
   patron: PatronBolsa;
   className?: string;
+  /** Junto a un texto que ya nombra el café: el lector de pantalla la salta. */
+  decorativa?: boolean;
 }
 
 function Dibujo({ patron, acento }: { patron: PatronBolsa; acento: string }) {
@@ -39,13 +41,17 @@ function Dibujo({ patron, acento }: { patron: PatronBolsa; acento: string }) {
   }
 }
 
-export default function BolsaMockup({ id, nombre, region, proceso, fondo, acento, patron, className }: Props) {
+export default function BolsaMockup({ id, nombre, region, proceso, fondo, acento, patron, className, decorativa }: Props) {
   const p = `tm-bolsa-${id}`;
   // La silueta de la bolsa: sello arriba, cuerpo que se abre un poco hacia la base.
   const cuerpo = "M44 52 L256 52 L266 356 Q268 384 240 384 L60 384 Q32 384 34 356 Z";
 
   return (
-    <svg viewBox="0 0 300 400" role="img" aria-label={`Bolsa de café ${nombre}`} className={className}>
+    <svg
+      viewBox="0 0 300 400"
+      className={className}
+      {...(decorativa ? { "aria-hidden": true } : { role: "img", "aria-label": nombre })}
+    >
       <defs>
         <pattern id={`${p}-dibujo`} width="28" height="28" patternUnits="userSpaceOnUse">
           <Dibujo patron={patron} acento={acento} />
@@ -77,6 +83,10 @@ export default function BolsaMockup({ id, nombre, region, proceso, fondo, acento
         <rect x="30" y="336" width="240" height="60" fill={`url(#${p}-dibujo)`} opacity=".35" />
         <rect x="30" y="52" width="240" height="340" fill={`url(#${p}-luz)`} />
       </g>
+
+      {/* Contorno: separa la bolsa de un fondo del mismo color */}
+      <path d={cuerpo} fill="none" stroke="#fff" strokeOpacity=".22" strokeWidth="1.5" />
+      <rect x="44" y="20" width="212" height="36" rx="3" fill="none" stroke="#fff" strokeOpacity=".22" strokeWidth="1.5" />
 
       {/* Válvula */}
       <circle cx="150" cy="104" r="9" fill="#000" opacity=".25" />

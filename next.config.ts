@@ -3,8 +3,8 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
-// Las fotos de finca viven en el bucket público de Supabase (ver
-// supabase/sql/finca_fotos.sql). El host se saca del entorno para no clavar
+// Las fotos de finca y de producto viven en buckets públicos de Supabase (ver
+// supabase/sql/finca_fotos.sql y cafe_ediciones.sql). El host se saca del entorno para no clavar
 // el id del proyecto en el repo.
 const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
             protocol: "https",
             hostname: supabaseHost,
             pathname: "/storage/v1/object/public/fincas/**",
+          },
+          {
+            protocol: "https",
+            hostname: supabaseHost,
+            pathname: "/storage/v1/object/public/cafes/**",
           },
         ]
       : [],

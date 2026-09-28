@@ -40,6 +40,8 @@ export interface Product {
   momento: MomentoId;
   img: string | null;
   swatch: string;
+  /** Mockup de la bolsa: se dibuja mientras el café no tenga foto en img. */
+  bolsa: BolsaCafe;
   /** Dormido con FEATURE_AMBASSADORS. No se usa con el flag apagado. */
   wholesale?: number;
   wholesale_usd?: number;
@@ -394,10 +396,15 @@ export type Locale = "es" | "en";
 /** Dibujo de la bolsa mientras no hay foto real de cada café. */
 export type PatronBolsa = "puntos" | "ondas" | "rayas" | "hojas" | "montanas";
 
+export interface BolsaCafe {
+  fondo: string;
+  acento: string;
+  patron: PatronBolsa;
+}
+
 /** Un slide del carrusel del hero: un café y su historia corta. */
 export interface HeroSlide {
   cafeId: string;
-  bolsa: { fondo: string; acento: string; patron: PatronBolsa };
   titulo_es: string;
   titulo_en: string;
   destacado_es: string;

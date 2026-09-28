@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { findProduct, products } from "@/lib/content";
+import { obtenerCafe } from "@/lib/servidor/cafes";
 import { obtenerFotoFinca, urlFoto } from "@/lib/finca-fotos";
 import ProductoScreen from "@/components/shop/ProductoScreen";
 import type { Locale } from "@/lib/types";
@@ -24,7 +25,7 @@ export async function generateMetadata({
   params: Promise<{ locale: Locale; slug: string }>;
 }) {
   const { locale, slug } = await params;
-  const producto = findProduct(slug);
+  const producto = await obtenerCafe(slug);
   if (!producto) return {};
 
   return {

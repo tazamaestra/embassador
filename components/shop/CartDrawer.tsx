@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/lib/nav";
 import { useCartStore } from "@/lib/cart-store";
-import { findProduct } from "@/lib/content";
+import { useCafes } from "@/components/shared/CafesProvider";
 import { compararPrecios } from "@/lib/suscripcion";
 import { formatPrice } from "@/lib/format";
 import type { Locale } from "@/lib/types";
@@ -14,7 +14,14 @@ export default function CartDrawer() {
   const es = locale !== "en";
   const t = useTranslations("cart");
   const router = useRouter();
-  const { items, open, closeCart, setQty, removeItem, clear } = useCartStore();
+  const { items: guardados, open, closeCart, setQty, removeItem, clear } = useCartStore();
+  const cafes = useCafes();
+  // El carrito vive en localStorage con el precio de cuando se agregó. Se
+  // muestra el de hoy; el checkout cobra con el del servidor de todos modos.
+  const items = guardados.map((item) => {
+    const cafe = cafes.find((p) => p.id === item.id);
+    return cafe ? { ...item, name: cafe.name, price: cafe.precioCop, priceUsd: cafe.precioUsd } : item;
+  });
   const closeRef = useRef<HTMLButtonElement>(null);
 
   // El carrito lleva al checkout de una pantalla. Ahí se decide si es compra
@@ -36,7 +43,7 @@ export default function CartDrawer() {
 
   // Cuánto se ahorraría suscrito, con el mismo contenido del carrito.
   const ahorroSuscrito = items.reduce((suma, item) => {
-    const producto = findProduct(item.id);
+    const producto = cafes.find((p) => p.id === item.id);
     if (!producto) return suma;
     return (
       suma +

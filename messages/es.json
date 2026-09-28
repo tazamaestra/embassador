@@ -67,6 +67,7 @@
     "body": "CUERPO"
   },
   "shop": {
+    "tostion": "Tostión {tueste}",
     "kicker": "CATÁLOGO",
     "h1": "Los cafés",
     "sub": "Cinco fincas. Filtra por la hora en que lo vas a tomar.",
@@ -88,7 +89,7 @@
     "specAltura": "ALTURA",
     "specProceso": "PROCESO",
     "specVariedad": "VARIEDAD",
-    "specTueste": "TUESTE",
+    "specTueste": "TOSTIÓN",
     "specPeso": "PESO",
     "specNotas": "NOTAS",
     "add": "Agregar al carrito",

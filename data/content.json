@@ -12,16 +12,11 @@
     { "num": "5", "label_es": "Fincas", "label_en": "Farms" },
     { "num": "454 g", "label_es": "Por bolsa", "label_en": "Per bag" },
     { "num": "48 h", "label_es": "Del tueste al envío", "label_en": "Roast to shipping" }
-  ],
-  "_notaHeroSlides": "Carrusel del hero: un café por slide. 'bolsa' pinta el mockup SVG mientras no hay fotos reales de cada bolsa.",
+  ],
+  "_notaHeroSlides": "Carrusel del hero: un café por slide. La bolsa de cada café sale de products[].bolsa.",
   "heroSlides": [
     {
       "cafeId": "la-esperanza",
-      "bolsa": {
-        "fondo": "#6E1417",
-        "acento": "#F0A24B",
-        "patron": "puntos"
-      },
       "titulo_es": "El café contra el que",
       "destacado_es": "comparas los demás",
       "relato_es": "Es nuestra finca, en Balboa. La cereza se seca entera al sol y la taza sale con arándano y uva. Lo tostamos para que sea tu punto de partida: pruébalo y reconoces un café de especialidad.",
@@ -31,11 +26,6 @@
     },
     {
       "cafeId": "el-jardin",
-      "bolsa": {
-        "fondo": "#B6893B",
-        "acento": "#FBF3DD",
-        "patron": "ondas"
-      },
       "titulo_es": "Dulce como la panela",
       "destacado_es": "de las tres de la tarde",
       "relato_es": "Ana Milena Quiceno despulpa el grano y lo seca con parte de su miel, a 1.850 metros en Pitalito. El proceso honey le deja la panela y un final de mandarina que sostiene la tarde.",
@@ -45,11 +35,6 @@
     },
     {
       "cafeId": "el-descanso",
-      "bolsa": {
-        "fondo": "#3A2418",
-        "acento": "#C9486B",
-        "patron": "rayas"
-      },
       "titulo_es": "Mora y cacao",
       "destacado_es": "para la noche larga",
       "relato_es": "La familia Ipia lo cultiva a 1.900 metros, entre las montañas de Inzá. La cereza se seca entera y el grano se queda con la mora y el vino tinto. Cuerpo alto para cuando todavía falta.",
@@ -59,11 +44,6 @@
     },
     {
       "cafeId": "santa-rita",
-      "bolsa": {
-        "fondo": "#2F5D3A",
-        "acento": "#F0C14B",
-        "patron": "hojas"
-      },
       "titulo_es": "Chocolate y almendra",
       "destacado_es": "para arrancar temprano",
       "relato_es": "Gilberto Ramírez lava cada lote en su finca de Andes, Antioquia. Sale una taza limpia y redonda, de chocolate, almendra y un toque de naranja, que no pelea con nadie a las cinco de la mañana.",
@@ -73,11 +53,6 @@
     },
     {
       "cafeId": "la-cumbre",
-      "bolsa": {
-        "fondo": "#E8731E",
-        "acento": "#2A1A12",
-        "patron": "montanas"
-      },
       "titulo_es": "El más alto de los cinco",
       "destacado_es": "para un domingo sin afán",
       "relato_es": "A 2.050 metros, en Buesaco, el frío de Nariño hace que el grano madure despacio. Jorge Eliécer Muñoz cultiva bourbon rosado, una variedad escasa que da jazmín, lima y miel. Pide tomarse sin prisa.",
@@ -139,7 +114,7 @@
       "notas_en": "Red fruits, blueberry and grape. Citric acidity.",
       "historia_es": "Taza Maestra nació de una pregunta: ¿quién le enseña a la gente a distinguir un café de especialidad de uno comercial? Este café es la respuesta. Queremos que sea el punto de referencia, la taza contra la cual comparas todas las demás, para que aprendas a reconocer por tu cuenta cuándo un café es de calidad y cuándo no.",
       "historia_en": "Taza Maestra began with a question: who teaches people to tell specialty coffee from commercial coffee? This coffee is the answer. We want it to be the reference point, the cup you measure every other against, so you learn to tell for yourself when a coffee is good and when it isn't.",
-      "tueste_es": "Medio",
+      "tueste_es": "Media",
       "tueste_en": "Medium",
       "pesoG": 454,
       "precioCop": 45000,
@@ -149,6 +124,7 @@
       "momento": "tres-pm",
       "img": "assets/bag-maroon.png",
       "swatch": "linear-gradient(150deg,#7E181C,#4A0B0F)",
+      "bolsa": { "fondo": "#6E1417", "acento": "#F0A24B", "patron": "puntos" },
       "wholesale": 38000,
       "wholesale_usd": 9.5
     },
@@ -164,8 +140,8 @@
       "variedad": "Caturra",
       "notas_es": "Panela, mandarina y durazno. Cuerpo medio.",
       "notas_en": "Panela, mandarin and peach. Medium body.",
-      "tueste_es": "Medio claro",
-      "tueste_en": "Medium-light",
+      "tueste_es": "Media",
+      "tueste_en": "Medium",
       "pesoG": 454,
       "precioCop": 47000,
       "precioUsd": 11.5,
@@ -173,7 +149,8 @@
       "precioSuscriptorUsd": 10,
       "momento": "tres-pm",
       "img": null,
-      "swatch": "linear-gradient(150deg,#B6893B,#8a6a2c)"
+      "swatch": "linear-gradient(150deg,#B6893B,#8a6a2c)",
+      "bolsa": { "fondo": "#B6893B", "acento": "#FBF3DD", "patron": "ondas" }
     },
     {
       "id": "el-descanso",
@@ -187,7 +164,7 @@
       "variedad": "Colombia",
       "notas_es": "Mora, vino tinto y cacao. Cuerpo alto.",
       "notas_en": "Blackberry, red wine and cocoa. Full body.",
-      "tueste_es": "Medio",
+      "tueste_es": "Media",
       "tueste_en": "Medium",
       "pesoG": 454,
       "precioCop": 49000,
@@ -196,7 +173,8 @@
       "precioSuscriptorUsd": 10,
       "momento": "antes-del-deploy",
       "img": null,
-      "swatch": "linear-gradient(150deg,#3A2418,#1f120b)"
+      "swatch": "linear-gradient(150deg,#3A2418,#1f120b)",
+      "bolsa": { "fondo": "#3A2418", "acento": "#C9486B", "patron": "rayas" }
     },
     {
       "id": "santa-rita",
@@ -210,16 +188,17 @@
       "variedad": "Tabi",
       "notas_es": "Chocolate, almendra y naranja. Final dulce.",
       "notas_en": "Chocolate, almond and orange. Sweet finish.",
-      "tueste_es": "Medio oscuro",
-      "tueste_en": "Medium-dark",
+      "tueste_es": "Media",
+      "tueste_en": "Medium",
       "pesoG": 454,
       "precioCop": 42000,
       "precioUsd": 10.5,
       "precioSuscriptorCop": 35000,
       "precioSuscriptorUsd": 9,
       "momento": "madrugada",
-      "img": "assets/bag-green.png",
+      "img": null,
       "swatch": "linear-gradient(150deg,#2F5D3A,#1c3a24)",
+      "bolsa": { "fondo": "#2F5D3A", "acento": "#F0C14B", "patron": "hojas" },
       "wholesale": 28000,
       "wholesale_usd": 7
     },
@@ -235,8 +214,8 @@
       "variedad": "Bourbon rosado",
       "notas_es": "Jazmín, lima y miel. Acidez marcada.",
       "notas_en": "Jasmine, lime and honey. Pronounced acidity.",
-      "tueste_es": "Claro",
-      "tueste_en": "Light",
+      "tueste_es": "Media",
+      "tueste_en": "Medium",
       "pesoG": 454,
       "precioCop": 52000,
       "precioUsd": 13,
@@ -244,7 +223,8 @@
       "precioSuscriptorUsd": 11,
       "momento": "domingo-tranquilo",
       "img": null,
-      "swatch": "linear-gradient(150deg,#E8731E,#b8550f)"
+      "swatch": "linear-gradient(150deg,#E8731E,#b8550f)",
+      "bolsa": { "fondo": "#E8731E", "acento": "#2A1A12", "patron": "montanas" }
     }
   ],
   "productFilters": [

@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import BolsaMockup from "@/components/shared/BolsaMockup";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/lib/nav";
-import { momentos, productsByMomento } from "@/lib/content";
+import { momentos } from "@/lib/content";
+import { useCafesPorMomento } from "@/components/shared/CafesProvider";
+import { srcImagen } from "@/lib/cafes";
 import { compararPrecios } from "@/lib/suscripcion";
 import { formatPrice } from "@/lib/format";
 import type { Locale, MomentoId } from "@/lib/types";
@@ -19,7 +22,7 @@ export default function MomentQuiz({ locale }: { locale: Locale }) {
   const [momentoId, setMomentoId] = useState<MomentoId | null>(null);
 
   const momento = momentos.find((m) => m.id === momentoId);
-  const cafe = momentoId ? productsByMomento(momentoId)[0] : undefined;
+  const cafe = useCafesPorMomento(momentoId)[0];
   const precios = cafe ? compararPrecios(cafe) : null;
 
   // El quiz recomienda una bolsa del catálogo. La suscripción ya no es por
@@ -84,7 +87,7 @@ export default function MomentQuiz({ locale }: { locale: Locale }) {
               >
                 {cafe.img ? (
                   <Image
-                    src={`/${cafe.img.replace("assets/", "")}`}
+                    src={srcImagen(cafe.img)}
                     alt=""
                     width={130}
                     height={170}
@@ -92,9 +95,15 @@ export default function MomentQuiz({ locale }: { locale: Locale }) {
                     className="object-contain drop-shadow-xl p-4"
                   />
                 ) : (
-                  <span className="font-mono text-[10px] text-white/50 tracking-widest p-4 text-center">
-                    [ foto: {cafe.name} ]
-                  </span>
+                  <BolsaMockup
+                    id={`quiz-${cafe.id}`}
+                    nombre={cafe.name}
+                    region={cafe.region}
+                    proceso={es ? cafe.proceso_es : cafe.proceso_en}
+                    {...cafe.bolsa}
+                    decorativa
+                    className="w-[130px] h-auto drop-shadow-xl my-4"
+                  />
                 )}
               </div>
 

@@ -4,12 +4,12 @@
 // Las suscripciones NO pasan por aquí: usan cobro recurrente con fuente de
 // pago, en /api/suscripciones.
 //
-// El precio se calcula AQUÍ, desde el catálogo. Nunca se confía en el monto
-// que mande el navegador.
+// El precio se calcula AQUÍ, desde el catálogo con las ediciones del panel
+// (lib/servidor/cafes.ts). Nunca se confía en el monto que mande el navegador.
 
 import { NextResponse } from "next/server";
 import { crearClienteConToken } from "@/lib/supabase-admin";
-import { findProduct } from "@/lib/content";
+import { obtenerCafe } from "@/lib/servidor/cafes";
 import {
   WOMPI_CHECKOUT_URL, WOMPI_PUBLIC_KEY, aCentavos, firmaIntegridad,
   generarReferencia, wompiConfigurado,
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "cuerpo_invalido" }, { status: 400 });
   }
 
-  const producto = cuerpo.cafe ? findProduct(cuerpo.cafe) : undefined;
+  const producto = cuerpo.cafe ? await obtenerCafe(cuerpo.cafe) : undefined;
   if (!producto) {
     return NextResponse.json({ error: "cafe_desconocido" }, { status: 400 });
   }

@@ -8,6 +8,8 @@ import { ModeProvider } from "@/contexts/ModeContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/shop/CartDrawer";
+import { CafesProvider } from "@/components/shared/CafesProvider";
+import { obtenerCafes } from "@/lib/servidor/cafes";
 import "../globals.css";
 
 // Este es el layout raíz: `<html>` y `<body>` viven aquí, bajo [locale], y no
@@ -63,6 +65,8 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
   const messages = await getMessages();
+  // Precios, nombres y fotos editados en el panel. Cacheado: ver lib/servidor/cafes.ts.
+  const cafes = await obtenerCafes();
 
   return (
     <html
@@ -71,6 +75,7 @@ export default async function LocaleLayout({
     >
       <body className="bg-fondo text-tinta font-body antialiased">
         <NextIntlClientProvider messages={messages}>
+          <CafesProvider cafes={cafes}>
           <ModeProvider>
             <a href="#tm-main" className="skip-link">
               {(messages as { skip?: string }).skip ?? "Saltar al contenido"}
@@ -82,6 +87,7 @@ export default async function LocaleLayout({
             <Footer />
             <CartDrawer />
           </ModeProvider>
+          </CafesProvider>
         </NextIntlClientProvider>
       </body>
     </html>

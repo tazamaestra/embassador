@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import { heroSlides, heroStats, products } from "@/lib/content";
+import { heroSlides, heroStats } from "@/lib/content";
+import { obtenerCafes } from "@/lib/servidor/cafes";
 import HeroCarrusel, { type SlideHero } from "@/components/home/HeroCarrusel";
 import type { Locale } from "@/lib/types";
 
@@ -8,6 +9,7 @@ import type { Locale } from "@/lib/types";
 export default async function Hero({ locale }: { locale: Locale }) {
   const t = await getTranslations("hero");
   const en = locale === "en";
+  const products = await obtenerCafes();
 
   const slides: SlideHero[] = heroSlides.flatMap((s) => {
     const cafe = products.find((p) => p.id === s.cafeId);
@@ -21,7 +23,8 @@ export default async function Hero({ locale }: { locale: Locale }) {
       relato: en ? s.relato_en : s.relato_es,
       region: cafe.region,
       proceso: en ? cafe.proceso_en : cafe.proceso_es,
-      bolsa: s.bolsa,
+      img: cafe.img,
+      bolsa: cafe.bolsa,
     }];
   });
 

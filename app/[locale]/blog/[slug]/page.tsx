@@ -1,9 +1,12 @@
 import Image from "next/image";
+import BolsaMockup from "@/components/shared/BolsaMockup";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/lib/nav";
 import { routing } from "@/i18n/routing";
-import { blogPosts, findPost, findProduct } from "@/lib/content";
+import { blogPosts, findPost } from "@/lib/content";
+import { obtenerCafe } from "@/lib/servidor/cafes";
+import { srcImagen } from "@/lib/cafes";
 import type { Locale } from "@/lib/types";
 
 export function generateStaticParams() {
@@ -43,7 +46,7 @@ export default async function PostPage({
   const titulo = es ? post.t_es : post.t_en;
   const entrada = es ? post.d_es : post.d_en;
   const cuerpo = es ? post.cuerpo_es : post.cuerpo_en;
-  const cafe = post.cafeSlug ? findProduct(post.cafeSlug) : undefined;
+  const cafe = post.cafeSlug ? await obtenerCafe(post.cafeSlug) : undefined;
 
   return (
     <article className="bg-fondo">
@@ -91,13 +94,23 @@ export default async function PostPage({
               style={{ background: cafe.swatch }}
               aria-hidden="true"
             >
-              {cafe.img && (
+              {cafe.img ? (
                 <Image
-                  src={`/${cafe.img.replace("assets/", "")}`}
+                  src={srcImagen(cafe.img)}
                   alt=""
                   fill
                   sizes="160px"
                   className="object-contain p-4"
+                />
+              ) : (
+                <BolsaMockup
+                  id={`blog-${cafe.id}`}
+                  nombre={cafe.name}
+                  region={cafe.region}
+                  proceso={es ? cafe.proceso_es : cafe.proceso_en}
+                  {...cafe.bolsa}
+                  decorativa
+                  className="absolute inset-0 m-auto h-[85%] w-auto drop-shadow-md"
                 />
               )}
             </div>

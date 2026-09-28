@@ -3,7 +3,8 @@
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { products, productFilters } from "@/lib/content";
+import { productFilters } from "@/lib/content";
+import { useCafes } from "@/components/shared/CafesProvider";
 import ProductCard from "@/components/shop/ProductCard";
 import type { Locale } from "@/lib/types";
 
@@ -26,6 +27,7 @@ export default function TiendaScreen() {
   const t = useTranslations("shop");
   const locale = useLocale() as Locale;
   const [filter, setFilter] = useState("todos");
+  const products = useCafes();
 
   const filtered =
     filter === "todos" ? products : products.filter((p) => p.momento === filter);

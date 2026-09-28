@@ -147,7 +147,7 @@ describe("carrusel del hero", () => {
   });
 
   it("las bolsas no se repiten: cada café se ve distinto", () => {
-    const bolsas = heroSlides.map((s) => `${s.bolsa.fondo}|${s.bolsa.patron}`);
+    const bolsas = products.map((p) => `${p.bolsa.fondo}|${p.bolsa.patron}`);
     expect(new Set(bolsas).size).toBe(bolsas.length);
   });
 });

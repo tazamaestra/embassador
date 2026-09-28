@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import Image from "next/image";
 import { Link } from "@/lib/nav";
-import BolsaMockup from "@/components/home/BolsaMockup";
-import type { PatronBolsa } from "@/lib/types";
+import BolsaMockup from "@/components/shared/BolsaMockup";
+import { srcImagen } from "@/lib/cafes";
+import type { BolsaCafe } from "@/lib/types";
 
 // Un café por slide: cambian el texto y la bolsa, el fondo y el CTA se quedan.
 // Todos los slides viven apilados en la misma celda del grid, así el alto no
@@ -18,7 +20,9 @@ export interface SlideHero {
   relato: string;
   region: string;
   proceso: string;
-  bolsa: { fondo: string; acento: string; patron: PatronBolsa };
+  /** Foto de la bolsa; sin ella se dibuja el mockup. */
+  img: string | null;
+  bolsa: BolsaCafe;
 }
 
 interface Textos {
@@ -186,14 +190,27 @@ export default function HeroCarrusel({ slides, textos, pie }: { slides: SlideHer
                 className="absolute inset-0 rounded-full opacity-25"
                 style={{ background: `radial-gradient(circle, ${s.bolsa.acento} 0%, transparent 70%)`, transform: "scale(0.8)" }}
               />
-              <BolsaMockup
-                id={s.id}
-                nombre={s.nombre}
-                region={s.region}
-                proceso={s.proceso}
-                {...s.bolsa}
-                className="relative z-10 w-52 md:w-80 h-auto drop-shadow-2xl"
-              />
+              {s.img ? (
+                <Image
+                  src={srcImagen(s.img)}
+                  alt=""
+                  width={340}
+                  height={420}
+                  sizes="(max-width: 768px) 208px, 320px"
+                  priority={i === 0}
+                  className="relative z-10 w-52 md:w-80 h-auto drop-shadow-2xl"
+                />
+              ) : (
+                <BolsaMockup
+                  id={`hero-${s.id}`}
+                  nombre={s.nombre}
+                  region={s.region}
+                  proceso={s.proceso}
+                  {...s.bolsa}
+                  decorativa
+                  className="relative z-10 w-52 md:w-80 h-auto drop-shadow-2xl"
+                />
+              )}
             </div>
           );
         })}

@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import BolsaMockup from "@/components/shared/BolsaMockup";
+import { useCafe } from "@/components/shared/CafesProvider";
+import { srcImagen } from "@/lib/cafes";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter } from "@/lib/nav";
 import {
-  findMomento, findPostByCafe, findProduct,
+  findMomento, findPostByCafe, heroSlides,
 } from "@/lib/content";
 import { formatPrice } from "@/lib/format";
 import { mejorAhorro } from "@/lib/suscripcion";
@@ -33,7 +36,7 @@ export default function ProductoScreen({
   const { addItem } = useCartStore();
   const [added, setAdded] = useState(false);
 
-  const product = findProduct(slug);
+  const product = useCafe(slug);
 
   if (!product) {
     return (
@@ -48,6 +51,9 @@ export default function ProductoScreen({
 
   const notas = locale === "en" ? product.notas_en : product.notas_es;
   const proposito = locale === "en" ? product.historia_en : product.historia_es;
+  // Sin propósito escrito, junto a la foto de la finca va el relato del hero.
+  const slide = heroSlides.find((s) => s.cafeId === product.id);
+  const relatoFinca = slide && (locale === "en" ? slide.relato_en : slide.relato_es);
   const tueste = locale === "en" ? product.tueste_en : product.tueste_es;
   const proceso = locale === "en" ? product.proceso_en : product.proceso_es;
   const momento = findMomento(product.momento);
@@ -103,7 +109,7 @@ export default function ProductoScreen({
           >
             {product.img ? (
               <Image
-                src={`/${product.img.replace("assets/", "")}`}
+                src={srcImagen(product.img)}
                 alt={product.name}
                 width={320}
                 height={400}
@@ -112,14 +118,14 @@ export default function ProductoScreen({
                 priority
               />
             ) : (
-              <div
-                className="w-48 h-64 rounded-card border border-white/20 flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,.08)" }}
-              >
-                <span className="font-mono text-[10px] text-white/50 tracking-[.1em] text-center p-4">
-                  [ foto: {product.name} ]
-                </span>
-              </div>
+              <BolsaMockup
+                id={`ficha-${product.id}`}
+                nombre={product.name}
+                region={product.region}
+                proceso={locale === "en" ? product.proceso_en : product.proceso_es}
+                {...product.bolsa}
+                className="w-64 md:w-80 max-h-[380px] h-auto drop-shadow-2xl"
+              />
             )}
           </div>
 
@@ -219,6 +225,23 @@ export default function ProductoScreen({
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover"
                 />
+              </div>
+            )}
+
+            {!proposito && foto && (
+              <div className="p-8 md:p-10 flex flex-col justify-center">
+                <p className="font-mono text-[11px] tracking-[.2em] text-dorado uppercase mb-2">
+                  {t("fincaKicker")}
+                </p>
+                <h2 className="font-display font-bold text-tinta text-2xl md:text-3xl leading-snug mb-4">
+                  {product.finca}
+                </h2>
+                {relatoFinca && (
+                  <p className="font-body text-tinta-suave text-base leading-relaxed">{relatoFinca}</p>
+                )}
+                <p className="font-mono text-[10px] tracking-[.18em] text-tinta-suave uppercase mt-6">
+                  {product.productor} · {product.region} · {product.altura}
+                </p>
               </div>
             )}
 

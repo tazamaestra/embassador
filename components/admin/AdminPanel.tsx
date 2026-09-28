@@ -5,7 +5,7 @@ import { useRouter } from "@/lib/nav";
 import { useAuthStore } from "@/lib/auth-store";
 import { esEquipo } from "@/lib/finca-fotos";
 import AdminSuscripciones from "@/components/admin/AdminSuscripciones";
-import AdminFincas from "@/components/admin/AdminFincas";
+import AdminCafes from "@/components/admin/AdminCafes";
 import type { Catalogo, Locale } from "@/lib/types";
 
 // Panel del equipo. Dos roles en la app: suscriptor y admin. Admin es quien
@@ -20,7 +20,7 @@ export default function AdminPanel({ locale, catalogo }: { locale: Locale; catal
   const router = useRouter();
   const { user, loading, init } = useAuthStore();
   const [permiso, setPermiso] = useState<Permiso>("verificando");
-  const [pestaña, setPestaña] = useState<"suscripciones" | "fincas">("suscripciones");
+  const [pestaña, setPestaña] = useState<"suscripciones" | "cafes">("suscripciones");
 
   useEffect(() => {
     init();
@@ -73,7 +73,7 @@ export default function AdminPanel({ locale, catalogo }: { locale: Locale; catal
         <p className="font-mono text-[11px] tracking-[.2em] text-dorado uppercase mb-2">{es ? "EQUIPO" : "TEAM"}</p>
         <div role="tablist" aria-label={es ? "Secciones del panel" : "Panel sections"} className="flex gap-6 border-b border-borde mb-8">
           {tab("suscripciones", es ? "Suscripciones" : "Subscriptions")}
-          {tab("fincas", es ? "Fotos de finca" : "Farm photos")}
+          {tab("cafes", es ? "Cafés" : "Coffees")}
         </div>
       </div>
 
@@ -82,7 +82,7 @@ export default function AdminPanel({ locale, catalogo }: { locale: Locale; catal
           <AdminSuscripciones catalogo={catalogo} />
         </div>
       ) : (
-        <AdminFincas locale={locale} />
+        <AdminCafes locale={locale} />
       )}
     </div>
   );
