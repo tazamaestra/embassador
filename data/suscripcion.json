@@ -1,5 +1,63 @@
 {
   "_nota": "Solo textos. Precios, planes, frecuencias, moliendas, perfiles, prepagos y reglas viven en Supabase (supabase/sql/fase1_suscripciones.sql) y se editan allá.",
+  "club": {
+    "_nota": "PROPUESTA. Los puntos todavía no se cuentan en la base: definir los números con el negocio y construir el saldo en Supabase antes de anunciarlo en producción.",
+    "niveles": [
+      {
+        "id": "semilla",
+        "label_es": "Semilla",
+        "label_en": "Seed",
+        "desdeEnvio": 1,
+        "puntosEnvio": 100,
+        "desc_es": "Desde el primer envío ya sumas.",
+        "desc_en": "You start earning with the first shipment."
+      },
+      {
+        "id": "cosecha",
+        "label_es": "Cosecha",
+        "label_en": "Harvest",
+        "desdeEnvio": 4,
+        "puntosEnvio": 150,
+        "desc_es": "Cada envío vale 50% más puntos.",
+        "desc_en": "Every shipment is worth 50% more points."
+      },
+      {
+        "id": "reserva",
+        "label_es": "Reserva",
+        "label_en": "Reserve",
+        "desdeEnvio": 12,
+        "puntosEnvio": 200,
+        "desc_es": "El doble de puntos y los microlotes antes que nadie.",
+        "desc_en": "Double points and microlots before anyone else."
+      }
+    ],
+    "premios": [
+      {
+        "id": "bono",
+        "puntos": 400,
+        "label_es": "Bono de $20.000 para la tienda",
+        "label_en": "$20,000 store credit"
+      },
+      {
+        "id": "bolsa",
+        "puntos": 700,
+        "label_es": "Una bolsa extra del café que elijas",
+        "label_en": "An extra bag of the coffee you pick"
+      },
+      {
+        "id": "kit",
+        "puntos": 1500,
+        "label_es": "Kit de preparación: filtro, taza y guía",
+        "label_en": "Brewing kit: dripper, mug and guide"
+      },
+      {
+        "id": "visita",
+        "puntos": 3000,
+        "label_es": "Cupo en una visita a la finca",
+        "label_en": "A spot on a farm visit"
+      }
+    ]
+  },
   "beneficios": [
     {
       "id": "envio",
@@ -95,6 +153,12 @@
     "Tunja"
   ],
   "faqs": [
+    {
+      "q_es": "¿Cómo funcionan los puntos?",
+      "q_en": "How do points work?",
+      "a_es": "Cada envío que se despacha te da puntos, y entre más envíos seguidos llevas, más puntos vale cada uno. Los cambias desde tu cuenta por bonos para la tienda, café o premios. Pausar no te baja de nivel; cancelar sí reinicia la racha.",
+      "a_en": "Every shipment that goes out earns you points, and the longer your streak, the more each one is worth. Redeem them from your account for store credit, coffee or rewards. Pausing doesn't drop your level; cancelling restarts the streak."
+    },
     {
       "q_es": "¿Cuándo me cobran?",
       "q_en": "When am I charged?",

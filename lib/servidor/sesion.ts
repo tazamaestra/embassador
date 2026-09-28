@@ -1,7 +1,7 @@
 // Quién llama a un route handler y con qué rol. SOLO SERVIDOR.
 //
-// Dos roles: suscriptor (cualquiera con sesión) y admin (quien esté en la
-// tabla `usuarios`, lo que responde la función es_equipo() de Postgres). El
+// Dos roles: suscriptor (cualquiera con sesión) y admin (fila en `usuarios`
+// con rol 'admin', lo que responde la función es_equipo() de Postgres). El
 // rol se pregunta a la base con el token del usuario: el navegador no puede
 // declararse admin.
 

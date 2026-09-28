@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/lib/nav";
 import { heroSlides, heroStats } from "@/lib/content";
 import { obtenerCafes } from "@/lib/servidor/cafes";
 import HeroCarrusel, { type SlideHero } from "@/components/home/HeroCarrusel";
@@ -30,12 +31,12 @@ export default async function Hero({ locale }: { locale: Locale }) {
 
   const pie = (
     <>
-      <a
-        href="#tm-quiz"
+      <Link
+        href="/suscripcion"
         className="inline-block bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-6 py-3 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5 mb-10"
       >
         {t("cta")}
-      </a>
+      </Link>
 
       <div className="flex flex-wrap gap-8">
         {heroStats.map((stat, i) => (

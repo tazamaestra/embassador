@@ -9,7 +9,7 @@ import AdminCafes from "@/components/admin/AdminCafes";
 import type { Catalogo, Locale } from "@/lib/types";
 
 // Panel del equipo. Dos roles en la app: suscriptor y admin. Admin es quien
-// está en la tabla `usuarios` (es_equipo() en Postgres). Esta pantalla solo
+// tiene rol 'admin' en `usuarios` (es_equipo() en Postgres). Esta pantalla solo
 // decide qué mostrar; lo que protege los datos son las rutas de /api/admin y
 // las policies, que vuelven a preguntar el rol en el servidor.
 
@@ -52,7 +52,7 @@ export default function AdminPanel({ locale, catalogo }: { locale: Locale; catal
           <h1 className="font-display font-bold text-tinta text-3xl mb-3">{es ? "Panel del equipo" : "Team panel"}</h1>
           <p className="font-body text-tinta-suave text-base">
             {es
-              ? "Esta cuenta no está en el equipo interno. Si crees que debería estarlo, pide que te agreguen a la tabla de usuarios."
+              ? "Esta cuenta no está en el equipo interno. Si crees que debería estarlo, pide que te den el rol de admin."
               : "This account isn't on the internal team. If it should be, ask to be added to the users table."}
           </p>
         </div>

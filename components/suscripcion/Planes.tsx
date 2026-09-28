@@ -103,6 +103,13 @@ export default function Planes({ locale, catalogo }: { locale: Locale; catalogo:
             .
           </p>
         )}
+
+        <p className="font-body text-tinta-suave text-sm mt-4 text-center">
+          {es ? "¿No sabes cuál te sirve? " : "Not sure which one fits? "}
+          <Link href="/quiz" className="font-700 text-vino underline underline-offset-4 hover:text-naranja-700">
+            {es ? "Haz el quiz de 60 segundos" : "Take the 60-second quiz"}
+          </Link>
+        </p>
       </div>
     </section>
   );

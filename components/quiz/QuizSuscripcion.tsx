@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "@/lib/nav";
-import { QUIZ_GUARDADO, recomendar, type RespuestasQuiz } from "@/lib/quiz";
+import { QUIZ_GUARDADO, QUIZ_PROGRESO, recomendar, type RespuestasQuiz } from "@/lib/quiz";
+import { borrarProgreso, guardarProgreso, leerProgreso } from "@/lib/progreso";
 import { costoMensual } from "@/lib/suscripcion";
 import { etiqueta, formatCOP } from "@/lib/format";
 import { llamarApi } from "@/lib/pago";
@@ -11,10 +12,20 @@ import type { Catalogo, Locale } from "@/lib/types";
 
 // Cinco preguntas, un clic cada una, y sale el plan. La lógica está en
 // lib/quiz.ts (función pura) y las reglas en la base; aquí solo se pregunta.
-// La recomendación se puede ajustar antes de ir a pagar.
+// La recomendación se puede ajustar antes de ir a pagar. El avance queda
+// guardado (lib/progreso): si se corta, se retoma en la misma pregunta o en
+// el resultado.
 
 type Pregunta = "metodo" | "leche" | "perfil" | "tazas" | "personas";
 const PREGUNTAS: Pregunta[] = ["metodo", "leche", "perfil", "tazas", "personas"];
+
+type Ajuste = { planId: string; frecuenciaId: string; moliendaId: string; perfilId: string };
+
+interface Progreso {
+  paso: number;
+  r: Partial<RespuestasQuiz>;
+  ajuste: Ajuste | null;
+}
 
 interface Opcion {
   valor: string;
@@ -32,12 +43,36 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
 
   const [paso, setPaso] = useState(0);
   const [r, setR] = useState<Partial<RespuestasQuiz>>({});
-  const [ajuste, setAjuste] = useState<{ planId: string; frecuenciaId: string; moliendaId: string; perfilId: string } | null>(null);
+  const [ajuste, setAjuste] = useState<Ajuste | null>(null);
+  // Hasta leer lo guardado no se pinta nada: si no, se vería un instante la
+  // pregunta 1 antes de saltar a donde iba.
+  const [restaurado, setRestaurado] = useState(false);
   const tituloRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     init();
   }, [init]);
+
+  // Lo guardado vale si sus respuestas siguen existiendo en el catálogo.
+  useEffect(() => {
+    const g = leerProgreso<Progreso>(QUIZ_PROGRESO);
+    if (g && typeof g.paso === "number" && g.r && typeof g.r === "object") {
+      const valido =
+        (g.r.metodoId === undefined || quiz.metodos.some((m) => m.id === g.r.metodoId)) &&
+        (g.r.perfilId === undefined || perfiles.some((p) => p.id === g.r.perfilId));
+      if (valido) {
+        setR(g.r);
+        setAjuste(g.ajuste ?? null);
+        setPaso(Math.min(Math.max(g.paso, 0), PREGUNTAS.length));
+      }
+    }
+    setRestaurado(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (restaurado) guardarProgreso<Progreso>(QUIZ_PROGRESO, { paso, r, ajuste });
+  }, [restaurado, paso, r, ajuste]);
 
   useEffect(() => {
     if (paso > 0) tituloRef.current?.focus();
@@ -109,11 +144,8 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
 
   function suscribirme() {
     if (!respuestas || !seleccion) return;
-    try {
-      window.sessionStorage.setItem(QUIZ_GUARDADO, JSON.stringify(respuestas));
-    } catch {
-      // Sin almacenamiento el quiz no llega al perfil, pero la compra sigue.
-    }
+    // Sin almacenamiento el quiz no llega al perfil, pero la compra sigue.
+    guardarProgreso(QUIZ_GUARDADO, respuestas);
     // Con sesión, las respuestas van al perfil de una.
     if (user) void llamarApi("/api/quiz", { body: respuestas });
     // Los nombres son los que lee el checkout (?plan=&frecuencia=…).
@@ -132,6 +164,8 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
     `w-full text-left rounded-card border p-5 transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0 ${
       activo ? "border-vino bg-white ring-2 ring-vino" : "border-borde bg-white hover:border-vino"
     }`;
+
+  if (!restaurado) return <div className="min-h-[420px]" aria-busy="true" />;
 
   if (!completo) {
     const actual = PREGUNTAS[paso];
@@ -248,7 +282,7 @@ export default function QuizSuscripcion({ locale, catalogo }: { locale: Locale; 
         {es ? "Suscribirme con esto" : "Subscribe with this"}
       </button>
       <div className="flex justify-between mt-4">
-        <button type="button" onClick={() => { setPaso(0); setR({}); setAjuste(null); }} className="font-body text-sm text-tinta-suave underline hover:text-vino">
+        <button type="button" onClick={() => { setPaso(0); setR({}); setAjuste(null); borrarProgreso(QUIZ_PROGRESO); }} className="font-body text-sm text-tinta-suave underline hover:text-vino">
           {es ? "Empezar de nuevo" : "Start over"}
         </button>
         {ajustado && (

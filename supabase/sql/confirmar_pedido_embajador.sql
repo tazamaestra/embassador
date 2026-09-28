@@ -13,8 +13,8 @@
 -- Si cualquier línea no tiene stock suficiente, TODA la
 -- confirmación se revierte (no se descuenta stock a medias).
 --
--- Solo puede ejecutarla alguien presente en la tabla `usuarios`
--- (equipo interno) — se valida con auth.uid() dentro de la
+-- Solo puede ejecutarla un admin (fila en `usuarios` con rol
+-- 'admin'; los customers también están en esa tabla) — se valida con auth.uid() dentro de la
 -- función, independientemente de quién la invoque.
 --
 -- Mapeo actual sitio web -> producto real (ver lib/pedidos.ts):
@@ -39,7 +39,7 @@ declare
   v_costo_total   numeric := 0;
   r               record;
 begin
-  if not exists (select 1 from public.usuarios u where u.id = auth.uid()) then
+  if not exists (select 1 from public.usuarios u where u.id = auth.uid() and u.rol = 'admin') then
     raise exception 'No autorizado: solo el equipo interno puede confirmar pedidos.';
   end if;
 

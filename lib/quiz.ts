@@ -5,8 +5,10 @@
 
 import type { Frecuencia, Plan, ReglasQuiz } from "./types";
 
-/** sessionStorage: respuestas del quiz camino al checkout, que las guarda en el perfil al pagar. */
+/** lib/progreso: respuestas del quiz camino al checkout, que las guarda en el perfil al pagar. */
 export const QUIZ_GUARDADO = "tm-quiz";
+/** lib/progreso: por dónde va el quiz, para retomarlo si se corta. */
+export const QUIZ_PROGRESO = "tm-quiz-progreso";
 
 export interface RespuestasQuiz {
   metodoId: string;

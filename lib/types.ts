@@ -279,7 +279,33 @@ export interface OrigenDelMes {
   swatch: string;
 }
 
+/** Un escalón del club: se llega a él con envíos seguidos. */
+export interface NivelClub {
+  id: string;
+  label_es: string;
+  label_en: string;
+  desdeEnvio: number;
+  /** Puntos por envío en este nivel. */
+  puntosEnvio: number;
+  desc_es: string;
+  desc_en: string;
+}
+
+export interface PremioClub {
+  id: string;
+  puntos: number;
+  label_es: string;
+  label_en: string;
+}
+
+/** Programa de puntos por permanencia. */
+export interface ClubConstancia {
+  niveles: NivelClub[];
+  premios: PremioClub[];
+}
+
 export interface SuscripcionEditorial {
+  club: ClubConstancia;
   beneficios: BeneficioSuscriptor[];
   origenDelMes: OrigenDelMes;
   ciudades: string[];

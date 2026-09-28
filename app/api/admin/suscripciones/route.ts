@@ -1,6 +1,6 @@
 // Panel del equipo: resumen y listado de suscripciones. Solo lectura.
 //
-// Solo para quien esté en la tabla `usuarios` (es_equipo()). El rol se
+// Solo para admins (rol 'admin' en `usuarios`, es_equipo()). El rol se
 // comprueba aquí, con el token del usuario, antes de leer nada con la
 // service key.
 

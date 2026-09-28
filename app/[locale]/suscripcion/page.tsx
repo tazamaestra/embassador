@@ -8,7 +8,9 @@ import FaqAccordion from "@/components/shared/FaqAccordion";
 import ComoFunciona from "@/components/suscripcion/ComoFunciona";
 import Planes from "@/components/suscripcion/Planes";
 import Beneficios from "@/components/suscripcion/Beneficios";
+import Constancia from "@/components/suscripcion/Constancia";
 import OrigenDelMes from "@/components/suscripcion/OrigenDelMes";
+import RetomarSuscripcion from "@/components/suscripcion/RetomarSuscripcion";
 import type { Locale } from "@/lib/types";
 
 // Los precios vienen de la base: se lee en cada visita para que un cambio en
@@ -29,6 +31,7 @@ export default async function SuscripcionPage({
 
   return (
     <>
+      <RetomarSuscripcion />
       {/* Hero */}
       <section
         className="py-20 md:py-28"
@@ -58,22 +61,25 @@ export default async function SuscripcionPage({
           <Revelar retrasoMs={90}>
             <div className="flex flex-wrap gap-3">
               <a
-                href="#quiz"
+                href="#planes"
                 className="bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-6 py-3 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0"
               >
-                {es ? "Encontrar mi plan" : "Find my plan"}
+                {es ? "Ver los planes" : "See the plans"}
               </a>
               <a
-                href="#planes"
+                href="#club"
                 className="border border-crema/50 text-crema hover:bg-white/10 font-body font-700 text-base px-6 py-3 rounded-btn transition-all duration-150"
               >
-                {es ? "Ver los planes" : "See the plans"}
+                {es ? "Qué ganas quedándote" : "What you earn by staying"}
               </a>
             </div>
           </Revelar>
         </div>
       </section>
 
+      <Planes locale={locale} catalogo={catalogo} />
+      <Constancia locale={locale} catalogo={catalogo} />
+      <Beneficios locale={locale} />
       <ComoFunciona locale={locale} reglas={catalogo.reglas} />
 
       {/* Quiz */}
@@ -101,8 +107,6 @@ export default async function SuscripcionPage({
         </div>
       </section>
 
-      <Planes locale={locale} catalogo={catalogo} />
-      <Beneficios locale={locale} />
       <OrigenDelMes locale={locale} />
 
       <FaqAccordion
@@ -124,8 +128,8 @@ export default async function SuscripcionPage({
             </h2>
             <p className="font-body text-crema/75 text-base mb-8">
               {es
-                ? "Sin permanencia. Pausas, saltas o cancelas desde tu cuenta."
-                : "No commitment. Pause, skip or cancel from your account."}
+                ? "Sin permanencia: pausas, saltas o cancelas desde tu cuenta. Pero entre más te quedas, más vale cada envío."
+                : "No commitment: pause, skip or cancel from your account. But the longer you stay, the more each shipment is worth."}
             </p>
             <Link
               href="/checkout"

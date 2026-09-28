@@ -64,8 +64,8 @@ create policy "Embajadores eliminan sus propios pedidos"
   on public.pedidos_embajador for delete
   using (auth.uid() = embajador_id);
 
--- Los usuarios internos (tabla usuarios = admins/asesores) ven todo,
+-- Los admins (usuarios con rol 'admin', ver usuarios_rol.sql) ven todo,
 -- para poder confirmar disponibilidad y pasar el pedido a ventas.
 create policy "Administradores ven todos los pedidos"
   on public.pedidos_embajador for select
-  using (exists (select 1 from public.usuarios u where u.id = auth.uid()));
+  using (exists (select 1 from public.usuarios u where u.id = auth.uid() and u.rol = 'admin'));

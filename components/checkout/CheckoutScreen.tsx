@@ -6,7 +6,8 @@ import { Link, useRouter } from "@/lib/nav";
 import { costoMensual, enviosDelPrepago, montoCobro, primerEnvio } from "@/lib/suscripcion";
 import { etiqueta, formatCOP, formatFecha } from "@/lib/format";
 import { llamarApi } from "@/lib/pago";
-import { QUIZ_GUARDADO } from "@/lib/quiz";
+import { QUIZ_GUARDADO, QUIZ_PROGRESO } from "@/lib/quiz";
+import { CHECKOUT_BORRADOR as BORRADOR, borrarProgreso, guardarProgreso, leerProgreso } from "@/lib/progreso";
 import { useAuthStore } from "@/lib/auth-store";
 import NumeroAnimado from "@/components/shared/NumeroAnimado";
 import AuthPanel from "@/components/auth/AuthPanel";
@@ -14,14 +15,23 @@ import MetodoPagoForm, { type PagoTokenizado } from "@/components/pago/MetodoPag
 import CamposDireccion, { DIRECCION_VACIA } from "@/components/shared/CamposDireccion";
 import type { Catalogo, Locale, OpcionCatalogo, Plan } from "@/lib/types";
 
-type PasoId = "plan" | "frecuencia" | "molienda" | "perfil" | "prepago" | "envio" | "pago";
-const PASOS: PasoId[] = ["plan", "frecuencia", "molienda", "perfil", "prepago", "envio", "pago"];
+type PasoId = "plan" | "frecuencia" | "formato" | "molienda" | "perfil" | "prepago" | "envio" | "pago";
+const PASOS_TODOS: PasoId[] = ["plan", "frecuencia", "formato", "molienda", "perfil", "prepago", "envio", "pago"];
 
-// Entrar con Google saca del sitio y vuelve con la página recargada. Sin esto,
-// el cliente perdería los pasos y tendría que rehacerlos. Se guarda en
-// sessionStorage —no localStorage— para que no quede rondando después de
-// cerrar la pestaña. Nunca se guarda nada del pago.
-const BORRADOR = "tm-checkout";
+// Primero se pregunta grano o molido; el método solo hace falta si va molido.
+// "grano" es el id de la molienda en grano en la tabla `moliendas`.
+const MOLIENDA_GRANO = "grano";
+
+function pasosPara(moliendaId: string, hayGrano: boolean): PasoId[] {
+  if (!hayGrano) return PASOS_TODOS.filter((p) => p !== "formato");
+  return moliendaId === MOLIENDA_GRANO ? PASOS_TODOS.filter((p) => p !== "molienda") : PASOS_TODOS;
+}
+
+// Entrar con Google saca del sitio y vuelve con la página recargada; un pago
+// rechazado, una recarga o cerrar la pestaña cortan el flujo. El borrador
+// (lib/progreso) evita que el cliente tenga que rehacer los pasos. Nunca se
+// guarda nada del pago. Mientras exista, /suscripcion trae al cliente de
+// vuelta aquí (RetomarSuscripcion).
 
 interface Borrador {
   indice: number;
@@ -31,15 +41,8 @@ interface Borrador {
   perfilId: string;
   prepagoId: string;
   direccion: typeof DIRECCION_VACIA;
-}
-
-function leerSesion<T>(clave: string): T | null {
-  try {
-    const crudo = window.sessionStorage.getItem(clave);
-    return crudo ? (JSON.parse(crudo) as T) : null;
-  } catch {
-    return null;
-  }
+  /** Ya vio el resumen con todo completo: al volver, vuelve ahí. */
+  llegoAlResumen: boolean;
 }
 
 export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; catalogo: Catalogo }) {
@@ -61,16 +64,23 @@ export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; c
     Boolean(existe(frecuencias, searchParams.get("frecuencia"))) &&
     Boolean(existe(moliendas, searchParams.get("molienda"))) &&
     Boolean(existe(perfiles, searchParams.get("perfil")));
-  const [indice, setIndice] = useState(completoDelQuiz ? PASOS.indexOf("prepago") : 0);
+  const hayGrano = moliendas.some((m) => m.id === MOLIENDA_GRANO);
+  const molidas = moliendas.filter((m) => m.id !== MOLIENDA_GRANO);
+  const moliendaInicial = existe(moliendas, searchParams.get("molienda")) ?? moliendas[0]?.id ?? "";
+  const [indice, setIndice] = useState(completoDelQuiz ? pasosPara(moliendaInicial, hayGrano).indexOf("prepago") : 0);
   const [sentido, setSentido] = useState<"adelante" | "atras">("adelante");
   const [planId, setPlanId] = useState(planInicial);
   const [frecuenciaId, setFrecuenciaId] = useState(
     existe(frecuencias, searchParams.get("frecuencia")) ?? planBase?.frecuenciaDefectoId ?? frecuencias[0]?.id ?? ""
   );
-  const [moliendaId, setMoliendaId] = useState(existe(moliendas, searchParams.get("molienda")) ?? moliendas[0]?.id ?? "");
+  const [moliendaId, setMoliendaId] = useState(moliendaInicial);
   const [perfilId, setPerfilId] = useState(existe(perfiles, searchParams.get("perfil")) ?? perfiles[0]?.id ?? "");
   const [prepagoId, setPrepagoId] = useState(prepagos[0]?.id ?? "");
   const [direccion, setDireccion] = useState(DIRECCION_VACIA);
+  const [llegoAlResumen, setLlegoAlResumen] = useState(false);
+  // El borrador no se escribe hasta haber leído el que había: si no, el
+  // primer render lo pisaría con los valores por defecto.
+  const [restaurado, setRestaurado] = useState(false);
 
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
@@ -82,35 +92,52 @@ export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; c
     init();
   }, [init]);
 
-  // Restaurar va en un efecto y no en el estado inicial: sessionStorage no
+  // Restaurar va en un efecto y no en el estado inicial: localStorage no
   // existe en el servidor, y leerlo durante el render rompería la hidratación.
-  // Si llegó con parámetros del quiz, esos mandan sobre el borrador.
+  // Si llegó con parámetros distintos (otro plan, un quiz nuevo), esos mandan
+  // y del borrador solo se toman prepago y dirección. Si los parámetros son
+  // los mismos del borrador —volvió al quiz y siguió, o recargó— se retoma
+  // donde iba.
   useEffect(() => {
-    const b = leerSesion<Partial<Borrador>>(BORRADOR);
-    if (!b) return;
-    const vieneDelQuiz = searchParams.has("plan");
-    if (!vieneDelQuiz) {
-      if (b.planId && existe(planes, b.planId)) setPlanId(b.planId);
-      if (b.frecuenciaId && existe(frecuencias, b.frecuenciaId)) setFrecuenciaId(b.frecuenciaId);
-      if (b.moliendaId && existe(moliendas, b.moliendaId)) setMoliendaId(b.moliendaId);
-      if (b.perfilId && existe(perfiles, b.perfilId)) setPerfilId(b.perfilId);
-      if (typeof b.indice === "number") setIndice(Math.min(Math.max(b.indice, 0), PASOS.length - 1));
+    const b = leerProgreso<Partial<Borrador>>(BORRADOR);
+    if (b) {
+      const guardado = { plan: b.planId, frecuencia: b.frecuenciaId, molienda: b.moliendaId, perfil: b.perfilId };
+      const mismaEleccion = (["plan", "frecuencia", "molienda", "perfil"] as const).every((k) => {
+        const valor = searchParams.get(k);
+        return valor === null || valor === guardado[k];
+      });
+
+      if (mismaEleccion) {
+        const moliendaB = existe(moliendas, b.moliendaId ?? null) ?? moliendaInicial;
+        if (b.planId && existe(planes, b.planId)) setPlanId(b.planId);
+        if (b.frecuenciaId && existe(frecuencias, b.frecuenciaId)) setFrecuenciaId(b.frecuenciaId);
+        setMoliendaId(moliendaB);
+        if (b.perfilId && existe(perfiles, b.perfilId)) setPerfilId(b.perfilId);
+        const pasosB = pasosPara(moliendaB, hayGrano);
+        if (b.llegoAlResumen) {
+          setLlegoAlResumen(true);
+          setIndice(pasosB.length - 1);
+        } else if (typeof b.indice === "number") {
+          setIndice(Math.min(Math.max(b.indice, 0), pasosB.length - 1));
+        }
+      }
+      if (b.prepagoId && existe(prepagos, b.prepagoId)) setPrepagoId(b.prepagoId);
+      if (b.direccion) setDireccion({ ...DIRECCION_VACIA, ...b.direccion });
     }
-    if (b.prepagoId && existe(prepagos, b.prepagoId)) setPrepagoId(b.prepagoId);
-    if (b.direccion) setDireccion({ ...DIRECCION_VACIA, ...b.direccion });
+    setRestaurado(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    try {
-      window.sessionStorage.setItem(
-        BORRADOR,
-        JSON.stringify({ indice, planId, frecuenciaId, moliendaId, perfilId, prepagoId, direccion } satisfies Borrador)
-      );
-    } catch {
-      // Modo privado o almacenamiento lleno: se sigue sin borrador.
-    }
-  }, [indice, planId, frecuenciaId, moliendaId, perfilId, prepagoId, direccion]);
+    if (!restaurado) return;
+    guardarProgreso<Borrador>(BORRADOR, { indice, planId, frecuenciaId, moliendaId, perfilId, prepagoId, direccion, llegoAlResumen });
+  }, [restaurado, indice, planId, frecuenciaId, moliendaId, perfilId, prepagoId, direccion, llegoAlResumen]);
+
+  // Llegar al resumen lo marca: desde ahí, cualquier vuelta al checkout
+  // (recargar, pago rechazado, volver de otra página) abre el resumen.
+  useEffect(() => {
+    if (restaurado && indice === pasosPara(moliendaId, hayGrano).length - 1) setLlegoAlResumen(true);
+  }, [restaurado, indice, moliendaId, hayGrano]);
 
   // Al cambiar de paso el foco va al título: si no, el teclado se queda en un
   // botón que ya no existe y el lector de pantalla no anuncia nada.
@@ -137,8 +164,9 @@ export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; c
   }
 
   const cobro = montoCobro(plan, frecuencia, prepago, reglas);
-  const pasoActual = PASOS[indice];
-  const esUltimo = indice === PASOS.length - 1;
+  const pasos = pasosPara(moliendaId, hayGrano);
+  const pasoActual = pasos[indice];
+  const esUltimo = indice === pasos.length - 1;
 
   const direccionCompleta = Boolean(
     direccion.nombre && direccion.telefono && direccion.linea && direccion.ciudad && direccion.departamento
@@ -146,7 +174,7 @@ export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; c
 
   function avanzar() {
     setSentido("adelante");
-    setIndice((i) => Math.min(i + 1, PASOS.length - 1));
+    setIndice((i) => Math.min(i + 1, pasos.length - 1));
   }
 
   function retroceder() {
@@ -165,7 +193,7 @@ export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; c
     const r = await llamarApi<{ cobro: string }>("/api/suscripciones", {
       body: {
         planId, frecuenciaId, moliendaId, perfilId, prepagoId, direccion,
-        quiz: leerSesion(QUIZ_GUARDADO) ?? undefined,
+        quiz: leerProgreso(QUIZ_GUARDADO) ?? undefined,
         pago: {
           tipo: pago.tipo, token: pago.token,
           acceptanceToken: pago.acceptanceToken, personalAuthToken: pago.personalAuthToken,
@@ -174,12 +202,7 @@ export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; c
     });
 
     if (r.ok) {
-      try {
-        window.sessionStorage.removeItem(BORRADOR);
-        window.sessionStorage.removeItem(QUIZ_GUARDADO);
-      } catch {
-        // Sin almacenamiento no hay nada que limpiar.
-      }
+      borrarProgreso(BORRADOR, QUIZ_GUARDADO, QUIZ_PROGRESO);
       router.push("/confirmacion");
       return;
     }
@@ -198,7 +221,7 @@ export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; c
   return (
     <div className="bg-fondo min-h-screen py-10">
       <div className="max-w-[640px] mx-auto px-[22px]">
-        <Progreso total={PASOS.length} indice={indice} es={es} />
+        <Progreso total={pasos.length} indice={indice} es={es} />
 
         <div key={pasoActual} className={sentido === "adelante" ? "tm-paso-adelante" : "tm-paso-atras"}>
           {pasoActual === "plan" && (
@@ -225,13 +248,39 @@ export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; c
             />
           )}
 
+          {pasoActual === "formato" && (
+            <PasoOpciones
+              ref={tituloRef}
+              es={es}
+              titulo={es ? "¿En grano o molido?" : "Whole bean or ground?"}
+              ayuda={es ? "Lo cambias cuando quieras desde tu cuenta." : "Change it anytime from your account."}
+              opciones={[
+                {
+                  id: "grano", label_es: "En grano", label_en: "Whole bean",
+                  desc_es: "Tienes molino y lo mueles justo antes de preparar.",
+                  desc_en: "You have a grinder and grind right before brewing.",
+                },
+                {
+                  id: "molido", label_es: "Molido", label_en: "Ground",
+                  desc_es: "Lo molemos para tu método el día del despacho.",
+                  desc_en: "We grind it for your method on shipping day.",
+                },
+              ]}
+              valor={moliendaId === MOLIENDA_GRANO ? "grano" : "molido"}
+              onElegir={(v) => {
+                if (v === "grano") setMoliendaId(MOLIENDA_GRANO);
+                else if (moliendaId === MOLIENDA_GRANO) setMoliendaId(molidas[0]?.id ?? moliendaId);
+              }}
+            />
+          )}
+
           {pasoActual === "molienda" && (
             <PasoOpciones
               ref={tituloRef}
               es={es}
               titulo={es ? "¿Cómo lo preparas?" : "How do you brew it?"}
-              ayuda={es ? "Lo molemos para tu método el día del despacho. O en grano, si tienes molino." : "We grind for your method on shipping day. Or whole bean, if you have a grinder."}
-              opciones={moliendas}
+              ayuda={es ? "Lo molemos a la medida de tu método." : "We grind it to suit your method."}
+              opciones={hayGrano ? molidas : moliendas}
               valor={moliendaId}
               onElegir={setMoliendaId}
             />
@@ -368,6 +417,21 @@ export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; c
             </button>
           )}
         </div>
+
+        {/* /suscripcion devuelve aquí mientras haya borrador: esta es la
+            salida para quien de verdad quiere empezar otra vez. */}
+        <p className="font-body text-tinta-suave text-sm mt-10 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              borrarProgreso(BORRADOR, QUIZ_GUARDADO, QUIZ_PROGRESO);
+              router.push("/suscripcion");
+            }}
+            className="underline underline-offset-4 hover:text-vino"
+          >
+            {es ? "Descartar y volver a ver los planes" : "Discard and see the plans again"}
+          </button>
+        </p>
       </div>
     </div>
   );

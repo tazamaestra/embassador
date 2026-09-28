@@ -65,6 +65,7 @@ export function productsByMomento(id: MomentoId): Product[] {
 export const suscripcionEditorial = rawSuscripcion as unknown as SuscripcionEditorial;
 
 export const {
+  club,
   beneficios,
   origenDelMes,
   ciudades,
