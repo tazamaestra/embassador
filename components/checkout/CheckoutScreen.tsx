@@ -31,7 +31,7 @@ function pasosPara(moliendaId: string, hayGrano: boolean): PasoId[] {
 // rechazado, una recarga o cerrar la pestaña cortan el flujo. El borrador
 // (lib/progreso) evita que el cliente tenga que rehacer los pasos. Nunca se
 // guarda nada del pago. Mientras exista, /suscripcion trae al cliente de
-// vuelta aquí (RetomarSuscripcion).
+// vuelta aquí (cookie de lib/progreso).
 
 interface Borrador {
   indice: number;

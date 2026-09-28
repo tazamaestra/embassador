@@ -1,5 +1,7 @@
+import { cookies } from "next/headers";
 import { setRequestLocale } from "next-intl/server";
-import { Link } from "@/lib/nav";
+import { Link, redirect } from "@/lib/nav";
+import { COOKIE_RETOMAR } from "@/lib/progreso";
 import { faqsSuscripcion } from "@/lib/content";
 import { obtenerCatalogo } from "@/lib/catalogo";
 import { formatCOP } from "@/lib/format";
@@ -10,7 +12,6 @@ import Planes from "@/components/suscripcion/Planes";
 import Beneficios from "@/components/suscripcion/Beneficios";
 import Constancia from "@/components/suscripcion/Constancia";
 import OrigenDelMes from "@/components/suscripcion/OrigenDelMes";
-import RetomarSuscripcion from "@/components/suscripcion/RetomarSuscripcion";
 import type { Locale } from "@/lib/types";
 
 // Los precios vienen de la base: se lee en cada visita para que un cambio en
@@ -26,12 +27,17 @@ export default async function SuscripcionPage({
   setRequestLocale(locale);
   const es = locale !== "en";
 
+  // Quien ya empezó vuelve a donde iba sin pasar por los planes. La cookie la
+  // mantiene lib/progreso; el checkout tiene cómo descartar y volver aquí.
+  const retomar = (await cookies()).get(COOKIE_RETOMAR)?.value;
+  if (retomar === "checkout") redirect({ href: "/checkout", locale });
+  if (retomar === "quiz") redirect({ href: "/quiz", locale });
+
   const catalogo = await obtenerCatalogo();
   const desde = Math.min(...catalogo.planes.map((p) => p.precioEnvioCop));
 
   return (
     <>
-      <RetomarSuscripcion />
       {/* Hero */}
       <section
         className="py-20 md:py-28"
