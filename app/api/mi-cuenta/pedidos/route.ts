@@ -4,8 +4,8 @@
 //
 // Nombre, correo y teléfono salen de su ficha. El precio sale del catálogo
 // (nunca del navegador). Con el inventario conectado, el pedido se crea allá
-// (POST /pedidos, ver docs/contrato-api-inventario.md); si no, en el
-// respaldo local y se gestiona en la pestaña Pedidos del panel.
+// (POST /pedidos, ver docs/contrato-api-inventario.md); si no está, da
+// error (los pedidos solo viven en el inventario).
 
 import { NextResponse } from "next/server";
 import { crearClienteAdmin } from "@/lib/supabase-admin";
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     throw e;
   }
 
-  const registro = await registrarPedido(db, {
+  const registro = await registrarPedido({
     referencia: generarReferencia("PED"),
     origen: "cuenta",
     cliente,

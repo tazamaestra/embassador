@@ -50,6 +50,12 @@ beforeAll(async () => {
           compras: [{ id: "V-1", fecha: "2026-11-08", producto: "santa-rita", presentacion: "cuarteron", gramos: 2250, cantidad: 8, total: 1200000 }],
         });
       }
+      const inglesa = { id: "3f2b8c1e-1d2a-4c3b-9e8f-0a1b2c3d4e5f", nombre: "Yami", negocio: "La Inglesa", documento: "900555111-2", email: null, telefono: null, ciudad: "Pereira" };
+      if (req.method === "GET" && url.startsWith("/clientes?")) {
+        const q = new URL(url, "http://x").searchParams.get("buscar") ?? "";
+        return responder(res, 200, { clientes: "la inglesa".includes(q.toLowerCase()) ? [inglesa] : [] });
+      }
+      if (req.method === "GET" && (url === `/clientes/${inglesa.id}` || url === "/clientes/900555111-2")) return responder(res, 200, inglesa);
       if (url.startsWith("/clientes/")) return responder(res, 404, { error: "cliente_no_encontrado" });
       responder(res, 500, { error: "interno" });
     });
@@ -113,6 +119,24 @@ describe("adaptador del inventario (servidor falso con el contrato)", () => {
     const r = await inv.obtenerCompras("900123456-7");
     expect(r.simuladas).toBe(false);
     expect(r.compras[0]).toMatchObject({ producto: "Chambrana · cuarterón", cantidad: 8, esCuarteron: true, totalCop: 1200000 });
+  });
+
+  it("busca clientes y lee uno por su ID o su NIT", async () => {
+    expect((await inv.buscarClientesInventario("ingl"))?.map((c) => c.negocio)).toEqual(["La Inglesa"]);
+    expect(await inv.buscarClientesInventario("zzz")).toEqual([]);
+    const porId = await inv.clienteDelInventario("3f2b8c1e-1d2a-4c3b-9e8f-0a1b2c3d4e5f");
+    expect(porId.estado === "ok" && porId.cliente.documento).toBe("900555111-2");
+    expect((await inv.clienteDelInventario("900555111-2")).estado).toBe("ok");
+    expect((await inv.clienteDelInventario("1088296001")).estado).toBe("no_encontrado");
+  });
+
+  it("vinculado, se busca por su ID; si no, por su NIT", () => {
+    expect(inv.claveInventario({ inventarioId: "abc", documento: "123" })).toBe("abc");
+    expect(inv.claveInventario({ inventarioId: null, documento: "123" })).toBe("123");
+  });
+
+  it("un NIT que el inventario no conoce queda marcado como no registrado", async () => {
+    expect(await inv.obtenerCompras("1088296001")).toEqual({ estado: "no_registrado", compras: [], simuladas: false });
   });
 
   it("con un token malo, falla sin lanzar", async () => {

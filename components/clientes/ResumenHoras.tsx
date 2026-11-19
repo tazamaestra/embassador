@@ -129,6 +129,10 @@ export function AvisoInventario({ estado, es }: { estado: ResumenCliente["invent
       "Falta el NIT o cédula del cliente: sin él no se pueden buscar sus compras.",
       "The client's tax ID is missing: purchases can't be looked up without it.",
     ],
+    no_registrado: [
+      "No se encontró este cliente en el inventario, así que no se ven sus compras ni suman horas. Vincúlalo arriba, en «Cliente en el inventario».",
+      "This client wasn't found in the inventory system, so no purchases or hours show up. Link it above, under “Inventory client”.",
+    ],
     error: [
       "No pudimos leer las compras en este momento. Intenta de nuevo en un rato.",
       "We couldn't load purchases right now. Try again in a while.",

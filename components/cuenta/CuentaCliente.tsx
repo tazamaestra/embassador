@@ -8,6 +8,7 @@ import { llamarApi } from "@/lib/pago";
 import { CUARTERONES_MES_REGALO, CUARTERONES_POR_HORA } from "@/lib/capacitacion";
 import type { Locale, Pedido, ResumenCliente } from "@/lib/types";
 import NuevoPedido from "@/components/cuenta/NuevoPedido";
+import MisCursos from "@/components/cuenta/MisCursos";
 import ListaPedidos from "@/components/clientes/ListaPedidos";
 import { AvisoInventario, ListaCapacitaciones, NotaSimuladas, TablaCompras, TarjetasHoras } from "@/components/clientes/ResumenHoras";
 
@@ -233,6 +234,8 @@ export default function CuentaCliente({ locale }: { locale: Locale }) {
           <TarjetasHoras horas={horas} es={es} />
         </section>
 
+        <MisCursos es={es} />
+
         <section className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display font-bold text-tinta text-2xl">{es ? "Tus pedidos" : "Your orders"}</h2>
@@ -253,7 +256,8 @@ export default function CuentaCliente({ locale }: { locale: Locale }) {
           <section className="space-y-4">
             <h2 className="font-display font-bold text-tinta text-2xl">{es ? "Tus compras" : "Your purchases"}</h2>
             {comprasSimuladas && <NotaSimuladas es={es} />}
-            {inventario === "ok" ? (
+            {/* Al cliente no se le habla del inventario: si su NIT no está, simplemente aún no hay compras. */}
+            {inventario === "ok" || inventario === "no_registrado" ? (
               <TablaCompras compras={compras} es={es} />
             ) : (
               <AvisoInventario estado={inventario === "sin_documento" ? "error" : inventario} es={es} />

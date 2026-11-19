@@ -22,10 +22,10 @@ import { esLineaCuarteron } from "@/lib/capacitacion";
 import { products } from "@/lib/content";
 import type { CompraInventario, EstadoPedido, Pedido } from "@/lib/types";
 import type {
-  CrearPedidoInventario, ErrorInventario, EstadoPedidoInventario, PagoPedidoInventario, PedidoInventario,
+  ClienteInventario, CrearPedidoInventario, ErrorInventario, EstadoPedidoInventario, PagoPedidoInventario, PedidoInventario,
 } from "@/lib/inventario-contrato";
 
-export type EstadoInventario = "ok" | "sin_configurar" | "sin_documento" | "error";
+export type EstadoInventario = "ok" | "sin_configurar" | "sin_documento" | "no_registrado" | "error";
 
 const TIEMPO_MAXIMO_MS = 8000;
 
@@ -127,18 +127,28 @@ export function comprasSimuladas(documento: string, hoy: Date = new Date()): Com
   return lineas.map(normalizar).sort((a, b) => b.fecha.localeCompare(a.fecha) || a.id.localeCompare(b.id));
 }
 
+/**
+ * Con qué se busca al cliente en el inventario: su ID si está vinculado
+ * (no depende del NIT ni del nombre) o, si no, su NIT o cédula. La API
+ * acepta los dos en /clientes/{clave}.
+ */
+export function claveInventario(cliente: { inventarioId: string | null; documento: string }): string {
+  return cliente.inventarioId || cliente.documento;
+}
+
+/** `clave`: ID del cliente en el inventario o su NIT (ver claveInventario). */
 export async function obtenerCompras(
-  documento: string
+  clave: string
 ): Promise<{ estado: EstadoInventario; compras: CompraInventario[]; simuladas: boolean }> {
-  if (!documento) return { estado: "sin_documento", compras: [], simuladas: false };
+  if (!clave) return { estado: "sin_documento", compras: [], simuladas: false };
 
   const base = process.env.INVENTARIO_API_URL;
   if (!base || process.env.INVENTARIO_MOCK === "1") {
-    return { estado: "ok", compras: comprasSimuladas(documento), simuladas: true };
+    return { estado: "ok", compras: comprasSimuladas(clave), simuladas: true };
   }
 
   const ruta = (process.env.INVENTARIO_RUTA ?? "/clientes/{documento}/compras")
-    .replace("{documento}", encodeURIComponent(documento));
+    .replace("{documento}", encodeURIComponent(clave));
   const token = process.env.INVENTARIO_API_TOKEN;
 
   try {
@@ -147,8 +157,8 @@ export async function obtenerCompras(
       cache: "no-store",
       signal: AbortSignal.timeout(TIEMPO_MAXIMO_MS),
     });
-    // Un cliente que el inventario no conoce = sin compras, no un error.
-    if (r.status === 404) return { estado: "ok", compras: [], simuladas: false };
+    // El inventario no conoce ese cliente: sin compras, y el panel lo avisa.
+    if (r.status === 404) return { estado: "no_registrado", compras: [], simuladas: false };
     if (!r.ok) return { estado: "error", compras: [], simuladas: false };
 
     const cuerpo = (await r.json()) as unknown;
@@ -256,10 +266,10 @@ export async function crearPedidoEnInventario(
   return { ok: false, motivo: "no_disponible" };
 }
 
-/** GET /clientes/{documento}/pedidos. null si el inventario no respondió. */
-export async function pedidosDeCliente(documento: string): Promise<PedidoInventario[] | null> {
-  if (!documento) return [];
-  const r = await llamarInventario<{ pedidos: PedidoInventario[] }>(`/clientes/${encodeURIComponent(documento)}/pedidos`);
+/** GET /clientes/{clave}/pedidos. null si el inventario no respondió. */
+export async function pedidosDeCliente(clave: string): Promise<PedidoInventario[] | null> {
+  if (!clave) return [];
+  const r = await llamarInventario<{ pedidos: PedidoInventario[] }>(`/clientes/${encodeURIComponent(clave)}/pedidos`);
   if (r.ok) return Array.isArray(r.data?.pedidos) ? r.data.pedidos : [];
   if (r.status === 404) return [];
   return null;
@@ -275,4 +285,24 @@ export async function informarPagoAlInventario(referenciaWeb: string, pago: Pago
 export async function pedidoPorReferencia(referenciaWeb: string): Promise<PedidoInventario | null> {
   const r = await llamarInventario<PedidoInventario>(`/pedidos/${encodeURIComponent(referenciaWeb)}`);
   return r.ok ? r.data : null;
+}
+
+// ── Clientes del inventario (vincular desde el panel) ─────────────────────
+
+/** GET /clientes?buscar=: para elegir el cliente del inventario. null si no respondió. */
+export async function buscarClientesInventario(texto: string): Promise<ClienteInventario[] | null> {
+  if (!inventarioConectado()) return null;
+  const q = new URLSearchParams({ buscar: texto.slice(0, 100), limite: "20" });
+  const r = await llamarInventario<{ clientes: ClienteInventario[] }>(`/clientes?${q}`);
+  return r.ok ? (Array.isArray(r.data?.clientes) ? r.data.clientes : []) : null;
+}
+
+/** GET /clientes/{clave}: el cliente por su ID o su NIT, leído en vivo. */
+export async function clienteDelInventario(
+  clave: string
+): Promise<{ estado: "ok"; cliente: ClienteInventario } | { estado: "no_encontrado" | "error" }> {
+  if (!clave || !inventarioConectado()) return { estado: "error" };
+  const r = await llamarInventario<ClienteInventario>(`/clientes/${encodeURIComponent(clave)}`);
+  if (r.ok && r.data?.id) return { estado: "ok", cliente: r.data };
+  return { estado: r.status === 404 ? "no_encontrado" : "error" };
 }

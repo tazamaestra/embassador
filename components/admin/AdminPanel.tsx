@@ -5,8 +5,8 @@ import { useRouter } from "@/lib/nav";
 import { useAuthStore } from "@/lib/auth-store";
 import { esEquipo } from "@/lib/finca-fotos";
 import AdminClientes from "@/components/admin/AdminClientes";
-import AdminPedidos from "@/components/admin/AdminPedidos";
 import AdminMuestras from "@/components/admin/AdminMuestras";
+import AdminCursos from "@/components/admin/AdminCursos";
 import AdminCafes from "@/components/admin/AdminCafes";
 import type { Locale } from "@/lib/types";
 
@@ -16,7 +16,7 @@ import type { Locale } from "@/lib/types";
 // /api/admin y las policies, que vuelven a preguntar el rol en el servidor.
 
 type Permiso = "verificando" | "concedido" | "denegado";
-type Pestaña = "clientes" | "pedidos" | "muestras" | "cafes";
+type Pestaña = "clientes" | "cursos" | "muestras" | "cafes";
 
 export default function AdminPanel({ locale }: { locale: Locale }) {
   const es = locale !== "en";
@@ -83,7 +83,7 @@ export default function AdminPanel({ locale }: { locale: Locale }) {
         <p className="font-mono text-[11px] tracking-[.2em] text-dorado uppercase mb-2">{es ? "EQUIPO" : "TEAM"}</p>
         <div role="tablist" aria-label={es ? "Secciones del panel" : "Panel sections"} className="flex gap-6 border-b border-borde mb-8 overflow-x-auto">
           {tab("clientes", es ? "Clientes" : "Clients")}
-          {tab("pedidos", es ? "Pedidos" : "Orders")}
+          {tab("cursos", es ? "Cursos" : "Courses")}
           {tab("muestras", es ? "Muestras" : "Samples")}
           {tab("cafes", es ? "Cafés" : "Coffees")}
         </div>
@@ -94,7 +94,7 @@ export default function AdminPanel({ locale }: { locale: Locale }) {
       ) : (
         <div className="max-w-310 mx-auto px-5.5 pb-16">
           {pestaña === "clientes" && <AdminClientes es={es} />}
-          {pestaña === "pedidos" && <AdminPedidos es={es} />}
+          {pestaña === "cursos" && <AdminCursos es={es} />}
           {pestaña === "muestras" && <AdminMuestras es={es} />}
         </div>
       )}

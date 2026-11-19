@@ -23,6 +23,7 @@ export function aCliente(f: Record<string, unknown>): Cliente {
     telefono: texto(f.telefono),
     negocio: texto(f.negocio),
     documento: texto(f.documento),
+    inventarioId: typeof f.inventario_id === "string" ? f.inventario_id : null,
     ciudad: texto(f.ciudad),
     notas: texto(f.notas),
     activo: f.activo !== false,

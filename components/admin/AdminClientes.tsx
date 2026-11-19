@@ -30,6 +30,10 @@ export function mensajeError(error: string, campo: string | undefined, es: boole
   if (error === "campo_invalido" && campo && campos[campo]) return campos[campo][es ? 0 : 1];
   const generales: Record<string, [string, string]> = {
     documento_repetido: ["Ya hay un cliente con ese NIT o cédula.", "There's already a client with that tax ID."],
+    inventario_repetido: ["Ese cliente del inventario ya está vinculado con otra ficha.", "That inventory client is already linked to another profile."],
+    inventario_no_encontrado: ["Ese cliente ya no existe en el inventario.", "That client no longer exists in the inventory."],
+    inventario_no_disponible: ["El inventario no respondió. Intenta de nuevo en un momento.", "The inventory didn't respond. Try again shortly."],
+    inventario_sin_configurar: ["La conexión con el inventario no está configurada.", "The inventory connection isn't configured."],
     email_repetido: ["Ya existe una cuenta con ese correo.", "An account with that email already exists."],
     es_equipo: ["Esa cuenta es del equipo: no se borra desde aquí.", "That's a team account: it can't be deleted here."],
     lectura: [

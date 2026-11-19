@@ -44,10 +44,10 @@ export async function POST(request: Request) {
   const aprobada = transaccion.status === "APPROVED";
 
   try {
-    // Pedido del carrito: el resultado va al inventario (o al respaldo
-    // local). Si falla, se reintenta con el reintento de Wompi.
+    // Pedido del carrito: el resultado va al inventario.
+    // Si falla, se reintenta con el reintento de Wompi.
     if (referencia.startsWith("PED-")) {
-      await registrarPago(db, referencia, {
+      await registrarPago(referencia, {
         aprobada,
         transaccion: transaccion.id,
         montoCop: Math.round((transaccion.amount_in_cents ?? 0) / 100),

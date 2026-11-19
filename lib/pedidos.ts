@@ -3,10 +3,7 @@
 // catálogo. El monto NUNCA viene del navegador.
 
 import { presentacionDe } from "./presentaciones";
-import type { EstadoPedido, LineaPedido, Pedido, Product } from "./types";
-
-/** Los que se manejan en el respaldo local (la tabla pedidos_tienda). */
-export const ESTADOS_PEDIDO: EstadoPedido[] = ["pendiente", "pagado", "fallido", "enviado", "cancelado"];
+import type { EstadoPedido, LineaPedido, Product } from "./types";
 
 export const ETIQUETA_ESTADO_PEDIDO: Record<EstadoPedido, [string, string]> = {
   pendiente: ["Pendiente de pago", "Awaiting payment"],
@@ -96,33 +93,6 @@ export function validarContacto(crudo: unknown): Contacto {
   if (c.telefono.replace(/\D/g, "").length < 7) throw new PedidoInvalido("telefono");
   return c;
 }
-
-export function aPedido(f: Record<string, unknown>): Pedido {
-  const estado = ESTADOS_PEDIDO.includes(f.estado as EstadoPedido) ? (f.estado as EstadoPedido) : "pendiente";
-  const t = (v: unknown) => (typeof v === "string" ? v : "");
-  return {
-    id: String(f.id),
-    creadoEn: String(f.creado_en ?? ""),
-    clienteId: typeof f.cliente_id === "string" ? f.cliente_id : null,
-    email: t(f.email),
-    nombre: t(f.nombre),
-    telefono: t(f.telefono),
-    linea: t(f.linea),
-    ciudad: t(f.ciudad),
-    departamento: t(f.departamento),
-    notas: t(f.notas),
-    items: Array.isArray(f.items) ? (f.items as LineaPedido[]) : [],
-    totalCop: Number(f.total_cop ?? 0),
-    estado,
-    referencia: t(f.referencia),
-    cliente: f.clientes && typeof f.clientes === "object"
-      ? { negocio: t((f.clientes as Record<string, unknown>).negocio), nombre: t((f.clientes as Record<string, unknown>).nombre) }
-      : null,
-  };
-}
-
-/** Pedidos que cuentan como compra hecha (para las horas mientras no hay inventario). */
-export const ESTADOS_CONFIRMADOS: EstadoPedido[] = ["pagado", "enviado", "entregado"];
 
 /** Datos de entrega de un pedido hecho desde la cuenta: el resto sale de la ficha. */
 export interface Entrega {

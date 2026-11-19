@@ -1,20 +1,17 @@
-// Dónde viven los pedidos. SOLO SERVIDOR.
+// Pedidos de la web. SOLO SERVIDOR.
 //
-//   · Con INVENTARIO_API_URL: el inventario es la fuente de verdad. Los
-//     pedidos se crean allá (POST /pedidos) y se leen de allá.
-//   · Sin ella (mientras se construye la API): respaldo local en la tabla
-//     pedidos_tienda, como hasta ahora.
+// El inventario es la fuente de verdad: los pedidos se crean allá
+// (POST /pedidos), se leen de allá y allá se cambian de estado. La web no
+// guarda pedidos. Sin INVENTARIO_API_URL no se pueden hacer pedidos.
 //
 // Las rutas (checkout, cuenta del cliente, webhook) solo hablan con este
-// archivo; cambiar de uno a otro es configurar la variable.
+// archivo. Contrato: docs/contrato-api-inventario.md.
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { aPedido } from "@/lib/pedidos";
 import {
-  aPedidoWeb, crearPedidoEnInventario, informarPagoAlInventario, inventarioConectado, pedidosDeCliente,
+  aPedidoWeb, claveInventario, crearPedidoEnInventario, informarPagoAlInventario, inventarioConectado, pedidosDeCliente,
 } from "@/lib/servidor/inventario";
 import type { CrearPedidoInventario } from "@/lib/inventario-contrato";
-import type { Cliente, EstadoPedido, LineaPedido, Pedido } from "@/lib/types";
+import type { Cliente, LineaPedido, Pedido } from "@/lib/types";
 
 export interface NuevoPedido {
   referencia: string;
@@ -36,7 +33,11 @@ export function aPedidoInventario(p: NuevoPedido): CrearPedidoInventario {
   return {
     referencia_web: p.referencia,
     origen: p.origen,
-    cliente: p.cliente?.documento ? { tipo: "registrado", documento: p.cliente.documento } : { tipo: "ocasional" },
+    cliente: p.cliente?.inventarioId
+      ? { tipo: "registrado", id: p.cliente.inventarioId, ...(p.cliente.documento ? { documento: p.cliente.documento } : {}) }
+      : p.cliente?.documento
+        ? { tipo: "registrado", documento: p.cliente.documento }
+        : { tipo: "ocasional" },
     contacto: p.contacto,
     entrega: { direccion: p.entrega.linea, ciudad: p.entrega.ciudad, departamento: p.entrega.departamento, notas: p.entrega.notas },
     items: p.items.map((l) => ({
@@ -53,66 +54,34 @@ export function aPedidoInventario(p: NuevoPedido): CrearPedidoInventario {
   };
 }
 
-export async function registrarPedido(db: SupabaseClient, p: NuevoPedido): Promise<ResultadoRegistro> {
-  if (inventarioConectado()) {
-    const r = await crearPedidoEnInventario(aPedidoInventario(p));
-    if (!r.ok) return { ok: false, motivo: r.motivo };
-    return { ok: true, pedido: aPedidoWeb(r.pedido, p.cliente?.id ?? null) };
+export async function registrarPedido(p: NuevoPedido): Promise<ResultadoRegistro> {
+  if (!inventarioConectado()) {
+    console.error("[pedidos] Falta INVENTARIO_API_URL: no se puede registrar el pedido.");
+    return { ok: false, motivo: "no_disponible", mensaje: "Inventario sin configurar" };
   }
-
-  const { data, error } = await db
-    .from("pedidos_tienda")
-    .insert({
-      cliente_id: p.cliente?.id ?? null,
-      ...p.contacto,
-      ...p.entrega,
-      items: p.items,
-      total_cop: p.totalCop,
-      estado: "pendiente",
-      referencia: p.referencia,
-    })
-    .select("*")
-    .single();
-  if (error) return { ok: false, motivo: "no_disponible", mensaje: error.message };
-  return { ok: true, pedido: aPedido(data) };
+  const r = await crearPedidoEnInventario(aPedidoInventario(p));
+  if (!r.ok) return { ok: false, motivo: r.motivo };
+  return { ok: true, pedido: aPedidoWeb(r.pedido, p.cliente?.id ?? null) };
 }
 
-/** Los pedidos de un cliente. null = el inventario no respondió. */
-export async function pedidosDelCliente(db: SupabaseClient, cliente: Cliente): Promise<Pedido[] | null> {
-  if (inventarioConectado()) {
-    const lista = await pedidosDeCliente(cliente.documento);
-    return lista === null ? null : lista.map((p) => aPedidoWeb(p, cliente.id));
-  }
-  const { data } = await db
-    .from("pedidos_tienda")
-    .select("*")
-    .eq("cliente_id", cliente.id)
-    .order("creado_en", { ascending: false })
-    .limit(100);
-  return (data ?? []).map(aPedido);
+/** Los pedidos de un cliente. null = el inventario no respondió o no está configurado. */
+export async function pedidosDelCliente(cliente: Cliente): Promise<Pedido[] | null> {
+  if (!inventarioConectado()) return null;
+  const lista = await pedidosDeCliente(claveInventario(cliente));
+  return lista === null ? null : lista.map((p) => aPedidoWeb(p, cliente.id));
 }
 
-/** Resultado de la pasarela de pago para un pedido. */
+/** Resultado de la pasarela de pago para un pedido. Lanza si el inventario no lo recibe. */
 export async function registrarPago(
-  db: SupabaseClient,
   referencia: string,
   pago: { aprobada: boolean; transaccion: string; montoCop: number }
 ): Promise<void> {
-  if (inventarioConectado()) {
-    const ok = await informarPagoAlInventario(referencia, {
-      estado: pago.aprobada ? "pagado" : "fallido",
-      pasarela: "wompi",
-      transaccion: pago.transaccion,
-      monto: pago.montoCop,
-    });
-    if (!ok) throw new Error("El inventario no recibió el pago");
-    return;
-  }
-  const estado: EstadoPedido = pago.aprobada ? "pagado" : "fallido";
-  const { error } = await db
-    .from("pedidos_tienda")
-    .update({ estado, wompi_transaccion: pago.transaccion })
-    .eq("referencia", referencia)
-    .in("estado", ["pendiente", "fallido"]);
-  if (error) throw error;
+  if (!inventarioConectado()) throw new Error("Falta INVENTARIO_API_URL");
+  const ok = await informarPagoAlInventario(referencia, {
+    estado: pago.aprobada ? "pagado" : "fallido",
+    pasarela: "wompi",
+    transaccion: pago.transaccion,
+    monto: pago.montoCop,
+  });
+  if (!ok) throw new Error("El inventario no recibió el pago");
 }

@@ -6,6 +6,8 @@ import type { Capacitacion, Cliente, ResumenCliente } from "@/lib/types";
 import { AvisoInventario, ListaCapacitaciones, NotaSimuladas, TablaCompras, TarjetasHoras } from "@/components/clientes/ResumenHoras";
 import { Credenciales, ENTRADA, ETIQUETA, mensajeError } from "@/components/admin/AdminClientes";
 import ListaPedidos from "@/components/clientes/ListaPedidos";
+import CursosCliente from "@/components/admin/CursosCliente";
+import VinculoInventario from "@/components/admin/VinculoInventario";
 
 // Ficha de un cliente en el panel: horas, compras del inventario,
 // capacitaciones dadas (registrar y borrar), datos de la cuenta, clave y
@@ -110,7 +112,7 @@ export default function FichaCliente({
     );
   }
 
-  const { cliente, compras, capacitaciones, horas, inventario, comprasSimuladas, pedidos } = resumen;
+  const { cliente, clienteInventario, compras, capacitaciones, horas, inventario, comprasSimuladas, pedidos } = resumen;
 
   return (
     <div className="rounded-card-lg border border-borde bg-fondo p-5 md:p-7 space-y-8 animate-[fadeUp_.25s_ease-out]">
@@ -153,6 +155,12 @@ export default function FichaCliente({
 
       {error && <p role="alert" className="font-body text-sm text-vino">{error}</p>}
       {credenciales && <Credenciales email={credenciales.email} clave={credenciales.clave} es={es} onCerrar={() => setCredenciales(null)} />}
+
+      {!comprasSimuladas && (
+        <Seccion titulo={es ? "Cliente en el inventario" : "Inventory client"}>
+          <VinculoInventario cliente={cliente} vinculo={clienteInventario} es={es} onCambio={() => { void cargar(); onCambio(); }} />
+        </Seccion>
+      )}
 
       <Seccion titulo={es ? "Horas de capacitación" : "Training hours"}>
         <TarjetasHoras horas={horas} es={es} />
@@ -202,24 +210,21 @@ export default function FichaCliente({
         <ListaCapacitaciones capacitaciones={capacitaciones} es={es} onBorrar={borrarCapacitacion} />
       </Seccion>
 
-      <Seccion titulo={es ? `Pedidos web (${pedidos.length})` : `Web orders (${pedidos.length})`}>
+      <Seccion titulo={es ? `Pedidos (${pedidos.length})` : `Orders (${pedidos.length})`}>
         <ListaPedidos
           pedidos={pedidos.slice(0, 5)}
           es={es}
-          vacio={es ? "No ha hecho pedidos desde su cuenta." : "No orders from their account."}
+          vacio={es ? "No tiene pedidos en el inventario." : "No orders in inventory."}
         />
         {pedidos.length > 5 && (
           <p className="font-body text-xs text-tinta-suave">
-            {es ? "Los anteriores están en la pestaña Pedidos." : "Older ones are in the Orders tab."}
+            {es ? `Y ${pedidos.length - 5} más en el inventario.` : `And ${pedidos.length - 5} more in inventory.`}
           </p>
         )}
-        {comprasSimuladas && pedidos.length > 0 && (
-          <p className="font-body text-xs text-tinta-suave">
-            {es
-              ? "Mientras el inventario no esté conectado, los pedidos marcados como pagados o enviados se suman a sus compras y horas."
-              : "Until inventory is connected, orders marked paid or shipped count toward purchases and hours."}
-          </p>
-        )}
+      </Seccion>
+
+      <Seccion titulo={es ? "Cursos" : "Courses"}>
+        <CursosCliente clienteId={id} es={es} />
       </Seccion>
 
       <Seccion titulo={es ? "Compras (inventario)" : "Purchases (inventory)"}>

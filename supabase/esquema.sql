@@ -9,11 +9,13 @@
 --   equipo                 Quién entra al panel /admin
 --   clientes               Ficha de cada cliente (la cuenta la crea el equipo)
 --   capacitaciones         Horas de capacitación ya dadas a cada cliente
---   pedidos_tienda         Compras hechas desde el carrito de la tienda
 --   wompi_eventos          Eventos del webhook de pagos (idempotencia)
 --   solicitudes_muestra    Muestras gratis de 100 g pedidas en la tienda
 --   finca_fotos            Foto de la finca de cada café
 --   cafe_ediciones         Lo que el panel cambia de cada café
+--
+-- Cursos en video (cursos, curso_videos, curso_accesos, curso_progreso):
+-- en supabase/cursos.sql, que se corre después de este.
 --
 -- Para una base vacía. Es idempotente: se puede volver a correr.
 -- Para pasar una base que ya tenía suscripciones, usar
@@ -50,6 +52,8 @@ create table if not exists public.clientes (
   telefono    text not null default '',
   negocio     text not null default '',
   documento   text unique,
+  -- ID del cliente en el inventario (supabase/clientes_inventario.sql)
+  inventario_id uuid unique,
   ciudad      text not null default '',
   notas       text not null default '',
   activo      boolean not null default true,
@@ -93,33 +97,6 @@ create table if not exists public.capacitaciones (
 );
 
 create index if not exists capacitaciones_cliente_idx on public.capacitaciones (cliente_id, fecha desc);
-
--- ── Pedidos de la tienda ───────────────────────────────────
--- Compra desde el carrito, con o sin cuenta. `items` guarda cada línea con
--- el precio del momento: {cafe, nombre, presentacion, pesoG, cantidad, precioCop}.
-
-create table if not exists public.pedidos_tienda (
-  id                 uuid primary key default gen_random_uuid(),
-  creado_en          timestamptz not null default now(),
-  actualizado_en     timestamptz not null default now(),
-  cliente_id         uuid references public.clientes (id) on delete set null,
-  nombre             text not null,
-  email              text not null,
-  telefono           text not null,
-  linea              text not null,
-  ciudad             text not null,
-  departamento       text not null,
-  notas              text not null default '',
-  items              jsonb not null,
-  total_cop          integer not null check (total_cop > 0),
-  estado             text not null default 'pendiente'
-                     check (estado in ('pendiente', 'pagado', 'fallido', 'enviado', 'cancelado')),
-  referencia         text not null unique,
-  wompi_transaccion  text
-);
-
-create index if not exists pedidos_tienda_estado_idx on public.pedidos_tienda (estado, creado_en desc);
-create index if not exists pedidos_tienda_cliente_idx on public.pedidos_tienda (cliente_id);
 
 -- ── Webhook de Wompi ───────────────────────────────────────
 -- Wompi reintenta el mismo evento: el checksum lo identifica.
@@ -199,13 +176,12 @@ create table if not exists public.cafe_ediciones (
 alter table public.equipo               enable row level security;
 alter table public.clientes             enable row level security;
 alter table public.capacitaciones       enable row level security;
-alter table public.pedidos_tienda              enable row level security;
 alter table public.wompi_eventos        enable row level security;
 alter table public.solicitudes_muestra  enable row level security;
 alter table public.finca_fotos          enable row level security;
 alter table public.cafe_ediciones       enable row level security;
 
--- El cliente lee su ficha, sus capacitaciones y sus pedidos. No escribe.
+-- El cliente lee su ficha y sus capacitaciones. No escribe.
 drop policy if exists clientes_propio on public.clientes;
 drop policy if exists clientes_propio_lectura on public.clientes;
 create policy clientes_propio_lectura on public.clientes
@@ -215,15 +191,11 @@ drop policy if exists capacitaciones_propias_lectura on public.capacitaciones;
 create policy capacitaciones_propias_lectura on public.capacitaciones
   for select using (auth.uid() = cliente_id);
 
-drop policy if exists pedidos_tienda_propios_lectura on public.pedidos_tienda;
-create policy pedidos_tienda_propios_lectura on public.pedidos_tienda
-  for select using (auth.uid() = cliente_id);
-
 -- El equipo, todo.
 do $$
 declare t text;
 begin
-  foreach t in array array['clientes', 'capacitaciones', 'pedidos_tienda', 'solicitudes_muestra',
+  foreach t in array array['clientes', 'capacitaciones', 'solicitudes_muestra',
                            'finca_fotos', 'cafe_ediciones']
   loop
     execute format('drop policy if exists %I on public.%I', t || '_equipo', t);

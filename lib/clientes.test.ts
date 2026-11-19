@@ -156,7 +156,7 @@ describe("pedidos", () => {
 
 describe("contrato con el inventario", () => {
   const cliente = {
-    id: "u1", email: "ana@cafe.co", nombre: "Ana", telefono: "300", negocio: "Café", documento: "900123456-7",
+    id: "u1", email: "ana@cafe.co", nombre: "Ana", telefono: "300", negocio: "Café", documento: "900123456-7", inventarioId: null,
     ciudad: "Pereira", notas: "", activo: true, creadoEn: "",
   };
   const base = {
@@ -175,6 +175,14 @@ describe("contrato con el inventario", () => {
     });
     expect(c.items[0]).toEqual({ producto: "santa-rita", nombre: "Chambrana", presentacion: "cuarteron", gramos: 2250, cantidad: 3, precio_unitario: 150000 });
     expect(aPedidoInventario({ ...base, cliente: null }).cliente).toEqual({ tipo: "ocasional" });
+  });
+
+  it("si el cliente está vinculado, manda su ID del inventario", () => {
+    const id = "3f2b8c1e-1d2a-4c3b-9e8f-0a1b2c3d4e5f";
+    expect(aPedidoInventario({ ...base, cliente: { ...cliente, inventarioId: id } }).cliente)
+      .toEqual({ tipo: "registrado", id, documento: "900123456-7" });
+    expect(aPedidoInventario({ ...base, cliente: { ...cliente, documento: "", inventarioId: id } }).cliente)
+      .toEqual({ tipo: "registrado", id });
   });
 
   it("lee el pedido que devuelve el inventario", () => {

@@ -49,10 +49,10 @@ export async function POST(request: Request) {
   const { data: fila } = sesion ? await db.from("clientes").select("*").eq("id", sesion.id).maybeSingle() : { data: null };
   const cliente = fila ? aCliente(fila) : null;
 
-  const registro = await registrarPedido(db, {
+  const registro = await registrarPedido({
     referencia,
     origen: "tienda",
-    cliente: cliente?.documento ? cliente : null,
+    cliente: cliente?.inventarioId || cliente?.documento ? cliente : null,
     contacto: { nombre: contacto.nombre, email: contacto.email, telefono: contacto.telefono },
     entrega: { linea: contacto.linea, ciudad: contacto.ciudad, departamento: contacto.departamento, notas: contacto.notas },
     items,

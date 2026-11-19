@@ -1,16 +1,21 @@
 // Panel del equipo: un cliente.
 //
 //   GET    /api/admin/clientes/:id   Ficha + compras del inventario + horas
-//   PATCH  /api/admin/clientes/:id   { ...campos de la ficha, nuevaClave?: true | "texto" }
+//   PATCH  /api/admin/clientes/:id   { ...campos de la ficha, nuevaClave?: true | "texto", inventarioId?: uuid | null }
 //   DELETE /api/admin/clientes/:id   Borra la cuenta y todo lo suyo
 //
 // `nuevaClave: true` genera una clave y la devuelve una vez; con texto, usa ese.
+// `inventarioId` vincula la ficha con su cliente del inventario (y copia su
+// NIT); null la desvincula.
 
 import { NextResponse } from "next/server";
 import { crearClienteAdmin } from "@/lib/supabase-admin";
 import { exigirAdmin, respuestaError } from "@/lib/servidor/sesion";
 import { resumenCliente } from "@/lib/servidor/clientes";
 import { aCliente, DatoInvalido, generarClave, validarCliente } from "@/lib/clientes";
+import { clienteDelInventario } from "@/lib/servidor/inventario";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const dynamic = "force-dynamic";
 
@@ -40,9 +45,31 @@ export async function PATCH(request: Request, { params }: Ctx) {
     throw e;
   }
 
+  // Vínculo con el inventario: se comprueba que el cliente exista allá.
+  const vinculo: { inventario_id?: string | null } = {};
+  if (cuerpo.inventarioId !== undefined) {
+    if (cuerpo.inventarioId === null) vinculo.inventario_id = null;
+    else {
+      if (typeof cuerpo.inventarioId !== "string" || !UUID.test(cuerpo.inventarioId)) return respuestaError("campo_invalido", 400, { campo: "inventarioId" });
+      const inv = await clienteDelInventario(cuerpo.inventarioId);
+      if (inv.estado !== "ok") {
+        return inv.estado === "no_encontrado"
+          ? respuestaError("inventario_no_encontrado", 404)
+          : respuestaError("inventario_no_disponible", 502);
+      }
+      vinculo.inventario_id = inv.cliente.id;
+      if (inv.cliente.documento) datos.documento = inv.cliente.documento;
+    }
+  }
+
   const db = crearClienteAdmin();
   const { data: actual } = await db.from("clientes").select("id, email, documento").eq("id", id).maybeSingle();
   if (!actual) return respuestaError("no_encontrado", 404);
+
+  if (vinculo.inventario_id) {
+    const { data: otro } = await db.from("clientes").select("id").eq("inventario_id", vinculo.inventario_id).neq("id", id).maybeSingle();
+    if (otro) return respuestaError("inventario_repetido", 409);
+  }
 
   if (datos.documento && datos.documento !== actual.documento) {
     const { data: repetido } = await db.from("clientes").select("id").eq("documento", datos.documento).neq("id", id).maybeSingle();
@@ -68,8 +95,9 @@ export async function PATCH(request: Request, { params }: Ctx) {
   }
 
   let cliente;
-  if (Object.keys(datos).length > 0) {
-    const { data, error } = await db.from("clientes").update(datos).eq("id", id).select("*").single();
+  const fila = { ...datos, ...vinculo };
+  if (Object.keys(fila).length > 0) {
+    const { data, error } = await db.from("clientes").update(fila).eq("id", id).select("*").single();
     if (error) return respuestaError("no_guardado", 409, { mensaje: error.message });
     cliente = aCliente(data);
   }

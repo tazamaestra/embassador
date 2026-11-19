@@ -74,8 +74,10 @@ export interface Cliente {
   telefono: string;
   /** Nombre de la cafetería o negocio, si aplica. */
   negocio: string;
-  /** NIT o cédula: con esto se buscan sus compras en el inventario. */
+  /** NIT o cédula. Si está vinculado, se copia del inventario al abrir la ficha. */
   documento: string;
+  /** ID del cliente en el inventario: con esto se leen sus compras y pedidos. */
+  inventarioId: string | null;
   ciudad: string;
   notas: string;
   activo: boolean;
@@ -129,10 +131,12 @@ export interface ResumenCliente {
   cliente: Cliente;
   compras: CompraInventario[];
   /** Por qué no hay compras, si no se pudieron leer. */
-  inventario: "ok" | "sin_configurar" | "sin_documento" | "error";
+  inventario: "ok" | "sin_configurar" | "sin_documento" | "no_registrado" | "error";
   /** true mientras no hay API de inventario: las compras son de ejemplo. */
   comprasSimuladas: boolean;
-  /** Pedidos que el cliente hizo desde la web (su cuenta o la tienda). */
+  /** Su cliente en el inventario, leído en vivo (null si no está vinculado o no existe). */
+  clienteInventario: import("./inventario-contrato").ClienteInventario | null;
+  /** Pedidos del cliente, leídos del inventario. */
   pedidos: Pedido[];
   capacitaciones: Capacitacion[];
   horas: HorasCapacitacion;
@@ -167,8 +171,6 @@ export interface Pedido {
   totalCop: number;
   estado: EstadoPedido;
   referencia: string;
-  /** Negocio o nombre del cliente con cuenta, si el pedido es de uno (panel). */
-  cliente?: { negocio: string; nombre: string } | null;
 }
 
 // ── Blog ───────────────────────────────────────────────────────────────────

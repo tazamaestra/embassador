@@ -9,7 +9,7 @@ Chambrana), en bolsa de 340 g o cuarterón de 2.250 g para cafeterías.
 - **Clientes**: el equipo les crea la cuenta. Cada cliente ve sus compras
   (leídas del software de inventario) y sus **horas de capacitación**:
   cada 3 cuarterones comprados = 1 hora.
-- **Panel del equipo** en `/admin`: clientes, pedidos, muestras y cafés.
+- **Panel del equipo** en `/admin`: clientes (con sus pedidos del inventario), muestras y cafés.
 
 Next.js 16 (App Router) + next-intl (es/en) + Supabase + Tailwind 4.
 
@@ -51,8 +51,9 @@ código en `lib/inventario-contrato.ts`.
 - **Con `INVENTARIO_API_URL`:** los pedidos (de la cuenta y de la tienda) se
   crean en el inventario (`POST /pedidos`). "Tus pedidos" y las compras se
   leen de allá, y las horas se calculan con esas compras.
-- **Sin ella:** respaldo local (tabla `pedidos_tienda`, pestaña Pedidos del
-  panel) y compras simuladas por NIT, marcadas como "de ejemplo".
+- **Sin ella:** no se pueden hacer pedidos (la web ya no los guarda) y las
+  compras son simuladas por NIT, marcadas como "de ejemplo". Los estados de
+  los pedidos se cambian en el inventario.
 
 Toda la conexión está en `lib/servidor/inventario.ts` y `lib/servidor/pedidos.ts`.
 `lib/servidor/inventario.test.ts` la prueba contra un inventario falso que
@@ -84,14 +85,17 @@ cumple el contrato.
 | `GET, PATCH, DELETE /api/admin/clientes/:id` | admin | Ficha completa, editar, nueva clave, activar, borrar |
 | `POST /api/admin/clientes/:id/capacitaciones` | admin | Registrar una sesión dada |
 | `DELETE /api/admin/clientes/:id/capacitaciones/:capId` | admin | Borrar una sesión |
-| `GET /api/admin/pedidos`, `PATCH /api/admin/pedidos/:id` | admin | Pedidos y su estado |
+| `GET, POST /api/admin/cursos`, `GET, PUT, DELETE /api/admin/cursos/:id` | admin | Cursos en video: datos, videos en orden y clientes elegidos |
+| `GET, PUT /api/admin/clientes/:id/cursos` | admin | Cursos de un cliente: avance y acceso |
+| `GET, POST /api/mi-cuenta/cursos` | cliente | Sus cursos con videos; marcar un video como visto |
 | `GET /api/admin/muestras`, `PATCH /api/admin/muestras/:id` | admin | Solicitudes de muestra |
 | `PATCH /api/admin/cafes/:slug`, `/api/admin/fincas/:slug` | admin | Precios, textos y fotos de cada café |
-| `POST /api/wompi/webhook` | Wompi | Marca el pedido pagado o fallido |
+| `POST /api/wompi/webhook` | Wompi | Informa al inventario el pago (pagado o fallido) |
 
 ## Tablas (`supabase/esquema.sql`)
 
-`equipo`, `clientes`, `capacitaciones`, `pedidos`, `wompi_eventos`,
+`equipo`, `clientes`, `capacitaciones`, `wompi_eventos`, `cursos`, `curso_videos`,
+`curso_accesos`, `curso_progreso` (estas cuatro en `supabase/cursos.sql`),
 `solicitudes_muestra`, `finca_fotos`, `cafe_ediciones`.
 
 ## Pruebas

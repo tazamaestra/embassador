@@ -41,10 +41,24 @@ export interface ContactoInventario {
   telefono: string;
 }
 
-/** Cliente con cuenta (por NIT/cédula) o comprador ocasional de la tienda. */
+/**
+ * Cliente con cuenta (por su ID en el inventario, o por NIT/cédula si aún
+ * no está vinculado) o comprador ocasional de la tienda.
+ */
 export type ClientePedidoInventario =
-  | { tipo: "registrado"; documento: string }
+  | { tipo: "registrado"; id?: string; documento?: string }
   | { tipo: "ocasional" };
+
+/** Un cliente del inventario (GET /clientes/{clave} y GET /clientes?buscar=). */
+export interface ClienteInventario {
+  id: string;
+  nombre: string;
+  negocio: string | null;
+  documento: string | null;
+  email: string | null;
+  telefono: string | null;
+  ciudad: string | null;
+}
 
 /** POST /pedidos — cuerpo. */
 export interface CrearPedidoInventario {

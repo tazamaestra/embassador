@@ -38,8 +38,8 @@ INVENTARIO_API_URL=https://<proyecto>.supabase.co/functions/v1/api
 INVENTARIO_API_TOKEN=<secreto>
 ```
 
-Mientras `INVENTARIO_API_URL` esté vacía, la web funciona sola: guarda los
-pedidos en su propia base y muestra compras de ejemplo.
+La web no guarda pedidos. Si `INVENTARIO_API_URL` está vacía, no se pueden
+hacer pedidos y las compras que se muestran son de ejemplo.
 
 ## 2. Convenciones
 
@@ -174,6 +174,21 @@ Para la pantalla de confirmación, después de comprar en la tienda.
 **Respuesta `200`:** el pedido, con la misma forma de 3.1.
 **`404 pedido_no_encontrado`** si no existe.
 
+### 3.3b Clientes — `GET /clientes?buscar=texto` y `GET /clientes/{clave}`
+
+Para vincular cada cuenta de la web con su cliente del inventario (migración
+0041 del inventario). La web guarda el **ID** del cliente; desde entonces
+`{clave}` en todas las rutas `/clientes/{clave}/…` es ese ID. También se
+acepta el NIT o cédula (clientes sin vincular).
+
+```json
+{ "clientes": [ { "id": "6f1c…", "nombre": "Yami Castaño", "negocio": "La Inglesa", "documento": "900555111-2", "email": "…", "telefono": "…", "ciudad": "Pereira" } ] }
+```
+
+`GET /clientes/{clave}` devuelve un solo cliente con esa forma, o `404`.
+En `POST /pedidos`, un cliente vinculado va como
+`{ "tipo": "registrado", "id": "6f1c…" }`.
+
 ### 3.4 Compras confirmadas de un cliente — `GET /clientes/{documento}/compras`
 
 Con esto la web calcula las **horas de capacitación**. Debe devolver solo las
@@ -193,7 +208,9 @@ los cancelados.
 }
 ```
 
+- **Solo las ventas de ese cliente, por su ID** (`ventas.cliente_id`, migración 0040 del inventario), no por el texto del nombre.
 - **Una fila por producto vendido:** si una factura tiene dos productos, son dos filas.
+- **Todos los cafés cuentan** (migración 0042 del inventario): Casa Roja y Chambrana llegan con su código web; los demás, con su nombre del inventario. Un lote de 2250 g es `cuarteron` y suma horas, sea cual sea el café.
 - **`fecha` es la de la venta:** la web la usa para el **bono mensual**, así que debe ser la fecha real.
 - **Si el cliente no existe:** `404`. La web lo trata como "sin compras".
 
