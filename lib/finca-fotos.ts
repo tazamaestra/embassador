@@ -1,5 +1,5 @@
 // Capa delgada sobre la tabla `finca_fotos` y el bucket `fincas`.
-// Ver supabase/sql/finca_fotos.sql para el esquema y las policies.
+// Ver supabase/esquema.sql para el esquema y las policies.
 
 import { getSupabase } from "@/lib/supabase";
 import type { ImagenComprimida } from "@/lib/imagen";

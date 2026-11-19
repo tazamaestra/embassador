@@ -1,5 +1,5 @@
 {
-  "_nota": "Contenido del sitio. El programa de embajadores vive aparte, en data/embajadores.json, dormido detrás de FEATURE_AMBASSADORS.",
+  "_nota": "Contenido del sitio.",
   "brand": {
     "name": "Taza Maestra",
     "tagline_es": "café de especialidad",
@@ -9,56 +9,95 @@
     "locale": "es-CO"
   },
   "heroStats": [
-    { "num": "5", "label_es": "Fincas", "label_en": "Farms" },
-    { "num": "454 g", "label_es": "Por bolsa", "label_en": "Per bag" },
-    { "num": "48 h", "label_es": "Del tueste al envío", "label_en": "Roast to shipping" }
+    {
+      "num": "2",
+      "label_es": "Perfiles",
+      "label_en": "Profiles"
+    },
+    {
+      "num": "340 g",
+      "label_es": "Por bolsa",
+      "label_en": "Per bag"
+    },
+    {
+      "num": "48 h",
+      "label_es": "Del tueste al envío",
+      "label_en": "Roast to shipping"
+    }
   ],
   "_notaHeroSlides": "Carrusel del hero: un café por slide. La bolsa de cada café sale de products[].bolsa.",
   "heroSlides": [
     {
       "cafeId": "la-esperanza",
-      "titulo_es": "El café contra el que",
-      "destacado_es": "comparas los demás",
-      "relato_es": "Es nuestra finca, en Balboa. La cereza se seca entera al sol y la taza sale con arándano y uva. Lo tostamos para que sea tu punto de partida: pruébalo y reconoces un café de especialidad.",
-      "titulo_en": "The coffee you",
-      "destacado_en": "measure the rest against",
-      "relato_en": "Our own farm, in Balboa. The cherry dries whole in the sun and the cup comes out tasting of blueberry and grape. We roast it as your reference point: taste it and you'll know specialty coffee."
-    },
-    {
-      "cafeId": "el-jardin",
-      "titulo_es": "Dulce como la panela",
-      "destacado_es": "de las tres de la tarde",
-      "relato_es": "Ana Milena Quiceno despulpa el grano y lo seca con parte de su miel, a 1.850 metros en Pitalito. El proceso honey le deja la panela y un final de mandarina que sostiene la tarde.",
-      "titulo_en": "Sweet as panela",
-      "destacado_en": "at three in the afternoon",
-      "relato_en": "Ana Milena Quiceno pulps the bean and dries it with part of its honey, 1,850 metres up in Pitalito. The honey process leaves panela sweetness and a mandarin finish that carries the afternoon."
-    },
-    {
-      "cafeId": "el-descanso",
-      "titulo_es": "Mora y cacao",
-      "destacado_es": "para la noche larga",
-      "relato_es": "La familia Ipia lo cultiva a 1.900 metros, entre las montañas de Inzá. La cereza se seca entera y el grano se queda con la mora y el vino tinto. Cuerpo alto para cuando todavía falta.",
-      "titulo_en": "Blackberry and cacao",
-      "destacado_en": "for the long night",
-      "relato_en": "The Ipia family grows it 1,900 metres up in the mountains of Inzá. The cherry dries whole and the bean keeps the blackberry and red wine. Full body for when there's still work ahead."
+      "titulo_es": "Un mes secándose al sol.",
+      "destacado_es": "Sabe a torta envinada.",
+      "relato_es": "La cereza de Taza Maestra conocida como Casa Roja se seca entera durante un mes. Esa fermentación prolongada la vuelve afrutada: en la taza aparecen arándanos, uva y un final suave de mantequilla.",
+      "titulo_en": "A month drying in the sun.",
+      "destacado_en": "It tastes like wine-soaked cake.",
+      "relato_en": "Taza Maestra's cherry known as Casa Roja dries whole for a full month. That extended fermentation makes it fruity: in the cup you get blueberries, grape and a soft, buttery finish.",
+      "sellos_es": [
+        "Natural",
+        "1 mes de secado",
+        "Fermentación prolongada"
+      ],
+      "sellos_en": [
+        "Natural",
+        "One month drying",
+        "Extended fermentation"
+      ],
+      "sabores_es": [
+        "Torta envinada",
+        "Arándanos",
+        "Uva",
+        "Mantequilla"
+      ],
+      "sabores_en": [
+        "Wine-soaked cake",
+        "Blueberries",
+        "Grape",
+        "Butter"
+      ],
+      "insignia": {
+        "num": "30",
+        "txt_es": "días de secado",
+        "txt_en": "days drying"
+      },
+      "fondo": "radial-gradient(120% 130% at 80% 0%, #8A1C21, #5E0F13 55%, #3E080C)"
     },
     {
       "cafeId": "santa-rita",
       "titulo_es": "Chocolate y almendra",
-      "destacado_es": "para arrancar temprano",
-      "relato_es": "Gilberto Ramírez lava cada lote en su finca de Andes, Antioquia. Sale una taza limpia y redonda, de chocolate, almendra y un toque de naranja, que no pelea con nadie a las cinco de la mañana.",
+      "destacado_es": "para arrancar temprano.",
+      "relato_es": "Lavado con cuidado en nuestra finca. Una taza limpia y redonda: chocolate, almendra y un toque de panela que termina dulce. No pelea con nadie a las cinco de la mañana.",
       "titulo_en": "Chocolate and almond",
-      "destacado_en": "for an early start",
-      "relato_en": "Gilberto Ramírez washes every lot on his farm in Andes, Antioquia. The result is a clean, round cup of chocolate, almond and a hint of orange that picks no fights at five in the morning."
-    },
-    {
-      "cafeId": "la-cumbre",
-      "titulo_es": "El más alto de los cinco",
-      "destacado_es": "para un domingo sin afán",
-      "relato_es": "A 2.050 metros, en Buesaco, el frío de Nariño hace que el grano madure despacio. Jorge Eliécer Muñoz cultiva bourbon rosado, una variedad escasa que da jazmín, lima y miel. Pide tomarse sin prisa.",
-      "titulo_en": "The highest of the five",
-      "destacado_en": "for an unhurried Sunday",
-      "relato_en": "At 2,050 metres in Buesaco, the Nariño cold makes the bean ripen slowly. Jorge Eliécer Muñoz grows pink bourbon, a rare variety that gives jasmine, lime and honey. It asks to be drunk slowly."
+      "destacado_en": "for an early start.",
+      "relato_en": "Carefully washed on our farm. A clean, round cup: chocolate, almond and a touch of panela with a sweet finish. It picks no fights at five in the morning.",
+      "sellos_es": [
+        "Lavado",
+        "Tostión media",
+        "Final dulce"
+      ],
+      "sellos_en": [
+        "Washed",
+        "Medium roast",
+        "Sweet finish"
+      ],
+      "sabores_es": [
+        "Chocolate",
+        "Almendra",
+        "Panela"
+      ],
+      "sabores_en": [
+        "Chocolate",
+        "Almond",
+        "Panela"
+      ],
+      "insignia": {
+        "num": "1.500",
+        "txt_es": "msnm",
+        "txt_en": "m a.s.l."
+      },
+      "fondo": "radial-gradient(120% 130% at 80% 0%, #2F5D3A, #1E3F27 55%, #12271A)"
     }
   ],
   "momentos": [
@@ -72,15 +111,6 @@
       "historia_en": "At three in the afternoon the drowsiness settles in. Two hours of work left and no meeting to make them go faster. A bright, acidic cup holds up better than a sweet one."
     },
     {
-      "id": "antes-del-deploy",
-      "label_es": "Antes del deploy",
-      "label_en": "Before the deploy",
-      "opcion_es": "La medianoche, revisando logs",
-      "opcion_en": "Midnight, reading logs",
-      "historia_es": "La salida a producción no avanza. Los logs siguen corriendo y hay que leerlos con calma. Tueste medio y cuerpo alto: aguanta la taza larga.",
-      "historia_en": "The release isn't moving. The logs keep scrolling and they need a careful read. Medium roast, full body: it holds up over a long cup."
-    },
-    {
       "id": "madrugada",
       "label_es": "La madrugada",
       "label_en": "Before dawn",
@@ -88,157 +118,116 @@
       "opcion_en": "4:40 a.m., before it gets light",
       "historia_es": "La casa está oscura y el día no ha empezado para nadie más. A esa hora no se piensa mucho: se prepara. Tueste más oscuro, chocolate y almendra.",
       "historia_en": "The house is dark and the day hasn't started for anyone else. At that hour you don't think much, you just brew. Darker roast, chocolate and almond."
-    },
-    {
-      "id": "domingo-tranquilo",
-      "label_es": "El domingo lento",
-      "label_en": "A slow Sunday",
-      "opcion_es": "El domingo, cuando nadie tiene afán",
-      "opcion_en": "Sunday, when nobody is in a hurry",
-      "historia_es": "Nadie tiene afán. Hay tiempo de moler, pesar el agua y esperar los cuatro minutos. Un lavado de altura se nota más cuando se prepara así.",
-      "historia_en": "Nobody is in a hurry. There's time to grind, weigh the water and wait the four minutes. A high-altitude washed coffee shows more when it's brewed like this."
     }
   ],
   "products": [
     {
       "id": "la-esperanza",
-      "name": "La Esperanza",
-      "productor": "Taza Maestra · finca propia",
-      "finca": "La Esperanza",
-      "region": "Balboa, Risaralda",
+      "name": "Casa Roja",
+      "productor": "Taza Maestra",
+      "finca": "Finca propia",
+      "finca_en": "Our own farm",
+      "region": "Colombia",
       "altura": "1.500 msnm",
       "proceso_es": "Natural",
       "proceso_en": "Natural",
       "variedad": "Castillo",
-      "notas_es": "Frutos rojos, arándano y uva. Acidez cítrica.",
-      "notas_en": "Red fruits, blueberry and grape. Citric acidity.",
+      "notas_es": "Torta envinada, arándanos, uva y mantequilla. Afrutado.",
+      "notas_en": "Wine-soaked cake, blueberries, grape and butter. Fruity.",
       "historia_es": "Taza Maestra nació de una pregunta: ¿quién le enseña a la gente a distinguir un café de especialidad de uno comercial? Este café es la respuesta. Queremos que sea el punto de referencia, la taza contra la cual comparas todas las demás, para que aprendas a reconocer por tu cuenta cuándo un café es de calidad y cuándo no.",
       "historia_en": "Taza Maestra began with a question: who teaches people to tell specialty coffee from commercial coffee? This coffee is the answer. We want it to be the reference point, the cup you measure every other against, so you learn to tell for yourself when a coffee is good and when it isn't.",
       "tueste_es": "Media",
       "tueste_en": "Medium",
-      "pesoG": 454,
-      "precioCop": 45000,
-      "precioUsd": 11,
-      "precioSuscriptorCop": 38000,
-      "precioSuscriptorUsd": 9.5,
+      "pesoG": 340,
+      "precioCop": 40000,
+      "precioUsd": 10,
+      "negocio": {
+        "pesoG": 2250,
+        "precioCop": 200000,
+        "precioUsd": 50
+      },
       "momento": "tres-pm",
       "img": "assets/bag-maroon.png",
       "swatch": "linear-gradient(150deg,#7E181C,#4A0B0F)",
-      "bolsa": { "fondo": "#6E1417", "acento": "#F0A24B", "patron": "puntos" },
-      "wholesale": 38000,
-      "wholesale_usd": 9.5
-    },
-    {
-      "id": "el-jardin",
-      "name": "El Jardín",
-      "productor": "Ana Milena Quiceno",
-      "finca": "El Jardín",
-      "region": "Pitalito, Huila",
-      "altura": "1.850 msnm",
-      "proceso_es": "Honey",
-      "proceso_en": "Honey",
-      "variedad": "Caturra",
-      "notas_es": "Panela, mandarina y durazno. Cuerpo medio.",
-      "notas_en": "Panela, mandarin and peach. Medium body.",
-      "tueste_es": "Media",
-      "tueste_en": "Medium",
-      "pesoG": 454,
-      "precioCop": 47000,
-      "precioUsd": 11.5,
-      "precioSuscriptorCop": 40000,
-      "precioSuscriptorUsd": 10,
-      "momento": "tres-pm",
-      "img": null,
-      "swatch": "linear-gradient(150deg,#B6893B,#8a6a2c)",
-      "bolsa": { "fondo": "#B6893B", "acento": "#FBF3DD", "patron": "ondas" }
-    },
-    {
-      "id": "el-descanso",
-      "name": "El Descanso",
-      "productor": "Familia Ipia",
-      "finca": "El Descanso",
-      "region": "Inzá, Cauca",
-      "altura": "1.900 msnm",
-      "proceso_es": "Natural",
-      "proceso_en": "Natural",
-      "variedad": "Colombia",
-      "notas_es": "Mora, vino tinto y cacao. Cuerpo alto.",
-      "notas_en": "Blackberry, red wine and cocoa. Full body.",
-      "tueste_es": "Media",
-      "tueste_en": "Medium",
-      "pesoG": 454,
-      "precioCop": 49000,
-      "precioUsd": 12,
-      "precioSuscriptorCop": 41000,
-      "precioSuscriptorUsd": 10,
-      "momento": "antes-del-deploy",
-      "img": null,
-      "swatch": "linear-gradient(150deg,#3A2418,#1f120b)",
-      "bolsa": { "fondo": "#3A2418", "acento": "#C9486B", "patron": "rayas" }
+      "bolsa": {
+        "fondo": "#6E1417",
+        "acento": "#F0A24B",
+        "patron": "puntos"
+      }
     },
     {
       "id": "santa-rita",
-      "name": "Santa Rita",
-      "productor": "Gilberto Ramírez",
-      "finca": "Santa Rita",
-      "region": "Andes, Antioquia",
-      "altura": "1.650 msnm",
+      "name": "Chambrana",
+      "productor": "Taza Maestra",
+      "finca": "Finca propia",
+      "finca_en": "Our own farm",
+      "region": "Colombia",
+      "altura": "1.500 msnm",
       "proceso_es": "Lavado",
       "proceso_en": "Washed",
       "variedad": "Tabi",
-      "notas_es": "Chocolate, almendra y naranja. Final dulce.",
-      "notas_en": "Chocolate, almond and orange. Sweet finish.",
+      "notas_es": "Chocolate, almendra y panela. Final dulce.",
+      "notas_en": "Chocolate, almond and panela. Sweet finish.",
       "tueste_es": "Media",
       "tueste_en": "Medium",
-      "pesoG": 454,
-      "precioCop": 42000,
-      "precioUsd": 10.5,
-      "precioSuscriptorCop": 35000,
-      "precioSuscriptorUsd": 9,
+      "pesoG": 340,
+      "precioCop": 30000,
+      "precioUsd": 7.5,
+      "negocio": {
+        "pesoG": 2250,
+        "precioCop": 150000,
+        "precioUsd": 37.5
+      },
       "momento": "madrugada",
-      "img": null,
+      "img": "assets/bag-chambrana.png",
       "swatch": "linear-gradient(150deg,#2F5D3A,#1c3a24)",
-      "bolsa": { "fondo": "#2F5D3A", "acento": "#F0C14B", "patron": "hojas" },
-      "wholesale": 28000,
-      "wholesale_usd": 7
-    },
-    {
-      "id": "la-cumbre",
-      "name": "La Cumbre",
-      "productor": "Jorge Eliécer Muñoz",
-      "finca": "La Cumbre",
-      "region": "Buesaco, Nariño",
-      "altura": "2.050 msnm",
-      "proceso_es": "Lavado",
-      "proceso_en": "Washed",
-      "variedad": "Bourbon rosado",
-      "notas_es": "Jazmín, lima y miel. Acidez marcada.",
-      "notas_en": "Jasmine, lime and honey. Pronounced acidity.",
-      "tueste_es": "Media",
-      "tueste_en": "Medium",
-      "pesoG": 454,
-      "precioCop": 52000,
-      "precioUsd": 13,
-      "precioSuscriptorCop": 44000,
-      "precioSuscriptorUsd": 11,
-      "momento": "domingo-tranquilo",
-      "img": null,
-      "swatch": "linear-gradient(150deg,#E8731E,#b8550f)",
-      "bolsa": { "fondo": "#E8731E", "acento": "#2A1A12", "patron": "montanas" }
+      "bolsa": {
+        "fondo": "#2F5D3A",
+        "acento": "#F0C14B",
+        "patron": "hojas"
+      }
     }
   ],
   "productFilters": [
-    { "id": "todos", "label_es": "Todos", "label_en": "All" },
-    { "id": "tres-pm", "label_es": "Las 3:00 p.m.", "label_en": "3:00 p.m." },
-    { "id": "antes-del-deploy", "label_es": "Antes del deploy", "label_en": "Before the deploy" },
-    { "id": "madrugada", "label_es": "La madrugada", "label_en": "Before dawn" },
-    { "id": "domingo-tranquilo", "label_es": "El domingo lento", "label_en": "A slow Sunday" }
+    {
+      "id": "todos",
+      "label_es": "Todos",
+      "label_en": "All"
+    },
+    {
+      "id": "tres-pm",
+      "label_es": "Las 3:00 p.m.",
+      "label_en": "3:00 p.m."
+    },
+    {
+      "id": "madrugada",
+      "label_es": "La madrugada",
+      "label_en": "Before dawn"
+    }
   ],
   "originFacts": [
-    { "k_es": "REGIONES", "k_en": "REGIONS", "v": "Risaralda · Huila · Cauca · Antioquia · Nariño" },
-    { "k_es": "ALTURA", "k_en": "ALTITUDE", "v": "1.650–2.050 msnm" },
-    { "k_es": "PROCESO", "k_en": "PROCESS", "v_es": "Lavado · Honey · Natural", "v_en": "Washed · Honey · Natural" },
-    { "k_es": "PRODUCTORES", "k_en": "PRODUCERS", "v": "5 fincas" }
+    {
+      "k_es": "ORIGEN",
+      "k_en": "ORIGIN",
+      "v": "Colombia"
+    },
+    {
+      "k_es": "ALTURA",
+      "k_en": "ALTITUDE",
+      "v": "1.500 msnm"
+    },
+    {
+      "k_es": "PROCESO",
+      "k_en": "PROCESS",
+      "v_es": "Lavado · Natural",
+      "v_en": "Washed · Natural"
+    },
+    {
+      "k_es": "FINCA",
+      "k_en": "FARM",
+      "v_es": "Propia",
+      "v_en": "Our own"
+    }
   ],
   "faqs": [
     {
@@ -262,8 +251,8 @@
     {
       "q_es": "¿De dónde viene el café?",
       "q_en": "Where does the coffee come from?",
-      "a_es": "De cinco fincas en Risaralda, Huila, Cauca, Antioquia y Nariño. Cada bolsa trae productor, finca, altura, proceso y variedad.",
-      "a_en": "From five farms in Risaralda, Huila, Cauca, Antioquia and Nariño. Every bag lists producer, farm, altitude, process and variety."
+      "a_es": "De nuestra propia finca en Colombia. Cada bolsa trae finca, altura, proceso y variedad.",
+      "a_en": "From our own farm in Colombia. Every bag lists farm, altitude, process and variety."
     },
     {
       "q_es": "¿Tengo que suscribirme?",
@@ -274,43 +263,171 @@
   ],
   "methods": [
     {
-      "code": "MÉTODO 01", "big": "V60", "tag": "FILTRADO · POUR OVER", "name": "Hario V60",
-      "desc_es": "Claridad total. Resalta frutos y florales de cafés lavados de altura.", "desc_en": "Total clarity. Highlights fruits and florals in high-altitude washed coffees.",
-      "steps_es": ["Calienta agua a 93 °C", "Moja el filtro de papel y desecha el agua", "Agrega 15 g de café molido fino-medio", "Vierte 30 ml para blooming · espera 30 seg", "Continúa vertiendo en espiral hasta 240 ml", "Disfruta en 3 minutos exactos"],
-      "steps_en": ["Heat water to 93 °C (200 °F)", "Rinse the paper filter and discard the water", "Add 15 g of medium-fine ground coffee", "Pour 30 ml for the bloom · wait 30 sec", "Continue pouring in spirals up to 240 ml", "Enjoy in exactly 3 minutes"],
-      "ratio": "1:16", "time": "3:00", "body_es": "Ligero", "body_en": "Light"
+      "code": "MÉTODO 01",
+      "big": "V60",
+      "tag": "FILTRADO · POUR OVER",
+      "name": "Hario V60",
+      "desc_es": "Claridad total. Resalta frutos y florales de cafés lavados de altura.",
+      "desc_en": "Total clarity. Highlights fruits and florals in high-altitude washed coffees.",
+      "steps_es": [
+        "Calienta agua a 93 °C",
+        "Moja el filtro de papel y desecha el agua",
+        "Agrega 15 g de café molido fino-medio",
+        "Vierte 30 ml para blooming · espera 30 seg",
+        "Continúa vertiendo en espiral hasta 240 ml",
+        "Disfruta en 3 minutos exactos"
+      ],
+      "steps_en": [
+        "Heat water to 93 °C (200 °F)",
+        "Rinse the paper filter and discard the water",
+        "Add 15 g of medium-fine ground coffee",
+        "Pour 30 ml for the bloom · wait 30 sec",
+        "Continue pouring in spirals up to 240 ml",
+        "Enjoy in exactly 3 minutes"
+      ],
+      "ratio": "1:16",
+      "time": "3:00",
+      "body_es": "Ligero",
+      "body_en": "Light"
     },
     {
-      "code": "MÉTODO 02", "big": "FP", "tag": "INMERSIÓN", "name": "Prensa Francesa",
-      "desc_es": "Cuerpo redondo y textura envolvente. Sin papel, conserva los aceites del grano.", "desc_en": "Round body and enveloping texture. No paper — preserves the coffee oils.",
-      "steps_es": ["Calienta agua a 95 °C", "Agrega 30 g de café molido grueso", "Vierte 450 ml de agua caliente", "Revuelve suavemente · tapa sin presionar", "Infusiona 4 minutos sin mover", "Presiona el émbolo lento y sirve de inmediato"],
-      "steps_en": ["Heat water to 95 °C (203 °F)", "Add 30 g of coarse ground coffee", "Pour 450 ml of hot water", "Stir gently · place lid without plunging", "Steep 4 minutes without disturbing", "Press plunger slowly and serve immediately"],
-      "ratio": "1:15", "time": "4:00", "body_es": "Alto", "body_en": "High"
+      "code": "MÉTODO 02",
+      "big": "FP",
+      "tag": "INMERSIÓN",
+      "name": "Prensa Francesa",
+      "desc_es": "Cuerpo redondo y textura envolvente. Sin papel, conserva los aceites del grano.",
+      "desc_en": "Round body and enveloping texture. No paper — preserves the coffee oils.",
+      "steps_es": [
+        "Calienta agua a 95 °C",
+        "Agrega 30 g de café molido grueso",
+        "Vierte 450 ml de agua caliente",
+        "Revuelve suavemente · tapa sin presionar",
+        "Infusiona 4 minutos sin mover",
+        "Presiona el émbolo lento y sirve de inmediato"
+      ],
+      "steps_en": [
+        "Heat water to 95 °C (203 °F)",
+        "Add 30 g of coarse ground coffee",
+        "Pour 450 ml of hot water",
+        "Stir gently · place lid without plunging",
+        "Steep 4 minutes without disturbing",
+        "Press plunger slowly and serve immediately"
+      ],
+      "ratio": "1:15",
+      "time": "4:00",
+      "body_es": "Alto",
+      "body_en": "High"
     },
-    { "_disabled": true, "code": "MÉTODO 03", "big": "ES", "tag": "PRESIÓN", "name": "Espresso", "desc_es": "", "desc_en": "", "steps_es": [], "steps_en": [], "ratio": "1:2", "time": "0:28", "body_es": "Intenso", "body_en": "Intense" },
     {
-      "code": "MÉTODO 04", "big": "CX", "tag": "FILTRADO", "name": "Chemex",
-      "desc_es": "Taza limpia y elegante. Ideal para perfiles delicados y momentos de compartir.", "desc_en": "Clean, elegant cup. Ideal for delicate profiles and moments to share.",
-      "steps_es": ["Calienta agua a 93 °C", "Dobla y moja el filtro grueso · desecha el agua", "Agrega 30 g de café molido medio-grueso", "Vierte 60 ml para blooming · espera 45 seg", "Vierte el resto en círculos lentos hasta 480 ml", "Taza limpia y elegante en 4 a 4:30 min"],
-      "steps_en": ["Heat water to 93 °C (200 °F)", "Fold and rinse thick filter · discard water", "Add 30 g of medium-coarse ground coffee", "Pour 60 ml for bloom · wait 45 sec", "Pour remaining water in slow circles to 480 ml", "Clean, elegant cup in 4 to 4:30 min"],
-      "ratio": "1:16", "time": "4:30", "body_es": "Limpio", "body_en": "Clean"
+      "_disabled": true,
+      "code": "MÉTODO 03",
+      "big": "ES",
+      "tag": "PRESIÓN",
+      "name": "Espresso",
+      "desc_es": "",
+      "desc_en": "",
+      "steps_es": [],
+      "steps_en": [],
+      "ratio": "1:2",
+      "time": "0:28",
+      "body_es": "Intenso",
+      "body_en": "Intense"
     },
-    { "_disabled": true, "code": "MÉTODO 05", "big": "CB", "tag": "INMERSIÓN EN FRÍO", "name": "Cold Brew", "desc_es": "", "desc_en": "", "steps_es": [], "steps_en": [], "ratio": "1:8", "time": "14 h", "body_es": "Suave", "body_en": "Smooth" },
     {
-      "code": "MÉTODO 06", "big": "MK", "tag": "PRESIÓN CASERA", "name": "Moka",
-      "desc_es": "Café fuerte y aromático sobre la estufa. El clásico que nunca falla.", "desc_en": "Strong, aromatic stovetop coffee. The classic that never fails.",
-      "steps_es": ["Llena el depósito con agua fría hasta la válvula", "Agrega 18 g de café molido fino al filtro", "Enrosca bien y pon a fuego medio-bajo", "Cuando salga café, baja el fuego al mínimo", "Retira al primer burbujeo y sirve"],
-      "steps_en": ["Fill the boiler with cold water up to the valve", "Add 18 g of fine ground coffee to the filter", "Screw tightly and set to medium-low heat", "When coffee starts flowing, lower heat to minimum", "Remove at the first gurgle and serve"],
-      "ratio": "1:10", "time": "5:00", "body_es": "Fuerte", "body_en": "Strong"
+      "code": "MÉTODO 04",
+      "big": "CX",
+      "tag": "FILTRADO",
+      "name": "Chemex",
+      "desc_es": "Taza limpia y elegante. Ideal para perfiles delicados y momentos de compartir.",
+      "desc_en": "Clean, elegant cup. Ideal for delicate profiles and moments to share.",
+      "steps_es": [
+        "Calienta agua a 93 °C",
+        "Dobla y moja el filtro grueso · desecha el agua",
+        "Agrega 30 g de café molido medio-grueso",
+        "Vierte 60 ml para blooming · espera 45 seg",
+        "Vierte el resto en círculos lentos hasta 480 ml",
+        "Taza limpia y elegante en 4 a 4:30 min"
+      ],
+      "steps_en": [
+        "Heat water to 93 °C (200 °F)",
+        "Fold and rinse thick filter · discard water",
+        "Add 30 g of medium-coarse ground coffee",
+        "Pour 60 ml for bloom · wait 45 sec",
+        "Pour remaining water in slow circles to 480 ml",
+        "Clean, elegant cup in 4 to 4:30 min"
+      ],
+      "ratio": "1:16",
+      "time": "4:30",
+      "body_es": "Limpio",
+      "body_en": "Clean"
+    },
+    {
+      "_disabled": true,
+      "code": "MÉTODO 05",
+      "big": "CB",
+      "tag": "INMERSIÓN EN FRÍO",
+      "name": "Cold Brew",
+      "desc_es": "",
+      "desc_en": "",
+      "steps_es": [],
+      "steps_en": [],
+      "ratio": "1:8",
+      "time": "14 h",
+      "body_es": "Suave",
+      "body_en": "Smooth"
+    },
+    {
+      "code": "MÉTODO 06",
+      "big": "MK",
+      "tag": "PRESIÓN CASERA",
+      "name": "Moka",
+      "desc_es": "Café fuerte y aromático sobre la estufa. El clásico que nunca falla.",
+      "desc_en": "Strong, aromatic stovetop coffee. The classic that never fails.",
+      "steps_es": [
+        "Llena el depósito con agua fría hasta la válvula",
+        "Agrega 18 g de café molido fino al filtro",
+        "Enrosca bien y pon a fuego medio-bajo",
+        "Cuando salga café, baja el fuego al mínimo",
+        "Retira al primer burbujeo y sirve"
+      ],
+      "steps_en": [
+        "Fill the boiler with cold water up to the valve",
+        "Add 18 g of fine ground coffee to the filter",
+        "Screw tightly and set to medium-low heat",
+        "When coffee starts flowing, lower heat to minimum",
+        "Remove at the first gurgle and serve"
+      ],
+      "ratio": "1:10",
+      "time": "5:00",
+      "body_es": "Fuerte",
+      "body_en": "Strong"
     }
   ],
   "blogFilters": [
-    { "id": "todos", "label_es": "Todo", "label_en": "All" },
-    { "id": "historias", "label_es": "Historias", "label_en": "Stories" },
-    { "id": "origen", "label_es": "Origen", "label_en": "Origin" },
-    { "id": "preparacion", "label_es": "Preparación", "label_en": "Brewing" }
+    {
+      "id": "todos",
+      "label_es": "Todo",
+      "label_en": "All"
+    },
+    {
+      "id": "historias",
+      "label_es": "Historias",
+      "label_en": "Stories"
+    },
+    {
+      "id": "origen",
+      "label_es": "Origen",
+      "label_en": "Origin"
+    },
+    {
+      "id": "preparacion",
+      "label_es": "Preparación",
+      "label_en": "Brewing"
+    }
   ],
-  "blogFeatured": { "slug": "tres-de-la-tarde" },
+  "blogFeatured": {
+    "slug": "tres-de-la-tarde"
+  },
   "blogPosts": [
     {
       "slug": "tres-de-la-tarde",
@@ -326,21 +443,21 @@
         "Marcela entra a las siete. A las once ya despachó lo urgente. El problema no es la mañana.",
         "El problema empieza a las tres. El almuerzo pesa, la pantalla cansa y todavía faltan dos horas. Nadie la está mirando. Podría bajar el ritmo y nadie lo notaría hasta el viernes.",
         "Baja por agua, la pone a calentar y muele 15 gramos. Son cuatro minutos. No los toma como un descanso: los toma para poder volver.",
-        "El café que le sirve no la despierta de golpe. La acidez cítrica del lavado de Balboa sostiene la atención sin el bajón de las cinco. Eso es todo lo que necesita."
+        "El café que le sirve no la despierta de golpe. La acidez cítrica de Casa Roja sostiene la atención sin el bajón de las cinco. Eso es todo lo que necesita."
       ],
       "cuerpo_en": [
         "Marcela clocks in at seven. By eleven the urgent work is done. The morning isn't the problem.",
         "The problem starts at three. Lunch sits heavy, the screen wears on her, and two hours are still left. Nobody is watching. She could slow down and no one would notice until Friday.",
         "She goes down for water, puts it on to heat and grinds 15 grams. It takes four minutes. She doesn't take them as a break: she takes them so she can go back.",
-        "The cup doesn't jolt her awake. The citric acidity of the Balboa washed lot holds her attention without the five o'clock crash. That's all she needs."
+        "The cup doesn't jolt her awake. Casa Roja's citric acidity holds her attention without the five o'clock crash. That's all she needs."
       ]
     },
     {
       "slug": "la-salida-a-produccion",
       "cat": "historias",
       "foto": null,
-      "sw": "linear-gradient(140deg,#3A2418,#1f120b)",
-      "cafeSlug": "el-descanso",
+      "sw": "linear-gradient(140deg,#2F5D3A,#1c3a24)",
+      "cafeSlug": "santa-rita",
       "t_es": "La salida a producción",
       "t_en": "The release window",
       "d_es": "El despliegue estaba planeado para las diez. A la medianoche Daniel seguía leyendo logs.",
@@ -349,13 +466,13 @@
         "El despliegue estaba planeado para las diez de la noche. A las once y media el equipo ya se había desconectado del canal.",
         "Daniel se quedó. No por heroísmo: alguien tenía que mirar los logs y él era el que entendía esa parte del sistema.",
         "A la medianoche preparó prensa francesa. Cuatro minutos de infusión, sin mirar el celular. Es el único momento de la noche en que no puede hacer nada más.",
-        "Un natural de Inzá aguanta bien esa hora: cuerpo alto, cacao, y no se pone ácido cuando se enfría en el escritorio. El error apareció a la 1:40. Era una variable de entorno."
+        "Chambrana aguanta bien esa hora: chocolate, almendra, y no se pone ácido cuando se enfría en el escritorio. El error apareció a la 1:40. Era una variable de entorno."
       ],
       "cuerpo_en": [
         "The deploy was scheduled for ten at night. By eleven thirty the team had already dropped off the channel.",
         "Daniel stayed. Not out of heroism: someone had to watch the logs, and he was the one who understood that part of the system.",
         "At midnight he made a French press. Four minutes of steeping, phone face down. It's the only moment of the night when he can't do anything else.",
-        "A natural from Inzá holds up at that hour: full body, cocoa, and it doesn't turn sour as it cools on the desk. The bug showed up at 1:40. It was an environment variable."
+        "Chambrana holds up at that hour: chocolate, almond, and it doesn't turn sour as it cools on the desk. The bug showed up at 1:40. It was an environment variable."
       ]
     },
     {
@@ -371,13 +488,13 @@
       "cuerpo_es": [
         "Don Hernando se levanta a las cuatro y cuarenta. No tiene que hacerlo. Lo hizo durante cuarenta y un años y el cuerpo no aprendió a parar.",
         "Pone el agua, espera, y se sienta. Antes ese rato era para alistarse. Ahora es solo el rato.",
-        "Dice que el café bueno se reconoce en que uno no le pone nada. El de Andes, Antioquia, tostado un poco más oscuro, se deja tomar así.",
+        "Dice que el café bueno se reconoce en que uno no le pone nada. El de nuestra finca, tostado un poco más oscuro, se deja tomar así.",
         "A las cinco y veinte la casa sigue en silencio. Él ya está despierto hace media hora, sin ningún lugar al que llegar."
       ],
       "cuerpo_en": [
         "Don Hernando gets up at four forty. He doesn't have to. He did it for forty-one years and his body never learned to stop.",
         "He puts the water on, waits, and sits down. That stretch of time used to be for getting ready. Now it's just the stretch of time.",
-        "He says you can tell good coffee because you don't add anything to it. The one from Andes, Antioquia, roasted a little darker, takes it well.",
+        "He says you can tell good coffee because you don't add anything to it. The one from our farm, roasted a little darker, takes it well.",
         "At five twenty the house is still quiet. He's been awake for half an hour, with nowhere to be."
       ]
     },
@@ -385,23 +502,20 @@
       "slug": "por-que-la-altura-cambia-la-taza",
       "cat": "origen",
       "foto": null,
-      "sw": "linear-gradient(140deg,#E8731E,#b8550f)",
-      "cafeSlug": "la-cumbre",
+      "sw": "linear-gradient(140deg,#B6893B,#8a6a2c)",
       "t_es": "Por qué la altura cambia la taza",
       "t_en": "Why altitude changes the cup",
-      "d_es": "A 2.050 metros el fruto madura más lento. Eso se mide, no se opina.",
-      "d_en": "At 2,050 metres the cherry ripens more slowly. That gets measured, not argued.",
+      "d_es": "A más altura el fruto madura más lento. Eso se mide, no se opina.",
+      "d_en": "The higher up, the slower the cherry ripens. That gets measured, not argued.",
       "cuerpo_es": [
-        "En Buesaco, Nariño, la finca de Jorge Eliécer Muñoz está a 2.050 metros. Las noches son frías y el fruto tarda más en madurar.",
+        "En Pitalito, Huila, la finca de Ana Milena Quiceno está a 1.850 metros. Las noches son frías y el fruto tarda más en madurar.",
         "Ese retraso concentra azúcares y ácidos orgánicos en el grano. Por eso un café de altura suele tener acidez más marcada y notas más definidas.",
-        "No es una regla absoluta: el proceso y el tueste pueden borrar esa ventaja. Un lavado bien hecho la conserva; un tueste muy oscuro la tapa.",
-        "En La Cumbre el resultado son notas de jazmín y lima, con tueste claro. Si lo prepara en V60 a 93 °C, aparecen en los primeros sorbos."
+        "No es una regla absoluta: el proceso y el tueste pueden borrar esa ventaja. Un proceso bien hecho la conserva; un tueste muy oscuro la tapa."
       ],
       "cuerpo_en": [
-        "In Buesaco, Nariño, Jorge Eliécer Muñoz's farm sits at 2,050 metres. The nights are cold and the cherries take longer to ripen.",
+        "In Pitalito, Huila, Ana Milena Quiceno's farm sits at 1,850 metres. The nights are cold and the cherries take longer to ripen.",
         "That delay concentrates sugars and organic acids in the bean. That's why high-grown coffee tends to have sharper acidity and more defined notes.",
-        "It isn't an absolute rule: processing and roasting can erase the advantage. A careful washed process keeps it; a very dark roast buries it.",
-        "In La Cumbre the result is jasmine and lime, with a light roast. Brew it in a V60 at 93 °C and they show up in the first sips."
+        "It isn't an absolute rule: processing and roasting can erase the advantage. A careful process keeps it; a very dark roast buries it."
       ]
     },
     {
@@ -409,7 +523,7 @@
       "cat": "preparacion",
       "foto": null,
       "sw": "linear-gradient(140deg,#B6893B,#8a6a2c)",
-      "cafeSlug": "el-jardin",
+      "cafeSlug": "santa-rita",
       "t_es": "Moler justo antes",
       "t_en": "Grind right before",
       "d_es": "Es el cambio más barato que puede hacer. También el que más se nota.",
@@ -418,14 +532,60 @@
         "El café molido pierde aromáticos en minutos. No en días: en minutos. Una bolsa abierta hace dos semanas ya no huele igual el primer día.",
         "Moler justo antes de preparar cambia más la taza que subir de precio el café. Un molino manual sirve.",
         "Para prensa francesa, molienda gruesa, como sal marina. Para V60, media. Para moka, fina, pero no en polvo.",
-        "Con un honey como el de Pitalito la diferencia se oye rápido: la panela y el durazno aparecen mientras se vierte el agua, no después."
+        "Con Chambrana la diferencia se nota rápido: el chocolate y la almendra aparecen mientras se vierte el agua, no después."
       ],
       "cuerpo_en": [
         "Ground coffee loses aromatics in minutes. Not days: minutes. A bag opened two weeks ago doesn't smell the way it did on day one.",
         "Grinding right before brewing changes the cup more than paying more for the coffee does. A hand grinder is enough.",
         "For French press, coarse, like sea salt. For V60, medium. For a moka pot, fine, but not powder.",
-        "With a honey process like the one from Pitalito the difference shows up fast: the panela and peach arrive while you're pouring, not after."
+        "With Chambrana the difference shows up fast: the chocolate and almond arrive while you are pouring, not after."
       ]
     }
+  ],
+  "ciudades": [
+    "Armenia",
+    "Barrancabermeja",
+    "Barranquilla",
+    "Bello",
+    "Bogotá",
+    "Bucaramanga",
+    "Buenaventura",
+    "Cali",
+    "Cartagena",
+    "Cartago",
+    "Chía",
+    "Cúcuta",
+    "Dosquebradas",
+    "Duitama",
+    "Envigado",
+    "Florencia",
+    "Floridablanca",
+    "Girardot",
+    "Ibagué",
+    "Itagüí",
+    "Leticia",
+    "Manizales",
+    "Medellín",
+    "Montería",
+    "Neiva",
+    "Palmira",
+    "Pasto",
+    "Pereira",
+    "Popayán",
+    "Quibdó",
+    "Riohacha",
+    "Rionegro",
+    "San Andrés",
+    "Santa Marta",
+    "Santa Rosa de Cabal",
+    "Sincelejo",
+    "Soacha",
+    "Sogamoso",
+    "Tuluá",
+    "Tunja",
+    "Valledupar",
+    "Villavicencio",
+    "Yopal",
+    "Zipaquirá"
   ]
 }

@@ -1,99 +1,148 @@
-// DORMIDO detrás de FEATURE_AMBASSADORS.
-//
-// Los pedidos mayoristas son del programa de embajadores. Con el flag apagado
-// nada de la interfaz llama a este módulo —el checkout de suscripción no pasa
-// por aquí— y cada función falla de forma explícita si alguien lo intenta.
-// No se borra: las tablas, el SQL y este código siguen listos para volver.
+// Pedidos de la tienda (compra única desde el carrito). Funciones puras:
+// validan lo que manda el navegador y arman las líneas con el precio del
+// catálogo. El monto NUNCA viene del navegador.
 
-import { getSupabase } from "@/lib/supabase";
-import { products } from "@/lib/content";
-import { FEATURE_AMBASSADORS } from "@/lib/flags";
-import type { CartItem } from "@/lib/cart-store";
+import { presentacionDe } from "./presentaciones";
+import type { EstadoPedido, LineaPedido, Pedido, Product } from "./types";
 
-// Mapeo del catálogo de la tienda web (content.json) a los productos
-// reales en Supabase (tabla `productos`), usado por confirmar_pedido_embajador
-// para saber de qué lote descontar stock. Ver supabase/sql/confirmar_pedido_embajador.sql.
-const PRODUCTO_ID_MAP: Record<string, string> = {
-  "la-esperanza": "df499576-64ce-49f1-8dc2-44efa6cdb0d5", // TazaMaestra Natural
-  "santa-rita": "a69a196c-dd8b-4ab1-b745-f24f339113f7", // TazaMaestra Lavado
+/** Los que se manejan en el respaldo local (la tabla pedidos_tienda). */
+export const ESTADOS_PEDIDO: EstadoPedido[] = ["pendiente", "pagado", "fallido", "enviado", "cancelado"];
+
+export const ETIQUETA_ESTADO_PEDIDO: Record<EstadoPedido, [string, string]> = {
+  pendiente: ["Pendiente de pago", "Awaiting payment"],
+  confirmado: ["Confirmado", "Confirmed"],
+  entregado: ["Entregado", "Delivered"],
+  pagado: ["Pagado", "Paid"],
+  fallido: ["Pago fallido", "Payment failed"],
+  enviado: ["Enviado", "Shipped"],
+  cancelado: ["Cancelado", "Cancelled"],
 };
 
-function exigirFlag() {
-  if (!FEATURE_AMBASSADORS) {
-    throw new Error(
-      "Los pedidos mayoristas están desactivados (FEATURE_AMBASSADORS=false)."
-    );
+export class PedidoInvalido extends Error {
+  constructor(public campo: string) {
+    super(campo);
+    this.name = "PedidoInvalido";
   }
 }
 
-export interface PedidoItem {
-  id: string;
-  producto_slug: string;
-  producto_nombre: string;
-  libras: number;
-  precio_compra_lb: number;
-  precio_venta_lb: number;
-  utilidad_lb: number;
-  utilidad_total: number;
+const MAX_LINEAS = 20;
+const MAX_CANTIDAD = 50;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Las líneas del carrito → líneas con nombre, peso y precio del catálogo. */
+export function armarLineas(crudo: unknown, catalogo: Product[]): LineaPedido[] {
+  if (!Array.isArray(crudo) || crudo.length === 0 || crudo.length > MAX_LINEAS) throw new PedidoInvalido("items");
+  const porClave = new Map<string, LineaPedido>();
+  for (const x of crudo) {
+    const r = (x ?? {}) as Record<string, unknown>;
+    const cafe = catalogo.find((p) => p.id === r.cafe);
+    if (!cafe) throw new PedidoInvalido("items");
+    const pres = presentacionDe(cafe, r.presentacion ?? "bolsa");
+    if (!pres) throw new PedidoInvalido("items");
+    const cantidad = Number(r.cantidad);
+    if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > MAX_CANTIDAD) throw new PedidoInvalido("items");
+
+    // La misma presentación dos veces se suma en una sola línea.
+    const clave = `${cafe.id}:${pres.id}`;
+    const previa = porClave.get(clave);
+    porClave.set(clave, {
+      cafe: cafe.id,
+      nombre: cafe.name,
+      presentacion: pres.id,
+      pesoG: pres.pesoG,
+      cantidad: Math.min(MAX_CANTIDAD, (previa?.cantidad ?? 0) + cantidad),
+      precioCop: pres.precioCop,
+    });
+  }
+  return [...porClave.values()];
 }
 
-export async function guardarCarritoComoPedido(embajadorId: string, items: CartItem[]) {
-  exigirFlag();
-  if (items.length === 0) return;
-
-  const rows = items.map((item) => {
-    const product = products.find((p) => p.id === item.id);
-    return {
-      embajador_id: embajadorId,
-      producto_id: PRODUCTO_ID_MAP[item.id] ?? null,
-      producto_slug: item.id,
-      producto_nombre: item.name,
-      libras: item.qty,
-      precio_compra_lb: product?.wholesale ?? item.price,
-      precio_venta_lb: product?.precioCop ?? item.price,
-    };
-  });
-
-  const supabase = await getSupabase();
-
-  const { error } = await supabase
-    .from("pedidos_embajador")
-    .upsert(rows, { onConflict: "embajador_id,producto_slug" });
-
-  if (error) throw error;
+export function totalDe(lineas: LineaPedido[]): number {
+  return lineas.reduce((s, l) => s + l.precioCop * l.cantidad, 0);
 }
 
-export async function obtenerPedidos(embajadorId: string): Promise<PedidoItem[]> {
-  exigirFlag();
-  const supabase = await getSupabase();
-  const { data, error } = await supabase
-    .from("pedidos_embajador")
-    .select("id, producto_slug, producto_nombre, libras, precio_compra_lb, precio_venta_lb, utilidad_lb, utilidad_total")
-    .eq("embajador_id", embajadorId)
-    .order("creado_en", { ascending: false });
-
-  if (error) throw error;
-  return data ?? [];
+export interface Contacto {
+  nombre: string;
+  email: string;
+  telefono: string;
+  linea: string;
+  ciudad: string;
+  departamento: string;
+  notas: string;
 }
 
-export async function actualizarLibrasPedido(id: string, libras: number) {
-  exigirFlag();
-  const supabase = await getSupabase();
-  const { error } = await supabase
-    .from("pedidos_embajador")
-    .update({ libras })
-    .eq("id", id);
+export const CONTACTO_VACIO: Contacto = {
+  nombre: "", email: "", telefono: "", linea: "", ciudad: "", departamento: "", notas: "",
+};
 
-  if (error) throw error;
+/** Datos de quien compra y a dónde va. Lanza PedidoInvalido con el campo malo. */
+export function validarContacto(crudo: unknown): Contacto {
+  const r = (crudo ?? {}) as Record<string, unknown>;
+  const campo = (k: keyof Contacto, max: number, requerido = true) => {
+    const v = typeof r[k] === "string" ? (r[k] as string).trim().replace(/\s+/g, " ") : "";
+    if ((requerido && !v) || v.length > max) throw new PedidoInvalido(k);
+    return v;
+  };
+  const c: Contacto = {
+    nombre: campo("nombre", 100),
+    email: campo("email", 160).toLowerCase(),
+    telefono: campo("telefono", 30),
+    linea: campo("linea", 200),
+    ciudad: campo("ciudad", 80),
+    departamento: campo("departamento", 80),
+    notas: campo("notas", 300, false),
+  };
+  if (!EMAIL.test(c.email)) throw new PedidoInvalido("email");
+  if (c.telefono.replace(/\D/g, "").length < 7) throw new PedidoInvalido("telefono");
+  return c;
 }
 
-export async function eliminarPedido(id: string) {
-  exigirFlag();
-  const supabase = await getSupabase();
-  const { error } = await supabase
-    .from("pedidos_embajador")
-    .delete()
-    .eq("id", id);
+export function aPedido(f: Record<string, unknown>): Pedido {
+  const estado = ESTADOS_PEDIDO.includes(f.estado as EstadoPedido) ? (f.estado as EstadoPedido) : "pendiente";
+  const t = (v: unknown) => (typeof v === "string" ? v : "");
+  return {
+    id: String(f.id),
+    creadoEn: String(f.creado_en ?? ""),
+    clienteId: typeof f.cliente_id === "string" ? f.cliente_id : null,
+    email: t(f.email),
+    nombre: t(f.nombre),
+    telefono: t(f.telefono),
+    linea: t(f.linea),
+    ciudad: t(f.ciudad),
+    departamento: t(f.departamento),
+    notas: t(f.notas),
+    items: Array.isArray(f.items) ? (f.items as LineaPedido[]) : [],
+    totalCop: Number(f.total_cop ?? 0),
+    estado,
+    referencia: t(f.referencia),
+    cliente: f.clientes && typeof f.clientes === "object"
+      ? { negocio: t((f.clientes as Record<string, unknown>).negocio), nombre: t((f.clientes as Record<string, unknown>).nombre) }
+      : null,
+  };
+}
 
-  if (error) throw error;
+/** Pedidos que cuentan como compra hecha (para las horas mientras no hay inventario). */
+export const ESTADOS_CONFIRMADOS: EstadoPedido[] = ["pagado", "enviado", "entregado"];
+
+/** Datos de entrega de un pedido hecho desde la cuenta: el resto sale de la ficha. */
+export interface Entrega {
+  linea: string;
+  ciudad: string;
+  departamento: string;
+  notas: string;
+}
+
+export function validarEntrega(crudo: unknown): Entrega {
+  const r = (crudo ?? {}) as Record<string, unknown>;
+  const campo = (k: keyof Entrega, max: number, requerido = true) => {
+    const v = typeof r[k] === "string" ? (r[k] as string).trim().replace(/\s+/g, " ") : "";
+    if ((requerido && !v) || v.length > max) throw new PedidoInvalido(k);
+    return v;
+  };
+  return {
+    linea: campo("linea", 200),
+    ciudad: campo("ciudad", 80),
+    departamento: campo("departamento", 80),
+    notas: campo("notas", 300, false),
+  };
 }

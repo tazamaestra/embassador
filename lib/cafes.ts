@@ -1,7 +1,7 @@
 // Lo que el equipo edita de cada café desde el panel, y cómo se aplica sobre
 // el catálogo base de data/content.json. Funciones puras: las usan el
 // servidor (para pintar y para cobrar) y el panel (para validar antes de
-// mandar). La tabla está en supabase/sql/cafe_ediciones.sql.
+// mandar). La tabla está en supabase/esquema.sql.
 
 import type { Product } from "./types";
 
@@ -12,9 +12,9 @@ export interface EdicionCafe {
   productoSlug: string;
   nombre: string | null;
   precioCop: number | null;
-  precioSuscriptorCop: number | null;
+  precioNegocioCop: number | null;
   precioUsd: number | null;
-  precioSuscriptorUsd: number | null;
+  precioNegocioUsd: number | null;
   notasEs: string | null;
   notasEn: string | null;
   propositoEs: string | null;
@@ -34,9 +34,9 @@ export function aEdicion(f: FilaEdicion): EdicionCafe {
     productoSlug: String(f.producto_slug),
     nombre: texto(f.nombre),
     precioCop: numero(f.precio_cop),
-    precioSuscriptorCop: numero(f.precio_suscriptor_cop),
+    precioNegocioCop: numero(f.precio_negocio_cop),
     precioUsd: numero(f.precio_usd),
-    precioSuscriptorUsd: numero(f.precio_suscriptor_usd),
+    precioNegocioUsd: numero(f.precio_negocio_usd),
     notasEs: texto(f.notas_es),
     notasEn: texto(f.notas_en),
     propositoEs: texto(f.proposito_es),
@@ -71,14 +71,18 @@ export function aplicarEdiciones(base: Product[], ediciones: EdicionCafe[]): Pro
       ...p,
       name: e.nombre ?? p.name,
       precioCop: e.precioCop ?? p.precioCop,
-      precioSuscriptorCop: e.precioSuscriptorCop ?? p.precioSuscriptorCop,
       precioUsd: e.precioUsd ?? p.precioUsd,
-      precioSuscriptorUsd: e.precioSuscriptorUsd ?? p.precioSuscriptorUsd,
       notas_es: e.notasEs ?? p.notas_es,
       notas_en: e.notasEn ?? p.notas_en,
       historia_es: e.propositoEs ?? p.historia_es,
       historia_en: e.propositoEn ?? p.historia_en,
       img: e.fotoPath ? urlFotoCafe(e.fotoPath) : p.img,
+      // El cuarterón para negocios: solo si el café lo tiene en el catálogo.
+      negocio: p.negocio && {
+        ...p.negocio,
+        precioCop: e.precioNegocioCop ?? p.negocio.precioCop,
+        precioUsd: e.precioNegocioUsd ?? p.negocio.precioUsd,
+      },
     };
   });
 }
@@ -94,9 +98,9 @@ export class EdicionInvalida extends Error {
 export interface DatosEdicion {
   nombre: string | null;
   precioCop: number | null;
-  precioSuscriptorCop: number | null;
+  precioNegocioCop: number | null;
   precioUsd: number | null;
-  precioSuscriptorUsd: number | null;
+  precioNegocioUsd: number | null;
   notasEs: string | null;
   notasEn: string | null;
   propositoEs: string | null;
@@ -107,8 +111,7 @@ const LIMITES = { nombre: 60, notas: 200, proposito: 1200 };
 
 /**
  * Valida lo que llega del panel. Vacío = volver al valor del JSON. Los
- * precios se comparan contra el resultado final (editado o base), para que
- * el precio de suscriptor nunca quede por encima del de compra única.
+ * precios del cuarterón solo se aceptan si el café tiene esa presentación.
  */
 export function validarDatosEdicion(crudo: unknown, base: Product): DatosEdicion {
   const r = (crudo ?? {}) as Record<string, unknown>;
@@ -133,23 +136,18 @@ export function validarDatosEdicion(crudo: unknown, base: Product): DatosEdicion
   const datos: DatosEdicion = {
     nombre: txt("nombre", LIMITES.nombre),
     precioCop: precio("precioCop", true),
-    precioSuscriptorCop: precio("precioSuscriptorCop", true),
+    precioNegocioCop: precio("precioNegocioCop", true),
     precioUsd: precio("precioUsd", false),
-    precioSuscriptorUsd: precio("precioSuscriptorUsd", false),
+    precioNegocioUsd: precio("precioNegocioUsd", false),
     notasEs: txt("notasEs", LIMITES.notas),
     notasEn: txt("notasEn", LIMITES.notas),
     propositoEs: txt("propositoEs", LIMITES.proposito),
     propositoEn: txt("propositoEn", LIMITES.proposito),
   };
 
-  const unico = datos.precioCop ?? base.precioCop;
-  const suscriptor = datos.precioSuscriptorCop ?? base.precioSuscriptorCop;
-  if (suscriptor > unico) throw new EdicionInvalida("precioSuscriptorCop");
-
-  const unicoUsd = datos.precioUsd ?? base.precioUsd;
-  const suscriptorUsd = datos.precioSuscriptorUsd ?? base.precioSuscriptorUsd;
-  if (unicoUsd !== undefined && suscriptorUsd !== undefined && suscriptorUsd > unicoUsd) {
-    throw new EdicionInvalida("precioSuscriptorUsd");
+  // Sin cuarterón en el catálogo, no hay precio de cuarterón que editar.
+  if (!base.negocio && (datos.precioNegocioCop !== null || datos.precioNegocioUsd !== null)) {
+    throw new EdicionInvalida("precioNegocioCop");
   }
 
   return datos;
@@ -160,9 +158,9 @@ export function aFila(datos: DatosEdicion): FilaEdicion {
   return {
     nombre: datos.nombre,
     precio_cop: datos.precioCop,
-    precio_suscriptor_cop: datos.precioSuscriptorCop,
+    precio_negocio_cop: datos.precioNegocioCop,
     precio_usd: datos.precioUsd,
-    precio_suscriptor_usd: datos.precioSuscriptorUsd,
+    precio_negocio_usd: datos.precioNegocioUsd,
     notas_es: datos.notasEs,
     notas_en: datos.notasEn,
     proposito_es: datos.propositoEs,

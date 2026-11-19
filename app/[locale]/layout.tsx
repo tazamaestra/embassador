@@ -4,7 +4,6 @@ import { Cormorant_Garamond, Mulish, Space_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
-import { ModeProvider } from "@/contexts/ModeContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/shop/CartDrawer";
@@ -41,9 +40,9 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Taza Maestra · Café de especialidad por suscripción",
+  title: "Taza Maestra · Café de especialidad de finca propia",
   description:
-    "Café de cinco fincas colombianas, por suscripción. Llega antes de que se acabe la bolsa. Pausas o cancelas en dos clics.",
+    "Café colombiano de finca propia: Casa Roja y Chambrana, en bolsa de 340 g o cuarterón para cafeterías. Pide una muestra gratis.",
 };
 
 /** Las dos versiones del sitio se arman en el build, no en cada visita. */
@@ -76,7 +75,6 @@ export default async function LocaleLayout({
       <body className="bg-fondo text-tinta font-body antialiased">
         <NextIntlClientProvider messages={messages}>
           <CafesProvider cafes={cafes}>
-          <ModeProvider>
             <a href="#tm-main" className="skip-link">
               {(messages as { skip?: string }).skip ?? "Saltar al contenido"}
             </a>
@@ -86,7 +84,6 @@ export default async function LocaleLayout({
             </main>
             <Footer />
             <CartDrawer />
-          </ModeProvider>
           </CafesProvider>
         </NextIntlClientProvider>
       </body>

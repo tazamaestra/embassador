@@ -6,6 +6,8 @@ import { useTranslations, useLocale } from "next-intl";
 import { productFilters } from "@/lib/content";
 import { useCafes } from "@/components/shared/CafesProvider";
 import ProductCard from "@/components/shop/ProductCard";
+import HeroTienda from "@/components/shop/HeroTienda";
+import SolicitudMuestra from "@/components/shop/SolicitudMuestra";
 import type { Locale } from "@/lib/types";
 
 // El footer enlaza a /tienda?filter=x. Leer ese parámetro saca del
@@ -38,27 +40,10 @@ export default function TiendaScreen() {
         <SincronizarFiltroUrl onFiltro={setFilter} />
       </Suspense>
 
-      {/* Encabezado */}
-      <section
-        className="py-16"
-        style={{ background: "linear-gradient(150deg,#7E181C,#4A0B0F)" }}
-      >
-        <div className="max-w-[1240px] mx-auto px-[22px]">
-          <p className="font-mono text-[11px] tracking-[.22em] text-dorado-claro uppercase mb-3">
-            {t("kicker")}
-          </p>
-          <h1
-            className="font-display font-bold text-crema-papel mb-3"
-            style={{ fontSize: "clamp(34px,5vw,58px)" }}
-          >
-            {t("h1")}
-          </h1>
-          <p className="font-body text-crema/75 text-base max-w-[560px]">{t("sub")}</p>
-        </div>
-      </section>
+      <HeroTienda products={products} locale={locale} />
 
       {/* Filtros por momento + grilla */}
-      <section className="py-12 bg-fondo">
+      <section id="catalogo" className="scroll-mt-20 py-12 bg-fondo">
         <div className="max-w-[1240px] mx-auto px-[22px]">
           <div role="group" aria-label={t("filtroAria")} className="flex flex-wrap gap-2 mb-8">
             {productFilters.map((f) => {
@@ -102,6 +87,8 @@ export default function TiendaScreen() {
           )}
         </div>
       </section>
+
+      <SolicitudMuestra locale={locale} />
     </>
   );
 }

@@ -1,108 +1,82 @@
-// Compra única de una bolsa suelta por Web Checkout de Wompi: crea el pedido
-// y devuelve los parámetros firmados.
+// Compra desde el carrito: crea el pedido y, si la pasarela está
+// configurada, devuelve los parámetros firmados del Web Checkout de Wompi.
 //
-// Las suscripciones NO pasan por aquí: usan cobro recurrente con fuente de
-// pago, en /api/suscripciones.
+//   POST /api/checkout  { items: [{ cafe, presentacion, cantidad }], contacto, locale }
 //
-// El precio se calcula AQUÍ, desde el catálogo con las ediciones del panel
-// (lib/servidor/cafes.ts). Nunca se confía en el monto que mande el navegador.
+// No pide cuenta: compra quien sea. Si viene sesión, el pedido queda ligado
+// al cliente. El precio se calcula AQUÍ, desde el catálogo con las
+// ediciones del panel; nunca se confía en el monto del navegador.
+// Sin Wompi configurado, el pedido queda "pendiente" y el equipo cobra por
+// fuera: la tienda funciona igual mientras se conecta la pasarela.
 
 import { NextResponse } from "next/server";
-import { crearClienteConToken } from "@/lib/supabase-admin";
-import { obtenerCafe } from "@/lib/servidor/cafes";
+import { crearClienteAdmin } from "@/lib/supabase-admin";
+import { registrarPedido } from "@/lib/servidor/pedidos";
+import { aCliente } from "@/lib/clientes";
+import { obtenerCafes } from "@/lib/servidor/cafes";
+import { leerSesion, respuestaError } from "@/lib/servidor/sesion";
+import { armarLineas, PedidoInvalido, totalDe, validarContacto } from "@/lib/pedidos";
 import {
   WOMPI_CHECKOUT_URL, WOMPI_PUBLIC_KEY, aCentavos, firmaIntegridad,
   generarReferencia, wompiConfigurado,
 } from "@/lib/wompi";
-import { guardarDireccionPrincipal, leerDireccion } from "@/lib/servidor/direccion";
 
-interface Cuerpo {
-  cafe?: string;
-  cantidad?: number;
-  locale?: string;
-  direccion?: unknown;
-}
+export const dynamic = "force-dynamic";
 
 const MONEDA = "COP";
 
 export async function POST(request: Request) {
-  if (!wompiConfigurado()) {
-    return NextResponse.json({ error: "wompi_sin_configurar" }, { status: 503 });
-  }
+  const cuerpo = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!cuerpo) return respuestaError("cuerpo_invalido", 400);
 
-  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) {
-    return NextResponse.json({ error: "sin_sesion" }, { status: 401 });
-  }
-
-  let cuerpo: Cuerpo;
+  let items, contacto;
   try {
-    cuerpo = (await request.json()) as Cuerpo;
-  } catch {
-    return NextResponse.json({ error: "cuerpo_invalido" }, { status: 400 });
+    items = armarLineas(cuerpo.items, await obtenerCafes());
+    contacto = validarContacto(cuerpo.contacto);
+  } catch (e) {
+    if (e instanceof PedidoInvalido) return respuestaError("campo_invalido", 400, { campo: e.campo });
+    throw e;
   }
 
-  const producto = cuerpo.cafe ? await obtenerCafe(cuerpo.cafe) : undefined;
-  if (!producto) {
-    return NextResponse.json({ error: "cafe_desconocido" }, { status: 400 });
-  }
+  const db = crearClienteAdmin();
+  const sesion = await leerSesion(request);
+  const totalCop = totalDe(items);
+  const referencia = generarReferencia("PED");
+  const conPasarela = wompiConfigurado();
 
-  const cantidad = Math.max(1, Math.min(10, Math.floor(cuerpo.cantidad ?? 1)));
-  const d = leerDireccion(cuerpo.direccion);
-  if (!d) {
-    return NextResponse.json({ error: "direccion_incompleta" }, { status: 400 });
-  }
+  // Con sesión de un cliente con ficha, el pedido va a su nombre; si no, es
+  // un comprador ocasional.
+  const { data: fila } = sesion ? await db.from("clientes").select("*").eq("id", sesion.id).maybeSingle() : { data: null };
+  const cliente = fila ? aCliente(fila) : null;
 
-  const supabase = crearClienteConToken(token);
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
-    return NextResponse.json({ error: "sin_sesion" }, { status: 401 });
-  }
-  const clienteId = auth.user.id;
-
-  // El trigger de auth.users ya debería haber creado la fila; el upsert cubre
-  // las bases creadas antes de instalar el SQL.
-  await supabase
-    .from("clientes")
-    .upsert({ id: clienteId, email: auth.user.email ?? "", nombre: d.nombre, telefono: d.telefono });
-
-  let direccionId: string;
-  try {
-    direccionId = await guardarDireccionPrincipal(supabase, clienteId, d);
-  } catch {
-    return NextResponse.json({ error: "direccion_no_guardada" }, { status: 500 });
-  }
-
-  const totalCop = producto.precioCop * cantidad;
-  const referencia = generarReferencia("UNI");
-
-  const { error } = await supabase.from("pedidos_unicos").insert({
-    cliente_id: clienteId,
-    producto_slug: producto.id,
-    cantidad,
-    total_cop: totalCop,
-    estado: "pendiente",
-    direccion_id: direccionId,
-    wompi_referencia: referencia,
+  const registro = await registrarPedido(db, {
+    referencia,
+    origen: "tienda",
+    cliente: cliente?.documento ? cliente : null,
+    contacto: { nombre: contacto.nombre, email: contacto.email, telefono: contacto.telefono },
+    entrega: { linea: contacto.linea, ciudad: contacto.ciudad, departamento: contacto.departamento, notas: contacto.notas },
+    items,
+    totalCop,
   });
-  if (error) {
-    return NextResponse.json({ error: "pedido_no_creado" }, { status: 500 });
+  if (!registro.ok) return respuestaError("pedido_no_creado", registro.motivo === "validacion" ? 400 : 502, { mensaje: registro.mensaje });
+
+  const locale = cuerpo.locale === "en" ? "en" : "es";
+  const sitio = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
+  const redirectUrl = `${sitio}/${locale}/confirmacion?ref=${referencia}`;
+
+  if (!conPasarela) {
+    return NextResponse.json({ referencia, totalCop, sinPasarela: true, redirectUrl });
   }
 
   const montoEnCentavos = aCentavos(totalCop);
-  const firma = firmaIntegridad({ referencia, montoEnCentavos, moneda: MONEDA });
-  const sitio = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  // Las rutas llevan prefijo de idioma; el retorno de Wompi también.
-  const locale = cuerpo.locale === "en" ? "en" : "es";
-
   return NextResponse.json({
+    referencia,
+    totalCop,
     checkoutUrl: WOMPI_CHECKOUT_URL,
     publicKey: WOMPI_PUBLIC_KEY,
-    referencia,
     montoEnCentavos,
     moneda: MONEDA,
-    firma,
-    redirectUrl: `${sitio}/${locale}/confirmacion?ref=${referencia}`,
-    totalCop,
+    firma: firmaIntegridad({ referencia, montoEnCentavos, moneda: MONEDA }),
+    redirectUrl,
   });
 }

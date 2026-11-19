@@ -1,8 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { PresentacionId } from "./presentaciones";
 
 export interface CartItem {
+  /** Id de la línea: el café, más la presentación si no es la bolsa normal. */
   id: string;
+  /** Sin estos dos, la línea es de antes de las presentaciones: bolsa de `id`. */
+  cafeId?: string;
+  presentacion?: PresentacionId;
   name: string;
   price: number;
   priceUsd?: number;

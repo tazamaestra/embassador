@@ -66,8 +66,8 @@ export default function AdminCafes({ locale }: { locale: Locale }) {
         if (vigente) {
           setError(
             es
-              ? "No se pudo cargar el panel. ¿Ya se corrió supabase/sql/cafe_ediciones.sql?"
-              : "Couldn't load the panel. Has supabase/sql/cafe_ediciones.sql been run?"
+              ? "No se pudo cargar el panel. ¿Ya se corrió supabase/esquema.sql?"
+              : "Couldn't load the panel. Has supabase/esquema.sql been run?"
           );
         }
       }
@@ -156,7 +156,7 @@ type Campo = keyof DatosEdicion;
 type Formulario = Record<Campo, string>;
 
 const CAMPOS: Campo[] = [
-  "nombre", "precioCop", "precioSuscriptorCop", "precioUsd", "precioSuscriptorUsd",
+  "nombre", "precioCop", "precioNegocioCop", "precioUsd", "precioNegocioUsd",
   "notasEs", "notasEn", "propositoEs", "propositoEn",
 ];
 
@@ -165,9 +165,9 @@ function formularioDe(p: Product): Formulario {
   return {
     nombre: p.name,
     precioCop: String(p.precioCop),
-    precioSuscriptorCop: String(p.precioSuscriptorCop),
+    precioNegocioCop: p.negocio ? String(p.negocio.precioCop) : "",
     precioUsd: p.precioUsd === undefined ? "" : String(p.precioUsd),
-    precioSuscriptorUsd: p.precioSuscriptorUsd === undefined ? "" : String(p.precioSuscriptorUsd),
+    precioNegocioUsd: p.negocio?.precioUsd === undefined ? "" : String(p.negocio.precioUsd),
     notasEs: p.notas_es,
     notasEn: p.notas_en,
     propositoEs: p.historia_es ?? "",
@@ -179,14 +179,14 @@ function mensajeCampo(campo: string, es: boolean): string {
   const m: Record<string, [string, string]> = {
     nombre: ["El nombre no puede pasar de 60 caracteres.", "The name can't be longer than 60 characters."],
     precioCop: ["El precio de compra única debe ser un número entero mayor que cero.", "The one-time price must be a whole number above zero."],
-    precioSuscriptorCop: [
-      "El precio de suscriptor debe ser un entero mayor que cero y no más alto que el de compra única.",
-      "The subscriber price must be a whole number above zero and not higher than the one-time price.",
+    precioNegocioCop: [
+      "El precio del cuarterón debe ser un número entero mayor que cero.",
+      "The large-bag price must be a whole number above zero.",
     ],
     precioUsd: ["El precio en dólares debe ser mayor que cero.", "The USD price must be above zero."],
-    precioSuscriptorUsd: [
-      "El precio de suscriptor en dólares debe ser mayor que cero y no más alto que el de compra única.",
-      "The subscriber USD price must be above zero and not higher than the one-time price.",
+    precioNegocioUsd: [
+      "El precio del cuarterón en dólares debe ser mayor que cero.",
+      "The large-bag USD price must be above zero.",
     ],
     notasEs: ["Las notas no pueden pasar de 200 caracteres.", "Notes can't be longer than 200 characters."],
     notasEn: ["Las notas no pueden pasar de 200 caracteres.", "Notes can't be longer than 200 characters."],
@@ -293,7 +293,7 @@ function EditorCafe({
             )}
           </p>
           <p className="font-mono text-[10px] tracking-[.12em] text-tinta-suave uppercase truncate">
-            {base.finca} · {formatCOP(actual.precioCop)} · {es ? "suscrito" : "subscribed"} {formatCOP(actual.precioSuscriptorCop)}
+            {base.finca} · {formatCOP(actual.precioCop)}{actual.negocio ? ` · ${es ? "cuarterón" : "large bag"} ${formatCOP(actual.negocio.precioCop)}` : ""}
           </p>
         </div>
         <span aria-hidden="true" className="text-tinta-suave transition-transform group-open:rotate-180">
@@ -316,22 +316,22 @@ function EditorCafe({
           </div>
 
           <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <legend className={`${ETIQUETA} mb-2`}>{es ? "Precios por bolsa" : "Prices per bag"}</legend>
+            <legend className={`${ETIQUETA} mb-2`}>{es ? "Precios: bolsa y cuarterón para negocios" : "Prices: bag and large business bag"}</legend>
             <div>
-              <label className={ETIQUETA} htmlFor={`cop-${base.id}`}>{es ? "Compra única (COP)" : "One-time (COP)"}</label>
+              <label className={ETIQUETA} htmlFor={`cop-${base.id}`}>{es ? `Bolsa ${base.pesoG} g (COP)` : `${base.pesoG} g bag (COP)`}</label>
               <input id={`cop-${base.id}`} type="number" inputMode="numeric" min={1} step={1} value={form.precioCop} onChange={poner("precioCop")} disabled={ocupado} className={ENTRADA} />
             </div>
             <div>
-              <label className={ETIQUETA} htmlFor={`cop-sus-${base.id}`}>{es ? "Suscriptor (COP)" : "Subscriber (COP)"}</label>
-              <input id={`cop-sus-${base.id}`} type="number" inputMode="numeric" min={1} step={1} value={form.precioSuscriptorCop} onChange={poner("precioSuscriptorCop")} disabled={ocupado} className={ENTRADA} />
+              <label className={ETIQUETA} htmlFor={`cop-sus-${base.id}`}>{es ? "Cuarterón (COP)" : "Large bag (COP)"}</label>
+              <input id={`cop-sus-${base.id}`} type="number" inputMode="numeric" min={1} step={1} value={form.precioNegocioCop} onChange={poner("precioNegocioCop")} disabled={ocupado || !base.negocio} className={ENTRADA} />
             </div>
             <div>
-              <label className={ETIQUETA} htmlFor={`usd-${base.id}`}>{es ? "Compra única (USD)" : "One-time (USD)"}</label>
+              <label className={ETIQUETA} htmlFor={`usd-${base.id}`}>{es ? `Bolsa ${base.pesoG} g (USD)` : `${base.pesoG} g bag (USD)`}</label>
               <input id={`usd-${base.id}`} type="number" inputMode="decimal" min={0.01} step={0.01} value={form.precioUsd} onChange={poner("precioUsd")} disabled={ocupado} className={ENTRADA} />
             </div>
             <div>
-              <label className={ETIQUETA} htmlFor={`usd-sus-${base.id}`}>{es ? "Suscriptor (USD)" : "Subscriber (USD)"}</label>
-              <input id={`usd-sus-${base.id}`} type="number" inputMode="decimal" min={0.01} step={0.01} value={form.precioSuscriptorUsd} onChange={poner("precioSuscriptorUsd")} disabled={ocupado} className={ENTRADA} />
+              <label className={ETIQUETA} htmlFor={`usd-sus-${base.id}`}>{es ? "Cuarterón (USD)" : "Large bag (USD)"}</label>
+              <input id={`usd-sus-${base.id}`} type="number" inputMode="decimal" min={0.01} step={0.01} value={form.precioNegocioUsd} onChange={poner("precioNegocioUsd")} disabled={ocupado || !base.negocio} className={ENTRADA} />
             </div>
           </fieldset>
 

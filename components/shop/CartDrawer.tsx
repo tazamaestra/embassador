@@ -5,8 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/lib/nav";
 import { useCartStore } from "@/lib/cart-store";
 import { useCafes } from "@/components/shared/CafesProvider";
-import { compararPrecios } from "@/lib/suscripcion";
 import { formatPrice } from "@/lib/format";
+import { formatPeso, presentacionDe } from "@/lib/presentaciones";
 import type { Locale } from "@/lib/types";
 
 export default function CartDrawer() {
@@ -18,38 +18,32 @@ export default function CartDrawer() {
   const cafes = useCafes();
   // El carrito vive en localStorage con el precio de cuando se agregó. Se
   // muestra el de hoy; el checkout cobra con el del servidor de todos modos.
+  // Las líneas viejas no traen cafeId ni presentación: son la bolsa de `id`.
   const items = guardados.map((item) => {
-    const cafe = cafes.find((p) => p.id === item.id);
-    return cafe ? { ...item, name: cafe.name, price: cafe.precioCop, priceUsd: cafe.precioUsd } : item;
+    const cafeId = item.cafeId ?? item.id;
+    const presentacion = item.presentacion ?? "bolsa";
+    const cafe = cafes.find((p) => p.id === cafeId);
+    const pres = cafe && presentacionDe(cafe, presentacion);
+    return {
+      ...item,
+      cafeId,
+      presentacion,
+      ...(cafe && pres
+        ? { name: cafe.name, price: pres.precioCop, priceUsd: pres.precioUsd, pesoG: pres.pesoG }
+        : { pesoG: undefined }),
+    };
   });
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  // El carrito lleva al checkout de una pantalla. Ahí se decide si es compra
-  // única o suscripción, y ahí se paga.
+  // El carrito lleva al checkout: datos de envío y pago de todo lo que hay.
   function irAPagar() {
-    const primero = items[0];
     closeCart();
-    router.push({
-      pathname: "/checkout",
-      query: primero
-        ? { cafe: primero.id, tipo: "unico" }
-        : {},
-    });
+    router.push("/checkout");
   }
 
   const total = items.reduce((s, i) => s + i.price * i.qty, 0);
   const totalUsd = items.reduce((s, i) => s + (i.priceUsd ?? 0) * i.qty, 0);
   const count = items.reduce((s, i) => s + i.qty, 0);
-
-  // Cuánto se ahorraría suscrito, con el mismo contenido del carrito.
-  const ahorroSuscrito = items.reduce((suma, item) => {
-    const producto = cafes.find((p) => p.id === item.id);
-    if (!producto) return suma;
-    return (
-      suma +
-      compararPrecios(producto, item.qty).ahorro
-    );
-  }, 0);
 
   // Close on Escape
   useEffect(() => {
@@ -150,6 +144,13 @@ export default function CartDrawer() {
                     <p className="font-display font-bold text-tinta text-base leading-tight truncate">
                       {item.name}
                     </p>
+                    {item.pesoG !== undefined && (
+                      <p className="font-body text-xs text-tinta-suave mt-0.5">
+                        {item.presentacion === "negocio"
+                          ? `${es ? "Para cafeterías o negocios" : "For cafés and businesses"} · ${formatPeso(item.pesoG)}`
+                          : formatPeso(item.pesoG)}
+                      </p>
+                    )}
                     <p className="font-mono text-[10px] tracking-[.1em] text-tinta-suave mt-0.5">
                       {formatPrice(item.price, item.priceUsd, locale)}
                     </p>
@@ -213,13 +214,6 @@ export default function CartDrawer() {
             <p className="font-body text-tinta-suave text-xs mb-4">
               {es ? "Envío calculado al finalizar el pedido" : "Shipping calculated at checkout"}
             </p>
-            {ahorroSuscrito > 0 && (
-              <p className="font-body text-verde text-xs mb-3">
-                {t("ahorroSuscrito", {
-                  ahorro: formatPrice(ahorroSuscrito, undefined, locale),
-                })}
-              </p>
-            )}
             <button
               onClick={irAPagar}
               className="w-full bg-vino hover:bg-vino-900 text-crema-papel font-body font-semibold text-base py-3.5 rounded-btn transition-colors duration-150 mb-2"

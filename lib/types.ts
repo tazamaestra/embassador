@@ -1,7 +1,7 @@
 // ── Catálogo ───────────────────────────────────────────────────────────────
 
 /** El momento del día que acompaña un café. Conecta quiz, tienda y blog. */
-export type MomentoId = "tres-pm" | "antes-del-deploy" | "madrugada" | "domingo-tranquilo";
+export type MomentoId = "tres-pm" | "madrugada" | "domingo-tranquilo";
 
 export interface Momento {
   id: MomentoId;
@@ -14,11 +14,19 @@ export interface Momento {
   historia_en: string;
 }
 
+export interface PresentacionNegocio {
+  pesoG: number;
+  precioCop: number;
+  precioUsd?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
   productor: string;
   finca: string;
+  /** La finca en inglés, si el nombre se traduce. */
+  finca_en?: string;
   region: string;
   altura: string;
   proceso_es: string;
@@ -35,16 +43,16 @@ export interface Product {
   pesoG: number;
   precioCop: number;
   precioUsd?: number;
-  precioSuscriptorCop: number;
-  precioSuscriptorUsd?: number;
+  /**
+   * Presentación para cafeterías o negocios (el cuarterón), con precio
+   * propio. Los campos de arriba son los de la bolsa normal.
+   */
+  negocio?: PresentacionNegocio;
   momento: MomentoId;
   img: string | null;
   swatch: string;
   /** Mockup de la bolsa: se dibuja mientras el café no tenga foto en img. */
   bolsa: BolsaCafe;
-  /** Dormido con FEATURE_AMBASSADORS. No se usa con el flag apagado. */
-  wholesale?: number;
-  wholesale_usd?: number;
 }
 
 export interface ProductFilter {
@@ -53,263 +61,114 @@ export interface ProductFilter {
   label_en: string;
 }
 
-// ── Suscripción ────────────────────────────────────────────────────────────
-// Precios, frecuencias, moliendas, perfiles, prepagos y reglas viven en
-// Supabase (supabase/sql/fase1_suscripciones.sql). lib/catalogo.ts los lee y
-// los entrega con estos tipos. Aquí no hay un solo número del negocio.
+// ── Clientes y capacitación ────────────────────────────────────────────────
+// Los clientes son cafeterías o personas a quienes el equipo les crea la
+// cuenta. Sus compras viven en el software de inventario (se consultan por
+// API con su NIT o cédula); aquí solo quedan sus datos y las horas de
+// capacitación que ya usaron.
 
-/** Lo que llega en cada envío. Precio por envío, envío incluido. */
-export interface Plan {
+export interface Cliente {
   id: string;
-  label_es: string;
-  label_en: string;
-  desc_es: string;
-  desc_en: string;
-  bolsas: number;
-  gramosBolsa: number;
-  precioEnvioCop: number;
-  incluye_es: string[];
-  incluye_en: string[];
-  frecuenciaDefectoId: string | null;
-  orden: number;
-}
-
-/** Cada cuánto se repite el envío. */
-export interface Frecuencia {
-  id: string;
-  dias: number;
-  label_es: string;
-  label_en: string;
-  orden: number;
-}
-
-/** Molienda o perfil de sabor: una opción con nombre y descripción. */
-export interface OpcionCatalogo {
-  id: string;
-  label_es: string;
-  label_en: string;
-  desc_es: string;
-  desc_en: string;
-  orden: number;
-}
-
-/** Pagar varios meses de una a cambio de un descuento. */
-export interface Prepago {
-  id: string;
-  meses: number;
-  descuentoPct: number;
-  label_es: string;
-  label_en: string;
-  orden: number;
-}
-
-export interface ReglasSuscripcion {
-  /** Días antes del envío en que se cobra. Es también el corte de cambios. */
-  diasCobroAntesEnvio: number;
-  /** Días entre el alta pagada y el primer envío. */
-  diasPreparacion: number;
-  /** Reintentos tras un fallo, en días desde el fallo anterior. */
-  reintentosDias: number[];
-  /** Pausas que se ofrecen, en meses. */
-  mesesPausa: number[];
-  redondeoCop: number;
-  /** Qué pasa al acabarse un prepago. */
-  prepagoRenovacion: "mismo" | "ciclo";
-  /** Cada `cadaEnvios` envíos seguidos, el siguiente lleva `bolsas` de regalo. */
-  regalo: { cadaEnvios: number; bolsas: number };
-}
-
-/** Puente con el software de gestión, que lee la tabla `pedidos`. */
-export interface Operacion {
-  productoId: string;
-  productoNombre: string;
-  canal: string;
-  prefijoPedido: string;
-  gramosPorLibra: number;
-}
-
-export interface MetodoQuiz {
-  id: string;
-  label_es: string;
-  label_en: string;
-  moliendaId: string;
-  gramosPorTaza: number;
-}
-
-export interface ReglasQuiz {
-  /** 1 = el plan debe cubrir todo el consumo; 0.9 acepta quedarse un 10% corto. */
-  factorCobertura: number;
-  tazasOpciones: number[];
-  personasOpciones: number[];
-  metodos: MetodoQuiz[];
-  /** Perfil elegido → perfil recomendado cuando se toma con leche. */
-  perfilConLeche: Record<string, string>;
-}
-
-export interface Catalogo {
-  planes: Plan[];
-  frecuencias: Frecuencia[];
-  moliendas: OpcionCatalogo[];
-  perfiles: OpcionCatalogo[];
-  prepagos: Prepago[];
-  reglas: ReglasSuscripcion;
-  quiz: ReglasQuiz;
-  operacion: Operacion;
-}
-
-export type EstadoSuscripcion = "activa" | "pausada" | "pago_pendiente" | "cancelada";
-
-/** Cambios que esperan a que se acabe el prepago para aplicarse. */
-export interface CambiosPendientes {
-  planId?: string;
-  frecuenciaId?: string;
-  prepagoId?: string;
-}
-
-export interface Suscripcion {
-  id: string;
-  clienteId: string;
-  planId: string;
-  frecuenciaId: string;
-  prepagoId: string;
-  moliendaId: string;
-  perfilId: string;
-  estado: EstadoSuscripcion;
-  /** Fecha ISO (YYYY-MM-DD) del próximo envío que todavía no se ha resuelto. */
-  proximoEnvio: string;
-  /** Con pausa, el día en que se reanuda sola. */
-  pausadaHasta: string | null;
-  cambiosPendientes: CambiosPendientes;
-  metodoPagoId: string | null;
-  /** Envíos ya pagados por un prepago que faltan por despachar. */
-  enviosPrepagadosRestantes: number;
-  intentosFallidos: number;
-  proximoReintento: string | null;
-  /** Último ciclo resuelto: pagado, prepagado o saltado. */
-  ciclo: number;
-  enviosHechos: number;
-  enviosSaltados: number;
-  direccionId: string | null;
-  creadaEn: string;
-  pausadaEn: string | null;
-  canceladaEn: string | null;
-}
-
-export type EstadoCobro = "CREANDO" | "PENDING" | "APPROVED" | "DECLINED" | "VOIDED" | "ERROR";
-export type OrigenCobro = "alta" | "automatico" | "reintento" | "manual";
-
-export interface Cobro {
-  id: string;
-  suscripcionId: string;
-  referencia: string;
-  ciclo: number;
-  origen: OrigenCobro;
-  enviosCubiertos: number;
-  montoCop: number;
-  estado: EstadoCobro;
-  motivo: string | null;
+  email: string;
+  nombre: string;
+  telefono: string;
+  /** Nombre de la cafetería o negocio, si aplica. */
+  negocio: string;
+  /** NIT o cédula: con esto se buscan sus compras en el inventario. */
+  documento: string;
+  ciudad: string;
+  notas: string;
+  activo: boolean;
   creadoEn: string;
 }
 
-export interface EnvioSuscripcion {
-  id: string;
-  suscripcionId: string;
-  numero: number;
-  fechaProgramada: string;
-  estado: "programado" | "saltado" | "enviado" | "cobrado";
-  planId: string | null;
-  bolsas: number;
-  molienda: string;
-  regalo: boolean;
-  origen: string;
-  totalCop: number;
-}
-
-export interface Direccion {
+export interface Capacitacion {
   id: string;
   clienteId: string;
+  /** ISO de solo día. */
+  fecha: string;
+  horas: number;
+  tema: string;
+  notas: string;
+}
+
+/** Una línea de compra tal como la entrega el inventario, ya normalizada. */
+export interface CompraInventario {
+  id: string;
+  /** ISO de solo día. */
+  fecha: string;
+  producto: string;
+  /** Gramos por unidad, si el inventario lo dice. */
+  gramos: number | null;
+  cantidad: number;
+  totalCop: number | null;
+  /** true si la línea es de cuarterones (2.250 g). */
+  esCuarteron: boolean;
+}
+
+export interface HorasCapacitacion {
+  cuarterones: number;
+  /** 1 por cada 3 cuarterones, en total. */
+  base: number;
+  /** 1 por cada 8 cuarterones dentro de un mismo mes. */
+  regalo: number;
+  /** base + regalo. */
+  ganadas: number;
+  usadas: number;
+  disponibles: number;
+  /** Cuarterones que faltan para la próxima hora. */
+  faltanParaSiguiente: number;
+  /** Cómo va el mes en curso hacia la hora de regalo. */
+  mesActual: { mes: string; cuarterones: number; faltanParaRegalo: number };
+  /** Meses que ya dieron horas de regalo, del más reciente al más viejo. */
+  regaloPorMes: { mes: string; cuarterones: number; horas: number }[];
+}
+
+/** Lo que ve el cliente en su cuenta (y el equipo en su ficha). */
+export interface ResumenCliente {
+  cliente: Cliente;
+  compras: CompraInventario[];
+  /** Por qué no hay compras, si no se pudieron leer. */
+  inventario: "ok" | "sin_configurar" | "sin_documento" | "error";
+  /** true mientras no hay API de inventario: las compras son de ejemplo. */
+  comprasSimuladas: boolean;
+  /** Pedidos que el cliente hizo desde la web (su cuenta o la tienda). */
+  pedidos: Pedido[];
+  capacitaciones: Capacitacion[];
+  horas: HorasCapacitacion;
+}
+
+// ── Pedidos de la tienda ──────────────────────────────────────────────────
+
+/** "confirmado" y "entregado" solo llegan desde el inventario. */
+export type EstadoPedido = "pendiente" | "confirmado" | "pagado" | "fallido" | "enviado" | "entregado" | "cancelado";
+
+export interface LineaPedido {
+  cafe: string;
+  nombre: string;
+  presentacion: "bolsa" | "negocio";
+  pesoG: number;
+  cantidad: number;
+  precioCop: number;
+}
+
+export interface Pedido {
+  id: string;
+  creadoEn: string;
+  clienteId: string | null;
+  email: string;
   nombre: string;
   telefono: string;
   linea: string;
   ciudad: string;
   departamento: string;
   notas: string;
-  esPrincipal: boolean;
-}
-
-export interface MetodoPago {
-  id: string;
-  tipo: "CARD" | "NEQUI";
-  marca: string;
-  ultimos4: string;
-  telefono: string;
-}
-
-export const MOTIVOS_CANCELACION = [
-  "precio", "mucho_cafe", "sabor", "envios", "otra_marca", "temporal", "otro",
-  "prefiero_no_decir",
-] as const;
-export type MotivoCancelacion = (typeof MOTIVOS_CANCELACION)[number] | "pago_fallido";
-
-// ── Contenido editorial de la suscripción ──────────────────────────────────
-// Textos que no mueven dinero: siguen en data/suscripcion.json.
-
-export interface BeneficioSuscriptor {
-  id: string;
-  label_es: string;
-  label_en: string;
-  desc_es: string;
-  desc_en: string;
-}
-
-/** El café invitado que entra en el plan Jornada. */
-export interface OrigenDelMes {
-  mes_es: string;
-  mes_en: string;
-  productor: string;
-  finca: string;
-  region: string;
-  altura: string;
-  variedad: string;
-  proceso_es: string;
-  proceso_en: string;
-  notas_es: string;
-  notas_en: string;
-  foto: string | null;
-  swatch: string;
-}
-
-/** Un escalón del club: se llega a él con envíos seguidos. */
-export interface NivelClub {
-  id: string;
-  label_es: string;
-  label_en: string;
-  desdeEnvio: number;
-  /** Puntos por envío en este nivel. */
-  puntosEnvio: number;
-  desc_es: string;
-  desc_en: string;
-}
-
-export interface PremioClub {
-  id: string;
-  puntos: number;
-  label_es: string;
-  label_en: string;
-}
-
-/** Programa de puntos por permanencia. */
-export interface ClubConstancia {
-  niveles: NivelClub[];
-  premios: PremioClub[];
-}
-
-export interface SuscripcionEditorial {
-  club: ClubConstancia;
-  beneficios: BeneficioSuscriptor[];
-  origenDelMes: OrigenDelMes;
-  ciudades: string[];
-  faqs: Faq[];
+  items: LineaPedido[];
+  totalCop: number;
+  estado: EstadoPedido;
+  referencia: string;
+  /** Negocio o nombre del cliente con cuenta, si el pedido es de uno (panel). */
+  cliente?: { negocio: string; nombre: string } | null;
 }
 
 // ── Blog ───────────────────────────────────────────────────────────────────
@@ -406,17 +265,6 @@ export interface HeroStat {
   label_en: string;
 }
 
-/** Dormida con FEATURE_AMBASSADORS. */
-export interface CalculatorConfig {
-  precioVenta: number;
-  precioVenta_usd?: number;
-  utilLibra: number;
-  utilLibra_usd?: number;
-  libras: { min: number; max: number; step: number; default: number };
-  formula: Record<string, string>;
-}
-
-export type Mode = "cliente" | "embajador";
 export type Locale = "es" | "en";
 
 /** Dibujo de la bolsa mientras no hay foto real de cada café. */
@@ -437,4 +285,14 @@ export interface HeroSlide {
   destacado_en: string;
   relato_es: string;
   relato_en: string;
+  /** Datos del proceso, en pastillas bajo el relato. */
+  sellos_es: string[];
+  sellos_en: string[];
+  /** Sabores que flotan alrededor de la bolsa. */
+  sabores_es: string[];
+  sabores_en: string[];
+  /** El dato grande pegado a la bolsa, ej. 30 · días de secado. */
+  insignia: { num: string; txt_es: string; txt_en: string };
+  /** Fondo del hero mientras se ve este café (gradiente CSS). */
+  fondo: string;
 }

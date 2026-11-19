@@ -5,19 +5,17 @@ import Image from "next/image";
 import { LogOut, LogIn } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, usePathname, useRouter } from "@/lib/nav";
-import ModeToggle from "./ModeToggle";
 import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
-import { FEATURE_AMBASSADORS, visibleNavKeys } from "@/lib/flags";
 import LocaleSwitcher from "./LocaleSwitcher";
 
-const NAV_PATHS: Record<string, string> = {
+const NAV_PATHS = {
   inicio: "/",
   tienda: "/tienda",
-  suscripcion: "/suscripcion",
   blog: "/blog",
-  embajadores: "/embajadores",
-};
+} as const;
+
+const NAV_KEYS = Object.keys(NAV_PATHS) as (keyof typeof NAV_PATHS)[];
 
 export default function Header() {
   const t = useTranslations("nav");
@@ -29,8 +27,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { items, openCart } = useCartStore();
   const cartCount = items.reduce((s, i) => s + i.qty, 0);
-  const { user, init, logout } = useAuthStore();
-  const navKeys = visibleNavKeys();
+  const { user, esEquipo, init, logout } = useAuthStore();
 
   useEffect(() => {
     init();
@@ -41,7 +38,7 @@ export default function Header() {
     router.push("/");
   }
 
-  function isActive(key: string) {
+  function isActive(key: keyof typeof NAV_PATHS) {
     const path = NAV_PATHS[key];
     if (path === "/") return pathname === "/";
     return pathname.startsWith(path);
@@ -76,7 +73,7 @@ export default function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1" aria-label="Navegación principal">
-          {navKeys.map((key) => (
+          {NAV_KEYS.map((key) => (
             <Link
               key={key}
               href={NAV_PATHS[key] as "/"}
@@ -97,16 +94,16 @@ export default function Header() {
           {/* Cuenta (solo con sesión) */}
           {user && (
             <Link
-              href="/cuenta"
+              href={esEquipo ? "/admin" : "/cuenta"}
               className="flex items-center gap-1.5 px-2 py-2 rounded-btn text-vino hover:bg-arena transition-colors"
-              aria-label={es ? "Mi cuenta" : "My account"}
+              aria-label={esEquipo ? (es ? "Panel del equipo" : "Team panel") : (es ? "Mi cuenta" : "My account")}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
                 <circle cx="12" cy="8" r="4" />
                 <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" />
               </svg>
               <span className="hidden sm:inline font-body font-600 text-sm max-w-28 truncate">
-                {user.nombre ? user.nombre.split(" ")[0] : (es ? "Mi cuenta" : "Account")}
+                {esEquipo ? (es ? "Panel" : "Panel") : user.nombre ? user.nombre.split(" ")[0] : (es ? "Mi cuenta" : "Account")}
               </span>
             </Link>
           )}
@@ -133,7 +130,6 @@ export default function Header() {
           </button>
 
           <div className="hidden sm:flex items-center gap-2">
-            {FEATURE_AMBASSADORS && <ModeToggle />}
             {user ? (
               <button
                 onClick={handleLogout}
@@ -180,7 +176,7 @@ export default function Header() {
       {/* Menú móvil */}
       {menuOpen && (
         <div className="absolute top-18.5 left-0 right-0 bg-fondo border-b border-borde shadow-md py-4 px-5.5 flex flex-col gap-3 md:hidden">
-          {navKeys.map((key) => (
+          {NAV_KEYS.map((key) => (
             <Link
               key={key}
               href={NAV_PATHS[key] as "/"}
@@ -194,7 +190,6 @@ export default function Header() {
             </Link>
           ))}
           <div className="pt-2 border-t border-borde flex items-center gap-2">
-            {FEATURE_AMBASSADORS && <ModeToggle />}
             {user ? (
               <button
                 onClick={() => { setMenuOpen(false); handleLogout(); }}

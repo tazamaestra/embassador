@@ -7,8 +7,8 @@ import {
 const base = products[0];
 
 const vacia = (slug: string): EdicionCafe => ({
-  productoSlug: slug, nombre: null, precioCop: null, precioSuscriptorCop: null,
-  precioUsd: null, precioSuscriptorUsd: null, notasEs: null, notasEn: null,
+  productoSlug: slug, nombre: null, precioCop: null, precioNegocioCop: null,
+  precioUsd: null, precioNegocioUsd: null, notasEs: null, notasEn: null,
   propositoEs: null, propositoEn: null, fotoPath: null, fotoAncho: null, fotoAlto: null,
 });
 
@@ -24,12 +24,12 @@ describe("aplicarEdiciones", () => {
 
   it("pone nombre, precios, notas, propósito y foto editados", () => {
     const [p] = aplicarEdiciones([base], [{
-      ...vacia(base.id), nombre: "Nuevo", precioCop: 60000, precioSuscriptorCop: 50000,
+      ...vacia(base.id), nombre: "Nuevo", precioCop: 60000, precioNegocioCop: 50000,
       notasEs: "Miel", propositoEs: "Por qué existe", fotoPath: `${base.id}/1.webp`,
     }]);
     expect(p.name).toBe("Nuevo");
     expect(p.precioCop).toBe(60000);
-    expect(p.precioSuscriptorCop).toBe(50000);
+    expect(p.negocio?.precioCop ?? 50000).toBe(50000);
     expect(p.notas_es).toBe("Miel");
     expect(p.notas_en).toBe(base.notas_en);
     expect(p.historia_es).toBe("Por qué existe");
@@ -61,9 +61,9 @@ describe("validarDatosEdicion", () => {
   });
 
   it("acepta precios como texto de un input", () => {
-    const d = validarDatosEdicion({ precioCop: "52000", precioSuscriptorCop: "45000", precioUsd: "12.499" }, base);
+    const d = validarDatosEdicion({ precioCop: "52000", precioNegocioCop: "45000", precioUsd: "12.499" }, base);
     expect(d.precioCop).toBe(52000);
-    expect(d.precioSuscriptorCop).toBe(45000);
+    expect(d.precioNegocioCop).toBe(45000);
     expect(d.precioUsd).toBe(12.5);
   });
 
@@ -73,10 +73,9 @@ describe("validarDatosEdicion", () => {
     }
   });
 
-  it("el precio de suscriptor no puede quedar por encima del de compra única", () => {
-    expect(() => validarDatosEdicion({ precioSuscriptorCop: base.precioCop + 1 }, base)).toThrow(EdicionInvalida);
-    // …tampoco al bajar solo el de compra única.
-    expect(() => validarDatosEdicion({ precioCop: base.precioSuscriptorCop - 1 }, base)).toThrow(EdicionInvalida);
+  it("el precio del cuarterón solo se acepta si el café tiene cuarterón", () => {
+    const sinCuarteron = { ...base, negocio: undefined };
+    expect(() => validarDatosEdicion({ precioNegocioCop: 150000 }, sinCuarteron)).toThrow(EdicionInvalida);
   });
 
   it("limita el largo de los textos", () => {

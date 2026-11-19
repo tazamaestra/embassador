@@ -4,34 +4,39 @@ import { useState } from "react";
 import Image from "next/image";
 import BolsaMockup from "@/components/shared/BolsaMockup";
 import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/lib/nav";
+import { Link } from "@/lib/nav";
+import { useCartStore } from "@/lib/cart-store";
 import { momentos } from "@/lib/content";
 import { useCafesPorMomento } from "@/components/shared/CafesProvider";
 import { srcImagen } from "@/lib/cafes";
-import { compararPrecios } from "@/lib/suscripcion";
-import { formatPrice } from "@/lib/format";
+import { formatCOP, formatUSD } from "@/lib/format";
 import type { Locale, MomentoId } from "@/lib/types";
 
 // Paso 1 de 3 hasta pagar: una pregunta, una recomendación, y al checkout.
 // La recomendación aparece aquí mismo, sin cambiar de página.
 export default function MomentQuiz({ locale }: { locale: Locale }) {
   const t = useTranslations("quiz");
-  const router = useRouter();
+  const { addItem } = useCartStore();
   const es = locale !== "en";
 
   const [momentoId, setMomentoId] = useState<MomentoId | null>(null);
 
   const momento = momentos.find((m) => m.id === momentoId);
   const cafe = useCafesPorMomento(momentoId)[0];
-  const precios = cafe ? compararPrecios(cafe) : null;
 
-  // El quiz recomienda una bolsa del catálogo. La suscripción ya no es por
-  // café —son planes por libras— así que la frecuencia se elige allá.
-  function comprarSuelto() {
+  // El quiz recomienda una bolsa del catálogo: se agrega al carrito, o se
+  // pide la muestra gratis para probarlo antes.
+  function agregar() {
     if (!cafe) return;
-    router.push({
-      pathname: "/checkout",
-      query: { cafe: cafe.id, tipo: "unico" },
+    addItem({
+      id: cafe.id,
+      cafeId: cafe.id,
+      presentacion: "bolsa",
+      name: cafe.name,
+      price: cafe.precioCop,
+      priceUsd: cafe.precioUsd,
+      swatch: cafe.swatch,
+      img: cafe.img,
     });
   }
 
@@ -46,7 +51,7 @@ export default function MomentQuiz({ locale }: { locale: Locale }) {
         </h2>
         <p className="font-body text-tinta-suave text-center text-base mb-8">{t("sub")}</p>
 
-        {/* Las cuatro opciones */}
+        {/* Las opciones */}
         <div role="radiogroup" aria-label={t("pregunta")} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {momentos.map((m) => {
             const activo = momentoId === m.id;
@@ -78,7 +83,7 @@ export default function MomentQuiz({ locale }: { locale: Locale }) {
         </div>
 
         {/* La recomendación, en la misma pantalla */}
-        {momento && cafe && precios && (
+        {momento && cafe && (
           <div className="mt-8 rounded-card-lg border border-borde bg-white overflow-hidden animate-[fadeUp_.3s_ease-out]">
             <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr]">
               <div
@@ -125,36 +130,29 @@ export default function MomentQuiz({ locale }: { locale: Locale }) {
                   {es ? cafe.notas_es : cafe.notas_en}
                 </p>
 
-                {/* Precio con el ahorro al lado */}
-                <div className="flex items-end gap-4 mb-1">
-                  <div>
-                    <p className="font-display font-bold text-verde text-3xl leading-none">
-                      {formatPrice(precios.suscriptor, cafe.precioSuscriptorUsd, locale)}
-                    </p>
-                  </div>
-                  <p className="font-body text-tinta-suave text-sm line-through leading-none pb-0.5">
-                    {formatPrice(precios.unico, cafe.precioUsd, locale)}
-                  </p>
-                </div>
-                <p className="font-body text-verde text-sm mb-5">
-                  {t("ahorro", {
-                    ahorro: formatPrice(precios.ahorro, undefined, locale),
-                  })}
+                {/* Precio en pesos, su equivalente en dólares y el envío aparte */}
+                <p className="font-display font-bold text-vino text-3xl leading-none">
+                  {formatCOP(cafe.precioCop)}
+                  <span className="font-mono font-400 text-xs text-tinta-suave ml-1.5">COP</span>
+                </p>
+                <p className="font-body text-tinta-suave text-sm mt-1.5 mb-5">
+                  {cafe.precioUsd !== undefined && <>≈ {formatUSD(cafe.precioUsd, locale)} · </>}
+                  {cafe.pesoG.toLocaleString("es-CO")} g · {t("envio")}
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Link
-                    href="/suscripcion"
-                    className="flex-1 text-center bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-6 py-3 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5"
-                  >
-                    {t("ctaSuscribir")}
-                  </Link>
                   <button
-                    onClick={comprarSuelto}
-                    className="flex-1 border border-borde-2 text-tinta-cafe hover:border-vino hover:text-vino font-body font-700 text-base px-6 py-3 rounded-btn transition-colors duration-150"
+                    onClick={agregar}
+                    className="flex-1 bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-6 py-3 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5"
                   >
                     {t("ctaUnico")}
                   </button>
+                  <Link
+                    href={{ pathname: "/tienda", hash: "muestra" }}
+                    className="flex-1 text-center border border-borde-2 text-tinta-cafe hover:border-vino hover:text-vino font-body font-700 text-base px-6 py-3 rounded-btn transition-colors duration-150"
+                  >
+                    {t("ctaSuscribir")}
+                  </Link>
                 </div>
 
                 <div className="flex flex-wrap gap-4 mt-4">

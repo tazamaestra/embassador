@@ -62,12 +62,12 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Suscripción */}
+          {/* Taza Maestra */}
           <div>
             <h3 className="font-mono text-[11px] tracking-[.2em] text-crema mb-4">{t("subTitle")}</h3>
             <ul className="space-y-2">
               {subLinks.map((link, i) => {
-                const hrefs = ["/suscripcion", "/suscripcion#planes", "/blog"];
+                const hrefs = ["/blog", "/tienda#muestra", "/cuenta"] as const;
                 return (
                   <li key={i}>
                     <Link href={hrefs[i]} className="font-body text-sm hover:text-crema transition-colors">{link}</Link>

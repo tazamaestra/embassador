@@ -3,7 +3,6 @@ import Hero from "@/components/home/Hero";
 import TrustBar from "@/components/home/TrustBar";
 import MomentQuiz from "@/components/home/MomentQuiz";
 import Stories from "@/components/home/Stories";
-import HowItWorks from "@/components/home/HowItWorks";
 import Origins from "@/components/home/Origins";
 import type { Locale } from "@/lib/types";
 
@@ -22,7 +21,6 @@ export default async function HomePage({
       <TrustBar />
       <MomentQuiz locale={locale} />
       <Stories locale={locale} />
-      <HowItWorks locale={locale} />
       <Origins locale={locale} />
     </>
   );

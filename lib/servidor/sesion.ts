@@ -1,7 +1,7 @@
 // Quién llama a un route handler y con qué rol. SOLO SERVIDOR.
 //
-// Dos roles: suscriptor (cualquiera con sesión) y admin (fila en `usuarios`
-// con rol 'admin', lo que responde la función es_equipo() de Postgres). El
+// Dos roles: suscriptor (cualquiera con sesión) y admin (fila en la tabla
+// `equipo`, lo que responde la función es_equipo() de Postgres). El
 // rol se pregunta a la base con el token del usuario: el navegador no puede
 // declararse admin.
 
@@ -29,4 +29,12 @@ export async function leerSesion(request: Request): Promise<Sesion | null> {
 export async function esAdmin(sesion: Sesion): Promise<boolean> {
   const { data, error } = await crearClienteConToken(sesion.token).rpc("es_equipo");
   return !error && data === true;
+}
+
+/** Sesión de un admin, o la respuesta de error lista para devolver. */
+export async function exigirAdmin(request: Request): Promise<Sesion | Response> {
+  const sesion = await leerSesion(request);
+  if (!sesion) return respuestaError("sin_sesion", 401);
+  if (!(await esAdmin(sesion))) return respuestaError("prohibido", 403);
+  return sesion;
 }

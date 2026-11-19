@@ -1,660 +1,216 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Link, useRouter } from "@/lib/nav";
-import { costoMensual, enviosDelPrepago, montoCobro, primerEnvio } from "@/lib/suscripcion";
-import { etiqueta, formatCOP, formatFecha } from "@/lib/format";
-import { llamarApi } from "@/lib/pago";
-import { QUIZ_GUARDADO, QUIZ_PROGRESO } from "@/lib/quiz";
-import { CHECKOUT_BORRADOR as BORRADOR, borrarProgreso, guardarProgreso, leerProgreso } from "@/lib/progreso";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "@/lib/nav";
+import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
-import NumeroAnimado from "@/components/shared/NumeroAnimado";
-import AuthPanel from "@/components/auth/AuthPanel";
-import MetodoPagoForm, { type PagoTokenizado } from "@/components/pago/MetodoPagoForm";
-import CamposDireccion, { DIRECCION_VACIA } from "@/components/shared/CamposDireccion";
-import type { Catalogo, Locale, OpcionCatalogo, Plan } from "@/lib/types";
+import { useCafes } from "@/components/shared/CafesProvider";
+import { ciudades } from "@/lib/content";
+import { formatCOP, formatUSD } from "@/lib/format";
+import { formatPeso, presentacionDe } from "@/lib/presentaciones";
+import { CONTACTO_VACIO, PedidoInvalido, validarContacto, type Contacto } from "@/lib/pedidos";
+import { iniciarPago, type LineaCarrito } from "@/lib/pago";
+import type { Locale } from "@/lib/types";
 
-type PasoId = "plan" | "frecuencia" | "formato" | "molienda" | "perfil" | "prepago" | "envio" | "pago";
-const PASOS_TODOS: PasoId[] = ["plan", "frecuencia", "formato", "molienda", "perfil", "prepago", "envio", "pago"];
+// Checkout del carrito: datos de envío y pago. Sin cuenta. El total que se
+// muestra es el del catálogo de hoy; el que se cobra lo calcula el servidor.
+// Si la pasarela no está configurada, el pedido queda registrado y el
+// equipo cobra por fuera (lo dice la confirmación).
 
-// Primero se pregunta grano o molido; el método solo hace falta si va molido.
-// "grano" es el id de la molienda en grano en la tabla `moliendas`.
-const MOLIENDA_GRANO = "grano";
+const ENTRADA =
+  "w-full bg-white border border-borde rounded-input px-4 py-3 font-body text-tinta text-base focus:outline-none focus:border-naranja focus:ring-1 focus:ring-naranja aria-[invalid=true]:border-vino transition-colors";
+const ETIQUETA = "block font-mono text-[11px] tracking-[.15em] text-tinta-suave uppercase mb-1";
 
-function pasosPara(moliendaId: string, hayGrano: boolean): PasoId[] {
-  if (!hayGrano) return PASOS_TODOS.filter((p) => p !== "formato");
-  return moliendaId === MOLIENDA_GRANO ? PASOS_TODOS.filter((p) => p !== "molienda") : PASOS_TODOS;
-}
-
-// Entrar con Google saca del sitio y vuelve con la página recargada; un pago
-// rechazado, una recarga o cerrar la pestaña cortan el flujo. El borrador
-// (lib/progreso) evita que el cliente tenga que rehacer los pasos. Nunca se
-// guarda nada del pago. Mientras exista, /suscripcion trae al cliente de
-// vuelta aquí (cookie de lib/progreso).
-
-interface Borrador {
-  indice: number;
-  planId: string;
-  frecuenciaId: string;
-  moliendaId: string;
-  perfilId: string;
-  prepagoId: string;
-  direccion: typeof DIRECCION_VACIA;
-  /** Ya vio el resumen con todo completo: al volver, vuelve ahí. */
-  llegoAlResumen: boolean;
-}
-
-export default function CheckoutScreen({ locale, catalogo }: { locale: Locale; catalogo: Catalogo }) {
+export default function CheckoutScreen({ locale }: { locale: Locale }) {
   const es = locale !== "en";
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const { user, loading: authLoading, init } = useAuthStore();
-  const { planes, frecuencias, moliendas, perfiles, prepagos, reglas } = catalogo;
-
-  // Lo que venga del quiz o de la tarjeta de un plan se respeta.
-  const existe = (lista: { id: string }[], id: string | null) => (id && lista.some((x) => x.id === id) ? id : null);
-  const planInicial = existe(planes, searchParams.get("plan")) ?? planes[0]?.id ?? "";
-  const planBase = planes.find((p) => p.id === planInicial);
-
-  // Del quiz llega todo elegido: no se le vuelve a preguntar, arranca en el
-  // prepago. Puede volver atrás si quiere cambiar algo.
-  const completoDelQuiz =
-    Boolean(existe(planes, searchParams.get("plan"))) &&
-    Boolean(existe(frecuencias, searchParams.get("frecuencia"))) &&
-    Boolean(existe(moliendas, searchParams.get("molienda"))) &&
-    Boolean(existe(perfiles, searchParams.get("perfil")));
-  const hayGrano = moliendas.some((m) => m.id === MOLIENDA_GRANO);
-  const molidas = moliendas.filter((m) => m.id !== MOLIENDA_GRANO);
-  const moliendaInicial = existe(moliendas, searchParams.get("molienda")) ?? moliendas[0]?.id ?? "";
-  const [indice, setIndice] = useState(completoDelQuiz ? pasosPara(moliendaInicial, hayGrano).indexOf("prepago") : 0);
-  const [sentido, setSentido] = useState<"adelante" | "atras">("adelante");
-  const [planId, setPlanId] = useState(planInicial);
-  const [frecuenciaId, setFrecuenciaId] = useState(
-    existe(frecuencias, searchParams.get("frecuencia")) ?? planBase?.frecuenciaDefectoId ?? frecuencias[0]?.id ?? ""
-  );
-  const [moliendaId, setMoliendaId] = useState(moliendaInicial);
-  const [perfilId, setPerfilId] = useState(existe(perfiles, searchParams.get("perfil")) ?? perfiles[0]?.id ?? "");
-  const [prepagoId, setPrepagoId] = useState(prepagos[0]?.id ?? "");
-  const [direccion, setDireccion] = useState(DIRECCION_VACIA);
-  const [llegoAlResumen, setLlegoAlResumen] = useState(false);
-  // El borrador no se escribe hasta haber leído el que había: si no, el
-  // primer render lo pisaría con los valores por defecto.
-  const [restaurado, setRestaurado] = useState(false);
-
+  const { items: guardados } = useCartStore();
+  const cafes = useCafes();
+  const { user, init } = useAuthStore();
+  const [contacto, setContacto] = useState<Contacto>(CONTACTO_VACIO);
+  const [campoMalo, setCampoMalo] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
-
-  const tituloRef = useRef<HTMLHeadingElement>(null);
-  const yaMontado = useRef(false);
+  const [montado, setMontado] = useState(false);
 
   useEffect(() => {
     init();
+    setMontado(true);
   }, [init]);
 
-  // Restaurar va en un efecto y no en el estado inicial: localStorage no
-  // existe en el servidor, y leerlo durante el render rompería la hidratación.
-  // Si llegó con parámetros distintos (otro plan, un quiz nuevo), esos mandan
-  // y del borrador solo se toman prepago y dirección. Si los parámetros son
-  // los mismos del borrador —volvió al quiz y siguió, o recargó— se retoma
-  // donde iba.
+  // Con sesión, el correo y el nombre ya se saben.
   useEffect(() => {
-    const b = leerProgreso<Partial<Borrador>>(BORRADOR);
-    if (b) {
-      const guardado = { plan: b.planId, frecuencia: b.frecuenciaId, molienda: b.moliendaId, perfil: b.perfilId };
-      const mismaEleccion = (["plan", "frecuencia", "molienda", "perfil"] as const).every((k) => {
-        const valor = searchParams.get(k);
-        return valor === null || valor === guardado[k];
-      });
+    if (user) setContacto((c) => ({ ...c, email: c.email || user.email, nombre: c.nombre || user.nombre, telefono: c.telefono || user.telefono }));
+  }, [user]);
 
-      if (mismaEleccion) {
-        const moliendaB = existe(moliendas, b.moliendaId ?? null) ?? moliendaInicial;
-        if (b.planId && existe(planes, b.planId)) setPlanId(b.planId);
-        if (b.frecuenciaId && existe(frecuencias, b.frecuenciaId)) setFrecuenciaId(b.frecuenciaId);
-        setMoliendaId(moliendaB);
-        if (b.perfilId && existe(perfiles, b.perfilId)) setPerfilId(b.perfilId);
-        const pasosB = pasosPara(moliendaB, hayGrano);
-        if (b.llegoAlResumen) {
-          setLlegoAlResumen(true);
-          setIndice(pasosB.length - 1);
-        } else if (typeof b.indice === "number") {
-          setIndice(Math.min(Math.max(b.indice, 0), pasosB.length - 1));
-        }
+  // Las líneas con el precio del catálogo de hoy.
+  const lineas = guardados.flatMap((item) => {
+    const cafe = cafes.find((p) => p.id === (item.cafeId ?? item.id));
+    const pres = cafe && presentacionDe(cafe, item.presentacion ?? "bolsa");
+    return cafe && pres ? [{ key: item.id, cafe, pres, cantidad: item.qty }] : [];
+  });
+  const total = lineas.reduce((s, l) => s + l.pres.precioCop * l.cantidad, 0);
+  const totalUsd = lineas.reduce((s, l) => s + (l.pres.precioUsd ?? 0) * l.cantidad, 0);
+
+  const MENSAJES: Record<string, [string, string]> = {
+    nombre: ["Escribe tu nombre.", "Enter your name."],
+    email: ["Revisa el correo: ahí te llega la confirmación.", "Check the email: your confirmation goes there."],
+    telefono: ["Revisa el celular.", "Check the phone number."],
+    linea: ["Falta la dirección.", "The address is missing."],
+    ciudad: ["Elige la ciudad.", "Choose the city."],
+    departamento: ["Falta el departamento.", "The state is missing."],
+    items: ["Algo cambió en el carrito. Revísalo y vuelve a intentar.", "Something changed in your cart. Check it and try again."],
+  };
+
+  async function pagar(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    try {
+      validarContacto(contacto);
+    } catch (err) {
+      if (err instanceof PedidoInvalido) {
+        setCampoMalo(err.campo);
+        document.getElementById(`co-${err.campo}`)?.focus();
+        return;
       }
-      if (b.prepagoId && existe(prepagos, b.prepagoId)) setPrepagoId(b.prepagoId);
-      if (b.direccion) setDireccion({ ...DIRECCION_VACIA, ...b.direccion });
+      throw err;
     }
-    setRestaurado(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!restaurado) return;
-    guardarProgreso<Borrador>(BORRADOR, { indice, planId, frecuenciaId, moliendaId, perfilId, prepagoId, direccion, llegoAlResumen });
-  }, [restaurado, indice, planId, frecuenciaId, moliendaId, perfilId, prepagoId, direccion, llegoAlResumen]);
-
-  // Llegar al resumen lo marca: desde ahí, cualquier vuelta al checkout
-  // (recargar, pago rechazado, volver de otra página) abre el resumen.
-  useEffect(() => {
-    if (restaurado && indice === pasosPara(moliendaId, hayGrano).length - 1) setLlegoAlResumen(true);
-  }, [restaurado, indice, moliendaId, hayGrano]);
-
-  // Al cambiar de paso el foco va al título: si no, el teclado se queda en un
-  // botón que ya no existe y el lector de pantalla no anuncia nada.
-  useEffect(() => {
-    if (!yaMontado.current) {
-      yaMontado.current = true;
+    setCampoMalo(null);
+    setEnviando(true);
+    const items: LineaCarrito[] = lineas.map((l) => ({ cafe: l.cafe.id, presentacion: l.pres.id, cantidad: l.cantidad }));
+    const r = await iniciarPago(items, contacto, locale);
+    if (r.ok) {
+      // El carrito se vacía en la confirmación: si el cliente vuelve atrás
+      // desde la pasarela, todavía lo tiene.
+      window.location.assign(r.url);
       return;
     }
-    tituloRef.current?.focus();
-  }, [indice]);
+    setEnviando(false);
+    if (r.motivo === "campo_invalido" && r.campo) {
+      setCampoMalo(r.campo);
+      return;
+    }
+    setError(es ? "No pudimos registrar el pedido. Intenta de nuevo en un momento." : "We couldn't place the order. Please try again in a moment.");
+  }
 
-  const plan = planes.find((p) => p.id === planId) ?? planes[0];
-  const frecuencia = frecuencias.find((f) => f.id === frecuenciaId) ?? frecuencias[0];
-  const prepago = prepagos.find((p) => p.id === prepagoId) ?? prepagos[0];
+  const campo = (k: keyof Contacto) => ({
+    id: `co-${k}`,
+    value: contacto[k],
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setContacto({ ...contacto, [k]: e.target.value }),
+    "aria-invalid": campoMalo === k,
+    "aria-describedby": campoMalo === k ? `co-${k}-error` : undefined,
+  });
+  const errorDe = (k: string) =>
+    campoMalo === k && MENSAJES[k] ? <p id={`co-${k}-error`} className="font-body text-xs text-vino mt-1">{MENSAJES[k][es ? 0 : 1]}</p> : null;
 
-  if (!plan || !frecuencia || !prepago) {
+  if (!montado) return <div className="bg-fondo min-h-[60vh]" />;
+
+  if (lineas.length === 0) {
     return (
-      <div className="bg-fondo min-h-[60vh] flex items-center justify-center px-[22px]">
-        <p className="font-body text-tinta-suave">
-          {es ? "Los planes no están disponibles en este momento." : "Plans aren't available right now."}
-        </p>
+      <div className="bg-fondo min-h-[60vh] flex items-center justify-center px-5.5">
+        <div className="text-center">
+          <p className="font-display font-bold text-tinta text-2xl mb-2">{es ? "Tu carrito está vacío" : "Your cart is empty"}</p>
+          <Link href="/tienda" className="inline-block mt-2 font-body font-700 text-sm px-5 py-2.5 rounded-btn bg-naranja text-white hover:bg-naranja-700">
+            {es ? "Ver los cafés" : "See the coffees"}
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const cobro = montoCobro(plan, frecuencia, prepago, reglas);
-  const pasos = pasosPara(moliendaId, hayGrano);
-  const pasoActual = pasos[indice];
-  const esUltimo = indice === pasos.length - 1;
-
-  const direccionCompleta = Boolean(
-    direccion.nombre && direccion.telefono && direccion.linea && direccion.ciudad && direccion.departamento
-  );
-
-  function avanzar() {
-    setSentido("adelante");
-    setIndice((i) => Math.min(i + 1, pasos.length - 1));
-  }
-
-  function retroceder() {
-    setSentido("atras");
-    setIndice((i) => Math.max(i - 1, 0));
-  }
-
-  async function pagar(pago: PagoTokenizado) {
-    setError("");
-    if (!direccionCompleta) {
-      setError(es ? "Faltan datos de envío." : "Shipping details are missing.");
-      return;
-    }
-    setEnviando(true);
-
-    const r = await llamarApi<{ cobro: string }>("/api/suscripciones", {
-      body: {
-        planId, frecuenciaId, moliendaId, perfilId, prepagoId, direccion,
-        quiz: leerProgreso(QUIZ_GUARDADO) ?? undefined,
-        pago: {
-          tipo: pago.tipo, token: pago.token,
-          acceptanceToken: pago.acceptanceToken, personalAuthToken: pago.personalAuthToken,
-        },
-      },
-    });
-
-    if (r.ok) {
-      borrarProgreso(BORRADOR, QUIZ_GUARDADO, QUIZ_PROGRESO);
-      router.push("/confirmacion");
-      return;
-    }
-
-    setEnviando(false);
-    const mensajes: Record<string, [string, string]> = {
-      sin_sesion: ["Entra con tu cuenta para suscribirte.", "Sign in to subscribe."],
-      ya_suscrito: ["Ya tienes una suscripción. La gestionas desde tu cuenta.", "You already have a subscription. Manage it from your account."],
-      medio_de_pago_rechazado: ["Wompi no aceptó ese medio de pago. Revisa los datos o prueba con otro.", "Wompi didn't accept that payment method. Check the details or try another."],
-      wompi_sin_configurar: ["Los pagos todavía no están habilitados. Escríbenos y lo resolvemos.", "Payments aren't enabled yet. Write to us and we'll sort it out."],
-    };
-    const [msgEs, msgEn] = mensajes[r.error] ?? ["No se pudo crear la suscripción. Intenta de nuevo.", "Couldn't create the subscription. Try again."];
-    setError(es ? msgEs : msgEn);
-  }
-
   return (
-    <div className="bg-fondo min-h-screen py-10">
-      <div className="max-w-[640px] mx-auto px-[22px]">
-        <Progreso total={pasos.length} indice={indice} es={es} />
+    <div className="bg-fondo min-h-screen">
+      <div className="max-w-310 mx-auto px-5.5 py-10 md:py-14">
+        <p className="font-mono text-[11px] tracking-[.22em] text-dorado uppercase mb-2">{es ? "FINALIZAR COMPRA" : "CHECKOUT"}</p>
+        <h1 className="font-display font-bold text-tinta mb-8" style={{ fontSize: "clamp(30px,4vw,46px)" }}>
+          {es ? "¿A dónde te lo enviamos?" : "Where should we send it?"}
+        </h1>
 
-        <div key={pasoActual} className={sentido === "adelante" ? "tm-paso-adelante" : "tm-paso-atras"}>
-          {pasoActual === "plan" && (
-            <PasoPlan ref={tituloRef} es={es} catalogo={catalogo} valor={planId} onElegir={(id) => {
-              setPlanId(id);
-              const p = planes.find((x) => x.id === id);
-              if (p?.frecuenciaDefectoId && !searchParams.has("frecuencia")) setFrecuenciaId(p.frecuenciaDefectoId);
-            }} />
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_.8fr] gap-8 items-start">
+          {/* Datos */}
+          <form id="checkout" onSubmit={pagar} noValidate className="rounded-card-lg bg-white border border-borde p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className={ETIQUETA} htmlFor="co-nombre">{es ? "Nombre completo" : "Full name"}</label>
+              <input autoComplete="name" className={ENTRADA} {...campo("nombre")} />
+              {errorDe("nombre")}
+            </div>
+            <div>
+              <label className={ETIQUETA} htmlFor="co-email">{es ? "Correo" : "Email"}</label>
+              <input type="email" autoComplete="email" className={ENTRADA} {...campo("email")} />
+              {errorDe("email")}
+            </div>
+            <div>
+              <label className={ETIQUETA} htmlFor="co-telefono">{es ? "Celular" : "Phone"}</label>
+              <input type="tel" inputMode="tel" autoComplete="tel" className={ENTRADA} {...campo("telefono")} />
+              {errorDe("telefono")}
+            </div>
+            <div className="sm:col-span-2">
+              <label className={ETIQUETA} htmlFor="co-linea">{es ? "Dirección" : "Address"}</label>
+              <input autoComplete="street-address" placeholder={es ? "Calle 12 #4-56, apto 301" : "Street, number, apartment"} className={ENTRADA} {...campo("linea")} />
+              {errorDe("linea")}
+            </div>
+            <div>
+              <label className={ETIQUETA} htmlFor="co-ciudad">{es ? "Ciudad" : "City"}</label>
+              <select autoComplete="address-level2" className={ENTRADA} {...campo("ciudad")}>
+                <option value="">{es ? "Elige tu ciudad" : "Choose your city"}</option>
+                {ciudades.map((c) => <option key={c} value={c}>{c}</option>)}
+                <option value="Otra">{es ? "Otra" : "Other"}</option>
+              </select>
+              {errorDe("ciudad")}
+            </div>
+            <div>
+              <label className={ETIQUETA} htmlFor="co-departamento">{es ? "Departamento" : "State"}</label>
+              <input autoComplete="address-level1" className={ENTRADA} {...campo("departamento")} />
+              {errorDe("departamento")}
+            </div>
+            <div className="sm:col-span-2">
+              <label className={ETIQUETA} htmlFor="co-notas">{es ? "Indicaciones (opcional)" : "Notes (optional)"}</label>
+              <input placeholder={es ? "Portería, punto de referencia, ciudad si elegiste Otra…" : "Doorman, landmark, city if you chose Other…"} className={ENTRADA} {...campo("notas")} />
+            </div>
+          </form>
 
-          {pasoActual === "frecuencia" && (
-            <PasoOpciones
-              ref={tituloRef}
-              es={es}
-              titulo={es ? "¿Cada cuánto?" : "How often?"}
-              ayuda={es ? "Lo cambias cuando quieras desde tu cuenta." : "Change it anytime from your account."}
-              opciones={frecuencias.map((f) => ({
-                id: f.id, label_es: f.label_es, label_en: f.label_en,
-                desc_es: `${formatCOP(costoMensual(plan, f, reglas))} al mes aprox.`,
-                desc_en: `About ${formatCOP(costoMensual(plan, f, reglas))} a month`,
-              }))}
-              valor={frecuenciaId}
-              onElegir={setFrecuenciaId}
-            />
-          )}
+          {/* Resumen */}
+          <aside className="rounded-card-lg bg-white border border-borde p-6 md:p-7 lg:sticky lg:top-24">
+            <p className="font-mono text-[11px] tracking-[.18em] text-tinta-suave uppercase mb-4">{es ? "TU PEDIDO" : "YOUR ORDER"}</p>
+            <ul className="divide-y divide-borde mb-4">
+              {lineas.map((l) => (
+                <li key={l.key} className="py-3 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-display font-bold text-tinta leading-tight">{l.cafe.name}</p>
+                    <p className="font-body text-xs text-tinta-suave">
+                      {l.pres.id === "negocio" ? (es ? "Cuarterón para negocios · " : "Business bag · ") : ""}
+                      {formatPeso(l.pres.pesoG)} · {l.cantidad} × {formatCOP(l.pres.precioCop)}
+                    </p>
+                  </div>
+                  <p className="font-body font-700 text-tinta tabular-nums">{formatCOP(l.pres.precioCop * l.cantidad)}</p>
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-baseline justify-between border-t border-borde pt-4">
+              <span className="font-body text-tinta-suave text-sm">{es ? "Total" : "Total"}</span>
+              <span className="font-display font-bold text-tinta text-3xl tabular-nums">{formatCOP(total)}</span>
+            </div>
+            {totalUsd > 0 && <p className="font-mono text-xs text-tinta-suave text-right">≈ {formatUSD(totalUsd, locale)}</p>}
+            <p className="font-body text-xs text-tinta-suave mt-1 mb-5">
+              {es ? "+ costo de envío, que te confirmamos según tu ciudad." : "+ shipping, confirmed for your city."}
+            </p>
 
-          {pasoActual === "formato" && (
-            <PasoOpciones
-              ref={tituloRef}
-              es={es}
-              titulo={es ? "¿En grano o molido?" : "Whole bean or ground?"}
-              ayuda={es ? "Lo cambias cuando quieras desde tu cuenta." : "Change it anytime from your account."}
-              opciones={[
-                {
-                  id: "grano", label_es: "En grano", label_en: "Whole bean",
-                  desc_es: "Tienes molino y lo mueles justo antes de preparar.",
-                  desc_en: "You have a grinder and grind right before brewing.",
-                },
-                {
-                  id: "molido", label_es: "Molido", label_en: "Ground",
-                  desc_es: "Lo molemos para tu método el día del despacho.",
-                  desc_en: "We grind it for your method on shipping day.",
-                },
-              ]}
-              valor={moliendaId === MOLIENDA_GRANO ? "grano" : "molido"}
-              onElegir={(v) => {
-                if (v === "grano") setMoliendaId(MOLIENDA_GRANO);
-                else if (moliendaId === MOLIENDA_GRANO) setMoliendaId(molidas[0]?.id ?? moliendaId);
-              }}
-            />
-          )}
+            {error && <p role="alert" className="font-body text-sm text-vino mb-3">{error}</p>}
+            {campoMalo === "items" && <p role="alert" className="font-body text-sm text-vino mb-3">{MENSAJES.items[es ? 0 : 1]}</p>}
 
-          {pasoActual === "molienda" && (
-            <PasoOpciones
-              ref={tituloRef}
-              es={es}
-              titulo={es ? "¿Cómo lo preparas?" : "How do you brew it?"}
-              ayuda={es ? "Lo molemos a la medida de tu método." : "We grind it to suit your method."}
-              opciones={hayGrano ? molidas : moliendas}
-              valor={moliendaId}
-              onElegir={setMoliendaId}
-            />
-          )}
-
-          {pasoActual === "perfil" && (
-            <PasoOpciones
-              ref={tituloRef}
-              es={es}
-              titulo={es ? "¿Qué taza te gusta?" : "Which cup do you like?"}
-              ayuda={es ? "Elegimos el lote de la finca que más se acerque." : "We pick the farm lot that comes closest."}
-              opciones={perfiles}
-              valor={perfilId}
-              onElegir={setPerfilId}
-            />
-          )}
-
-          {pasoActual === "prepago" && (
-            <PasoPrepago ref={tituloRef} es={es} catalogo={catalogo} plan={plan} frecuenciaId={frecuencia.id} valor={prepagoId} onElegir={setPrepagoId} />
-          )}
-
-          {pasoActual === "envio" && (
-            <PasoEnvio ref={tituloRef} es={es} direccion={direccion} onCambio={setDireccion} />
-          )}
-
-          {pasoActual === "pago" && (
-            <>
-              <Titulo innerRef={tituloRef}>{es ? "Revisa y paga" : "Review and pay"}</Titulo>
-
-              <div className="rounded-card border border-borde bg-white p-6 mb-4">
-                <dl className="grid grid-cols-2 gap-x-6 gap-y-3 mb-5">
-                  {[
-                    [es ? "Plan" : "Plan", `${es ? plan.label_es : plan.label_en} · ${plan.bolsas} × ${plan.gramosBolsa} g`],
-                    [es ? "Cada cuánto" : "How often", etiqueta(frecuencias, frecuenciaId, es)],
-                    [es ? "Molienda" : "Grind", etiqueta(moliendas, moliendaId, es)],
-                    [es ? "Perfil" : "Profile", etiqueta(perfiles, perfilId, es)],
-                    [es ? "Pago" : "Payment", etiqueta(prepagos, prepagoId, es)],
-                    [es ? "Primer envío" : "First shipment", formatFecha(primerEnvio(reglas), es)],
-                  ].map(([k, v]) => (
-                    <div key={k} className="contents">
-                      <dt className="font-mono text-[10px] tracking-[.15em] text-tinta-suave uppercase self-center">{k}</dt>
-                      <dd className="font-body font-600 text-tinta text-sm text-right">{v}</dd>
-                    </div>
-                  ))}
-                </dl>
-
-                <div className="border-t border-borde pt-5 flex items-baseline justify-between">
-                  <span className="font-body text-tinta text-base">
-                    {cobro.envios > 1
-                      ? es ? `Hoy, por ${cobro.envios} envíos` : `Today, for ${cobro.envios} shipments`
-                      : es ? "Hoy, por este envío" : "Today, for this shipment"}
-                  </span>
-                  <span className="font-display font-bold text-vino text-3xl leading-none">
-                    <NumeroAnimado valor={cobro.total} formato={(n) => formatCOP(Math.round(n))} />
-                  </span>
-                </div>
-                {cobro.ahorro > 0 && (
-                  <p className="font-mono text-[11px] text-verde text-right mt-1">
-                    {es ? `Ahorras ${formatCOP(cobro.ahorro)}` : `You save ${formatCOP(cobro.ahorro)}`}
-                  </p>
-                )}
-                <p className="font-body text-tinta-suave text-sm mt-4">
-                  {cobro.envios > 1
-                    ? es
-                      ? `Cuando se acaben los ${cobro.envios} envíos, se renueva por el mismo plazo. Lo cambias antes desde tu cuenta.`
-                      : `When the ${cobro.envios} shipments run out, it renews for the same term. Change it beforehand from your account.`
-                    : es
-                      ? `Después se cobra cada envío, ${reglas.diasCobroAntesEnvio} días antes de despacharlo.`
-                      : `After that, each shipment is charged ${reglas.diasCobroAntesEnvio} days before it ships.`}
-                </p>
-              </div>
-
-              <div className="rounded-card border border-borde bg-white p-5 mb-5">
-                <p className="font-mono text-[10px] tracking-[.15em] text-tinta-suave uppercase mb-1">
-                  {es ? "Envío a" : "Shipping to"}
-                </p>
-                <p className="font-body text-tinta text-sm">{direccion.nombre} · {direccion.telefono}</p>
-                <p className="font-body text-tinta-suave text-sm">
-                  {direccion.linea}, {direccion.ciudad}, {direccion.departamento}
-                </p>
-              </div>
-
-              {authLoading ? (
-                <p className="font-body text-tinta-suave text-sm">{es ? "Un momento…" : "One moment…"}</p>
-              ) : user ? (
-                <div className="rounded-card border border-borde bg-white p-6">
-                  <MetodoPagoForm
-                    es={es}
-                    ocupado={enviando}
-                    textoBoton={es ? `Pagar ${formatCOP(cobro.total)} y suscribirme` : `Pay ${formatCOP(cobro.total)} and subscribe`}
-                    onListo={pagar}
-                  />
-                </div>
-              ) : (
-                <div className="rounded-card border border-borde bg-white p-6">
-                  <p className="font-display font-bold text-tinta text-xl mb-1">{es ? "Crea tu cuenta" : "Create your account"}</p>
-                  <p className="font-body text-tinta-suave text-sm mb-4">
-                    {es
-                      ? "Es desde donde pausas, saltas o cancelas la suscripción. Con Google, con contraseña o con un código al correo."
-                      : "It's where you pause, skip or cancel the subscription. With Google, a password or a code by email."}
-                  </p>
-                  <AuthPanel locale={locale} destino={`/${locale}/checkout`} />
-                </div>
-              )}
-
-              <p className="font-body text-tinta-suave text-sm mt-4 text-center">
-                {es ? "Pausas o cancelas cuando quieras desde " : "Pause or cancel anytime from "}
-                <Link href="/cuenta" className="text-vino underline">{es ? "tu cuenta" : "your account"}</Link>.
-              </p>
-            </>
-          )}
-        </div>
-
-        {error && <p className="font-body text-vino text-sm mt-4" role="alert">{error}</p>}
-
-        <div className="flex items-center justify-between gap-3 mt-8">
-          <button
-            type="button"
-            onClick={retroceder}
-            disabled={indice === 0 || enviando}
-            className="font-body font-700 text-sm px-5 py-2.5 rounded-btn border border-borde-2 text-tinta-cafe hover:border-vino hover:text-vino transition-colors disabled:opacity-40 disabled:hover:border-borde-2 disabled:hover:text-tinta-cafe"
-          >
-            {es ? "Atrás" : "Back"}
-          </button>
-
-          {!esUltimo && (
             <button
-              type="button"
-              onClick={avanzar}
-              disabled={pasoActual === "envio" && !direccionCompleta}
-              className="font-body font-800 text-base px-6 py-3 rounded-btn bg-naranja hover:bg-naranja-700 text-white shadow-cta transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0"
+              type="submit"
+              form="checkout"
+              disabled={enviando}
+              className="w-full bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-6 py-3.5 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
             >
-              {es ? "Seguir" : "Continue"}
+              {enviando ? (es ? "Registrando tu pedido…" : "Placing your order…") : (es ? `Confirmar pedido · ${formatCOP(total)}` : `Place order · ${formatCOP(total)}`)}
             </button>
-          )}
+            <Link href="/tienda" className="block text-center mt-3 font-body text-sm text-tinta-suave hover:text-vino">
+              {es ? "← Seguir comprando" : "← Keep shopping"}
+            </Link>
+          </aside>
         </div>
-
-        {/* /suscripcion devuelve aquí mientras haya borrador: esta es la
-            salida para quien de verdad quiere empezar otra vez. */}
-        <p className="font-body text-tinta-suave text-sm mt-10 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              borrarProgreso(BORRADOR, QUIZ_GUARDADO, QUIZ_PROGRESO);
-              router.push("/suscripcion");
-            }}
-            className="underline underline-offset-4 hover:text-vino"
-          >
-            {es ? "Descartar y volver a ver los planes" : "Discard and see the plans again"}
-          </button>
-        </p>
       </div>
     </div>
   );
 }
-
-// ── Progreso ───────────────────────────────────────────────────────────────
-
-function Progreso({ total, indice, es }: { total: number; indice: number; es: boolean }) {
-  const pct = Math.round(((indice + 1) / total) * 100);
-  return (
-    <div className="mb-8">
-      <div className="flex items-baseline justify-between mb-2">
-        <p className="font-mono text-[11px] tracking-[.18em] text-tinta-suave uppercase">
-          {es ? `Paso ${indice + 1} de ${total}` : `Step ${indice + 1} of ${total}`}
-        </p>
-        <p className="font-mono text-[11px] text-tinta-suave">{pct}%</p>
-      </div>
-      <div
-        className="h-1.5 rounded-pill bg-borde overflow-hidden"
-        role="progressbar"
-        aria-valuenow={indice + 1}
-        aria-valuemin={1}
-        aria-valuemax={total}
-        aria-label={es ? "Avance de la suscripción" : "Subscription progress"}
-      >
-        <div
-          className="h-full bg-vino rounded-pill transition-transform duration-400 ease-out origin-left"
-          style={{ transform: `scaleX(${pct / 100})`, width: "100%" }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ── Piezas compartidas ─────────────────────────────────────────────────────
-
-function Titulo({
-  children, ayuda, innerRef,
-}: {
-  children: React.ReactNode;
-  ayuda?: string;
-  innerRef: React.Ref<HTMLHeadingElement>;
-}) {
-  return (
-    <>
-      <h1 ref={innerRef} tabIndex={-1} className="font-display font-bold text-tinta text-3xl mb-1 focus:outline-none">
-        {children}
-      </h1>
-      {ayuda && <p className="font-body text-tinta-suave text-sm mb-6">{ayuda}</p>}
-    </>
-  );
-}
-
-function tarjetaOpcion(activa: boolean) {
-  return [
-    "w-full text-left rounded-card border p-5 transition-all duration-150",
-    "hover:-translate-y-0.5 active:translate-y-0",
-    activa ? "border-vino bg-white ring-2 ring-vino shadow-card-hover" : "border-borde bg-white hover:border-vino",
-  ].join(" ");
-}
-
-// ── Pasos ──────────────────────────────────────────────────────────────────
-
-type OpcionLista = Pick<OpcionCatalogo, "id" | "label_es" | "label_en"> & { desc_es?: string; desc_en?: string };
-
-const PasoOpciones = function PasoOpciones({
-  ref, es, titulo, ayuda, opciones, valor, onElegir,
-}: {
-  ref: React.Ref<HTMLHeadingElement>;
-  es: boolean;
-  titulo: string;
-  ayuda: string;
-  opciones: readonly OpcionLista[];
-  valor: string;
-  onElegir: (id: string) => void;
-}) {
-  return (
-    <>
-      <Titulo innerRef={ref} ayuda={ayuda}>{titulo}</Titulo>
-      <div role="radiogroup" aria-label={titulo} className="grid gap-3">
-        {opciones.map((o) => {
-          const activa = o.id === valor;
-          const detalle = es ? o.desc_es : o.desc_en;
-          return (
-            <button key={o.id} type="button" role="radio" aria-checked={activa} onClick={() => onElegir(o.id)} className={tarjetaOpcion(activa)}>
-              <span className="font-display font-bold text-tinta text-xl block">{es ? o.label_es : o.label_en}</span>
-              {detalle && <span className="font-body text-tinta-suave text-sm block mt-1">{detalle}</span>}
-            </button>
-          );
-        })}
-      </div>
-    </>
-  );
-};
-
-const PasoPlan = function PasoPlan({
-  ref, es, catalogo, valor, onElegir,
-}: {
-  ref: React.Ref<HTMLHeadingElement>;
-  es: boolean;
-  catalogo: Catalogo;
-  valor: string;
-  onElegir: (id: string) => void;
-}) {
-  return (
-    <>
-      <Titulo
-        innerRef={ref}
-        ayuda={es ? "¿No sabes cuál? El quiz de 60 segundos te lo dice." : "Not sure? The 60-second quiz will tell you."}
-      >
-        {es ? "¿Qué plan?" : "Which plan?"}
-      </Titulo>
-      <Link href="/quiz" className="inline-block font-body text-sm text-vino underline mb-5">
-        {es ? "Hacer el quiz" : "Take the quiz"}
-      </Link>
-
-      <div role="radiogroup" aria-label={es ? "Planes" : "Plans"} className="grid gap-3">
-        {catalogo.planes.map((p) => {
-          const activa = p.id === valor;
-          return (
-            <button key={p.id} type="button" role="radio" aria-checked={activa} onClick={() => onElegir(p.id)} className={tarjetaOpcion(activa)}>
-              <span className="flex items-baseline justify-between gap-3">
-                <span className="font-display font-bold text-tinta text-xl">{es ? p.label_es : p.label_en}</span>
-                <span className="font-display font-bold text-vino text-xl shrink-0">
-                  {formatCOP(p.precioEnvioCop)}
-                  <span className="font-mono font-400 text-[11px] text-tinta-suave ml-1">{es ? "/envío" : "/shipment"}</span>
-                </span>
-              </span>
-              <span className="font-body text-tinta-suave text-sm block mt-1">{(es ? p.incluye_es : p.incluye_en).join(" · ")}</span>
-              <FrecuenciaSugerida es={es} catalogo={catalogo} plan={p} />
-            </button>
-          );
-        })}
-      </div>
-    </>
-  );
-};
-
-function FrecuenciaSugerida({ es, catalogo, plan }: { es: boolean; catalogo: Catalogo; plan: Plan }) {
-  const sugerida = catalogo.frecuencias.find((f) => f.id === plan.frecuenciaDefectoId);
-  if (!sugerida) return null;
-  return (
-    <span className="font-mono text-[11px] text-verde block mt-1">
-      {es ? `Pensado ${sugerida.label_es.toLowerCase()}` : `Designed for ${sugerida.label_en.toLowerCase()}`}
-    </span>
-  );
-}
-
-const PasoPrepago = function PasoPrepago({
-  ref, es, catalogo, plan, frecuenciaId, valor, onElegir,
-}: {
-  ref: React.Ref<HTMLHeadingElement>;
-  es: boolean;
-  catalogo: Catalogo;
-  plan: Plan;
-  frecuenciaId: string;
-  valor: string;
-  onElegir: (id: string) => void;
-}) {
-  const frecuencia = catalogo.frecuencias.find((f) => f.id === frecuenciaId)!;
-  return (
-    <>
-      <Titulo
-        innerRef={ref}
-        ayuda={
-          es
-            ? "Pagar varios meses de una baja el precio. Sigues pudiendo pausar o cancelar, y lo ya pagado te llega igual."
-            : "Paying several months up front lowers the price. You can still pause or cancel, and what you paid for still arrives."
-        }
-      >
-        {es ? "¿Cómo quieres pagar?" : "How do you want to pay?"}
-      </Titulo>
-
-      <div role="radiogroup" aria-label={es ? "Prepago" : "Prepayment"} className="grid gap-3">
-        {catalogo.prepagos.map((p) => {
-          const activa = p.id === valor;
-          const c = montoCobro(plan, frecuencia, p, catalogo.reglas);
-          const envios = enviosDelPrepago(p, frecuencia);
-          return (
-            <button key={p.id} type="button" role="radio" aria-checked={activa} onClick={() => onElegir(p.id)} className={tarjetaOpcion(activa)}>
-              <span className="flex items-baseline justify-between gap-3">
-                <span className="font-display font-bold text-tinta text-xl">{es ? p.label_es : p.label_en}</span>
-                <span className="text-right shrink-0">
-                  <span className="font-display font-bold text-vino text-xl block leading-none">{formatCOP(c.total)}</span>
-                  {envios > 1 && (
-                    <span className="font-mono text-[10px] text-tinta-suave">
-                      {formatCOP(c.porEnvio)}{es ? "/envío" : "/shipment"}
-                    </span>
-                  )}
-                </span>
-              </span>
-              <span className="font-body text-tinta-suave text-sm block mt-1">
-                {envios > 1
-                  ? es ? `${envios} envíos pagados de una, ${p.descuentoPct}% menos.` : `${envios} shipments paid up front, ${p.descuentoPct}% off.`
-                  : es ? "Se cobra cada envío." : "Charged each shipment."}
-              </span>
-              {c.ahorro > 0 && (
-                <span className="font-mono text-[11px] text-verde block mt-1">
-                  {es ? `Ahorras ${formatCOP(c.ahorro)}` : `You save ${formatCOP(c.ahorro)}`}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </>
-  );
-};
-
-const PasoEnvio = function PasoEnvio({
-  ref, es, direccion, onCambio,
-}: {
-  ref: React.Ref<HTMLHeadingElement>;
-  es: boolean;
-  direccion: typeof DIRECCION_VACIA;
-  onCambio: (d: typeof DIRECCION_VACIA) => void;
-}) {
-  return (
-    <>
-      <Titulo innerRef={ref} ayuda={es ? "Despachamos a todo el país." : "We ship nationwide."}>
-        {es ? "¿A dónde lo mandamos?" : "Where do we send it?"}
-      </Titulo>
-      <CamposDireccion es={es} direccion={direccion} onCambio={onCambio} prefijo="ck" />
-    </>
-  );
-};

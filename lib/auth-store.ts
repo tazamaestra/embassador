@@ -1,13 +1,10 @@
 import { create } from "zustand";
 import { getSupabase, haySesionGuardada, hayRespuestaOAuth } from "@/lib/supabase";
 
-// Tres formas de entrar, a propósito:
-//   · correo y contraseña, para quien quiere una cuenta de toda la vida;
-//   · Google, un clic;
-//   · código de 6 dígitos al correo, para quien no quiere inventar otra clave.
-//
-// Todas terminan en el mismo sitio: una sesión de Supabase y una fila en
-// `clientes` que crea el trigger de supabase/sql/suscripciones.sql.
+// Sesión del cliente o del equipo. No hay registro público: las cuentas las
+// crea el equipo desde el panel. Dos formas de entrar:
+//   · correo y la contraseña que se le envió;
+//   · código de 6 dígitos al correo (solo para cuentas que ya existen).
 
 export interface Cliente {
   id: string;
@@ -21,24 +18,16 @@ interface Resultado {
   error?: string;
 }
 
-interface ResultadoRegistro extends Resultado {
-  /**
-   * true cuando Supabase creó la cuenta pero exige confirmar el correo antes
-   * de dar sesión. Con «Confirm email» apagado nunca llega en true.
-   */
-  faltaConfirmar?: boolean;
-}
-
 interface AuthState {
   user: Cliente | null;
   loading: boolean;
+  /** null mientras se pregunta. true = cuenta del equipo (va a /admin). */
+  esEquipo: boolean | null;
   init: () => void;
-  registrar: (email: string, password: string) => Promise<ResultadoRegistro>;
   entrarConPassword: (email: string, password: string) => Promise<Resultado>;
-  entrarConGoogle: (destino?: string) => Promise<Resultado>;
   pedirCodigo: (email: string) => Promise<Resultado>;
   verificarCodigo: (email: string, codigo: string) => Promise<Resultado>;
-  guardarDatos: (datos: { nombre?: string; telefono?: string }) => Promise<void>;
+  cambiarClave: (nueva: string) => Promise<Resultado>;
   logout: () => Promise<void>;
 }
 
@@ -75,10 +64,13 @@ export function traducirErrorAuth(mensaje: string | undefined, es: boolean): str
       ? `La contraseña necesita al menos ${LARGO_MINIMO_PASSWORD} caracteres.`
       : `The password needs at least ${LARGO_MINIMO_PASSWORD} characters.`;
   }
-  if (m.includes("provider is not enabled")) {
+  if (m.includes("signups not allowed") || m.includes("signup") && m.includes("disabled") || m.includes("user not found")) {
     return es
-      ? "Entrar con Google todavía no está habilitado."
-      : "Signing in with Google isn't enabled yet.";
+      ? "Ese correo no tiene cuenta. Las cuentas las creamos nosotros y te llegan con tu compra."
+      : "That email has no account. We create accounts and send them with your purchase.";
+  }
+  if (m.includes("same") && m.includes("password")) {
+    return es ? "La contraseña nueva debe ser distinta de la actual." : "The new password must be different from the current one.";
   }
   return es ? "No se pudo. Intenta de nuevo." : "That didn't work. Try again.";
 }
@@ -115,16 +107,19 @@ async function escucharSesion(set: Aplicar) {
 
   const sincronizar = async (id?: string, email?: string) => {
     if (!id) {
-      set({ user: null, loading: false });
+      set({ user: null, loading: false, esEquipo: null });
       return;
     }
 
     // La sesión ya dice quién es. Se publica de una, sin esperar a la consulta
-    // del perfil: así /cuenta puede pedir la suscripción en paralelo en vez de
-    // encadenar sesión → perfil → suscripción. El nombre y el teléfono entran
-    // un instante después, encima de lo ya pintado.
-    set({ user: { id, email: email ?? "", nombre: "", telefono: "" }, loading: false });
-    set({ user: await cargarPerfil(id, email) });
+    // del perfil: así /cuenta pide su resumen en paralelo. El nombre y el
+    // teléfono entran un instante después, encima de lo ya pintado.
+    set({ user: { id, email: email ?? "", nombre: "", telefono: "" }, loading: false, esEquipo: null });
+    const [perfil, rol] = await Promise.all([
+      cargarPerfil(id, email),
+      supabase.rpc("es_equipo").then((r) => !r.error && r.data === true, () => false),
+    ]);
+    set({ user: perfil, esEquipo: rol });
   };
 
   const { data } = await supabase.auth.getSession();
@@ -135,9 +130,10 @@ async function escucharSesion(set: Aplicar) {
   });
 }
 
-export const useAuthStore = create<AuthState>()((set, get) => ({
+export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
   loading: true,
+  esEquipo: null,
 
   // Sin sesión guardada no hay nada que resolver: se responde "anónimo" al
   // instante y el SDK ni se descarga. Solo quien ya entró alguna vez paga esos
@@ -146,32 +142,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     if (initialized) return;
     initialized = true;
 
-    // Al volver de Google el token viene en el hash y todavía no hay nada
-    // guardado, así que ese caso también obliga a cargar el SDK.
+    // Al volver de un enlace de correo el token viene en el hash y todavía
+    // no hay nada guardado, así que ese caso también obliga a cargar el SDK.
     if (!haySesionGuardada() && !hayRespuestaOAuth()) {
       set({ user: null, loading: false });
       return;
     }
 
     escucharSesion(set);
-  },
-
-  registrar: async (email, password) => {
-    if (password.length < LARGO_MINIMO_PASSWORD) {
-      return { ok: false, error: "password is too short" };
-    }
-
-    const supabase = await getSupabase();
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) return { ok: false, error: error.message };
-
-    // Con «Confirm email» encendido, Supabase crea el usuario pero no da
-    // sesión. Se avisa en vez de dejar al cliente esperando un pago que no va
-    // a poder hacer.
-    if (!data.session) return { ok: true, faltaConfirmar: true };
-
-    await escucharSesion(set);
-    return { ok: true };
   },
 
   entrarConPassword: async (email, password) => {
@@ -183,25 +161,12 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     return { ok: true };
   },
 
-  // Sale del sitio y vuelve a `destino`. La sesión la recoge init() al cargar
-  // esa página, gracias a hayRespuestaOAuth().
-  entrarConGoogle: async (destino = "/cuenta") => {
-    const supabase = await getSupabase();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}${destino}`,
-      },
-    });
-    if (error) return { ok: false, error: error.message };
-    return { ok: true };
-  },
-
   pedirCodigo: async (email) => {
     const supabase = await getSupabase();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true },
+      // false: el código solo sirve para cuentas que ya creó el equipo.
+      options: { shouldCreateUser: false },
     });
     if (error) return { ok: false, error: error.message };
     return { ok: true };
@@ -222,29 +187,17 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     return { ok: true };
   },
 
-  guardarDatos: async ({ nombre, telefono }) => {
-    const user = get().user;
-    if (!user) return;
-
-    const cambios: Record<string, string> = {};
-    if (nombre !== undefined) cambios.nombre = nombre;
-    if (telefono !== undefined) cambios.telefono = telefono;
-    if (Object.keys(cambios).length === 0) return;
-
-    // upsert y no update: si el trigger de `clientes` no está instalado, la
-    // fila puede no existir todavía.
+  cambiarClave: async (nueva) => {
+    if (nueva.length < LARGO_MINIMO_PASSWORD) return { ok: false, error: "password is too short" };
     const supabase = await getSupabase();
-    const { error } = await supabase
-      .from("clientes")
-      .upsert({ id: user.id, email: user.email, ...cambios });
-    if (error) throw error;
-
-    set({ user: { ...user, ...cambios } });
+    const { error } = await supabase.auth.updateUser({ password: nueva });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
   },
 
   logout: async () => {
     const supabase = await getSupabase();
     await supabase.auth.signOut();
-    set({ user: null, loading: false });
+    set({ user: null, loading: false, esEquipo: null });
   },
 }));

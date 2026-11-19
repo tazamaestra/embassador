@@ -3,16 +3,19 @@
 import { useState } from "react";
 import Image from "next/image";
 import BolsaMockup from "@/components/shared/BolsaMockup";
+import BolsaNegocio from "@/components/shared/BolsaNegocio";
 import { useCafe } from "@/components/shared/CafesProvider";
 import { srcImagen } from "@/lib/cafes";
 import { useTranslations, useLocale } from "next-intl";
-import { Link, useRouter } from "@/lib/nav";
+import { Link } from "@/lib/nav";
 import {
   findMomento, findPostByCafe, heroSlides,
 } from "@/lib/content";
-import { formatPrice } from "@/lib/format";
-import { mejorAhorro } from "@/lib/suscripcion";
+import { formatCOP, formatUSD } from "@/lib/format";
 import { useCartStore } from "@/lib/cart-store";
+import {
+  formatPeso, idLineaCarrito, presentacionDe, presentacionesDe, type PresentacionId,
+} from "@/lib/presentaciones";
 import type { Locale } from "@/lib/types";
 
 /** La foto de finca la resuelve el servidor; aquí llega lista para pintar. */
@@ -32,9 +35,9 @@ export default function ProductoScreen({
 }) {
   const t = useTranslations("product");
   const locale = useLocale() as Locale;
-  const router = useRouter();
   const { addItem } = useCartStore();
   const [added, setAdded] = useState(false);
+  const [presId, setPresId] = useState<PresentacionId>("bolsa");
 
   const product = useCafe(slug);
 
@@ -56,39 +59,37 @@ export default function ProductoScreen({
   const relatoFinca = slide && (locale === "en" ? slide.relato_en : slide.relato_es);
   const tueste = locale === "en" ? product.tueste_en : product.tueste_es;
   const proceso = locale === "en" ? product.proceso_en : product.proceso_es;
+  const finca = locale === "en" ? product.finca_en ?? product.finca : product.finca;
   const momento = findMomento(product.momento);
   const historia = findPostByCafe(product.id);
-  const suscrito = mejorAhorro(product);
+  const presentaciones = presentacionesDe(product);
+  const pres = presentacionDe(product, presId) ?? presentaciones[0];
 
   const ficha: { k: string; v: string }[] = [
     { k: t("specProductor"), v: product.productor },
-    { k: t("specFinca"), v: product.finca },
+    { k: t("specFinca"), v: finca },
     { k: t("specRegion"), v: product.region },
     { k: t("specAltura"), v: product.altura },
     { k: t("specProceso"), v: proceso },
     { k: t("specVariedad"), v: product.variedad },
     { k: t("specTueste"), v: tueste },
-    { k: t("specPeso"), v: `${product.pesoG} g` },
+    { k: t("specPeso"), v: formatPeso(pres.pesoG) },
   ];
 
   function handleAdd() {
     if (!product) return;
     addItem({
-      id: product.id,
+      id: idLineaCarrito(product.id, pres.id),
+      cafeId: product.id,
+      presentacion: pres.id,
       name: product.name,
-      price: product.precioCop,
-      priceUsd: product.precioUsd,
-      swatch: product.swatch,
-      img: product.img,
+      price: pres.precioCop,
+      priceUsd: pres.precioUsd,
+      swatch: pres.id === "negocio" ? "#161412" : product.swatch,
+      img: pres.id === "negocio" ? null : product.img,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 3000);
-  }
-
-  // La suscripción ya no es por café: son planes por libras, con el café de
-  // la finca más el origen del mes. Desde la ficha se manda a elegir plan.
-  function handleSubscribe() {
-    router.push("/suscripcion");
   }
 
   return (
@@ -107,7 +108,14 @@ export default function ProductoScreen({
             className="min-h-[360px] md:min-h-[520px] flex items-center justify-center p-10 relative"
             style={{ background: product.swatch }}
           >
-            {product.img ? (
+            {pres.id === "negocio" ? (
+              <BolsaNegocio
+                product={product}
+                id={`ficha-negocio-${product.id}`}
+                proceso={proceso}
+                className="w-64 md:w-80 max-h-[380px] h-auto drop-shadow-2xl"
+              />
+            ) : product.img ? (
               <Image
                 src={srcImagen(product.img)}
                 alt={product.name}
@@ -122,7 +130,7 @@ export default function ProductoScreen({
                 id={`ficha-${product.id}`}
                 nombre={product.name}
                 region={product.region}
-                proceso={locale === "en" ? product.proceso_en : product.proceso_es}
+                proceso={proceso}
                 {...product.bolsa}
                 className="w-64 md:w-80 max-h-[380px] h-auto drop-shadow-2xl"
               />
@@ -160,42 +168,70 @@ export default function ProductoScreen({
               ))}
             </dl>
 
-            {/* Precio: único y suscriptor, lado a lado */}
-            <div className="border-t border-borde pt-6 grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <p className="font-mono text-[9px] tracking-[.18em] text-tinta-suave uppercase mb-1">
-                  {t("unico")}
+            {/* Presentación: la bolsa o el cuarterón para negocios */}
+            {presentaciones.length > 1 && (
+              <div className="border-t border-borde pt-6">
+                <p className="font-mono text-[9px] tracking-[.18em] text-tinta-suave uppercase mb-2">
+                  {t("presentacion")}
                 </p>
-                <p className="font-display font-bold text-tinta text-2xl leading-none">
-                  {formatPrice(product.precioCop, product.precioUsd, locale)}
-                </p>
+                <div role="radiogroup" aria-label={t("presentacion")} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {presentaciones.map((p) => {
+                    const activa = p.id === pres.id;
+                    return (
+                      <button
+                        key={p.id}
+                        role="radio"
+                        aria-checked={activa}
+                        onClick={() => { setPresId(p.id); setAdded(false); }}
+                        className={`text-left rounded-card border px-4 py-3 font-body transition-colors duration-150 ${
+                          activa
+                            ? "border-vino bg-vino/5 text-tinta"
+                            : "border-borde text-tinta-suave hover:border-vino"
+                        }`}
+                      >
+                        <span className="block font-700 text-sm text-tinta">
+                          {p.id === "negocio" ? t("presNegocio") : t("presBolsa")}
+                        </span>
+                        <span className="block font-mono text-[11px] mt-0.5">
+                          {formatPeso(p.pesoG)} · {formatCOP(p.precioCop)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="rounded-card bg-verde-claro px-4 py-3">
-                <p className="font-mono text-[9px] tracking-[.18em] text-verde uppercase mb-1">
-                  {t("suscrito")}
+            )}
+
+            {/* Precio en pesos, su equivalente en dólares y el envío aparte */}
+            <div className={`${presentaciones.length > 1 ? "pt-5" : "border-t border-borde pt-6"} mb-6`}>
+              <p className="font-mono text-[9px] tracking-[.18em] text-tinta-suave uppercase mb-1">
+                {t("precio", { peso: formatPeso(pres.pesoG).toUpperCase() })}
+              </p>
+              <p className="font-display font-bold text-tinta text-3xl leading-none">
+                {formatCOP(pres.precioCop)}
+                <span className="font-mono font-400 text-xs text-tinta-suave ml-1.5">COP</span>
+              </p>
+              {pres.precioUsd !== undefined && (
+                <p className="font-mono text-sm text-tinta-suave mt-1.5">
+                  ≈ {formatUSD(pres.precioUsd, locale)}
                 </p>
-                <p className="font-display font-bold text-verde text-2xl leading-none">
-                  {formatPrice(suscrito.suscriptor, product.precioSuscriptorUsd, locale)}
-                </p>
-                <p className="font-mono text-[9px] text-verde/80 mt-1">
-                  −{suscrito.ahorroPct}%
-                </p>
-              </div>
+              )}
+              <p className="font-body text-sm text-tinta-suave mt-1">{t("envio")}</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={handleSubscribe}
-                className="flex-1 bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-6 py-3 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5"
-              >
-                {t("subscribe")}
-              </button>
-              <button
                 onClick={handleAdd}
-                className="flex-1 border border-borde-2 text-tinta-cafe hover:border-vino hover:text-vino font-body font-700 text-base px-6 py-3 rounded-btn transition-colors duration-150"
+                className="flex-1 bg-naranja hover:bg-naranja-700 text-white font-body font-800 text-base px-6 py-3 rounded-btn shadow-cta transition-all duration-150 hover:-translate-y-0.5"
               >
                 {t("add")}
               </button>
+              <Link
+                href={{ pathname: "/tienda", hash: "muestra" }}
+                className="flex-1 text-center border border-borde-2 text-tinta-cafe hover:border-vino hover:text-vino font-body font-700 text-base px-6 py-3 rounded-btn transition-colors duration-150"
+              >
+                {t("subscribe")}
+              </Link>
             </div>
 
             <p className="font-body text-sm text-verde mt-3 min-h-5" aria-live="polite">
@@ -234,7 +270,7 @@ export default function ProductoScreen({
                   {t("fincaKicker")}
                 </p>
                 <h2 className="font-display font-bold text-tinta text-2xl md:text-3xl leading-snug mb-4">
-                  {product.finca}
+                  {finca}
                 </h2>
                 {relatoFinca && (
                   <p className="font-body text-tinta-suave text-base leading-relaxed">{relatoFinca}</p>
@@ -257,7 +293,7 @@ export default function ProductoScreen({
                   {proposito}
                 </p>
                 <p className="font-mono text-[10px] tracking-[.18em] text-tinta-suave uppercase mt-6">
-                  {t("fincaKicker")} · {product.finca} · {product.altura}
+                  {t("fincaKicker")} · {finca} · {product.altura}
                 </p>
               </div>
             )}

@@ -3,14 +3,12 @@
 // Llega sin sesión, así que usa la service key. Lo primero es validar el
 // checksum; si no cuadra, no se toca la base. Wompi reintenta un evento
 // hasta que recibe 200 (a los 30 min, 3 h y 24 h): por eso cada evento se
-// registra por su checksum y los repetidos se ignoran, y por eso resolverCobro
-// es idempotente.
+// registra por su checksum y los repetidos se ignoran.
 
 import { NextResponse } from "next/server";
 import { crearClienteAdmin } from "@/lib/supabase-admin";
-import { obtenerCatalogo } from "@/lib/catalogo";
 import { eventoValido, type EventoWompi } from "@/lib/wompi";
-import { resolverCobro } from "@/lib/servidor/suscripciones";
+import { registrarPago } from "@/lib/servidor/pedidos";
 
 export async function POST(request: Request) {
   let evento: EventoWompi;
@@ -37,8 +35,7 @@ export async function POST(request: Request) {
   });
   if (repetido?.code === "23505") return NextResponse.json({ ok: true, ignorado: "repetido" });
 
-  // nequi_token.updated: la pantalla ya consulta el token hasta que el
-  // cliente aprueba en su app. Queda registrado y no hay más que hacer.
+  // Otros eventos quedan registrados y no hay más que hacer.
   if (evento.event !== "transaction.updated" || !transaccion?.reference) {
     return NextResponse.json({ ok: true, ignorado: evento.event });
   }
@@ -47,23 +44,16 @@ export async function POST(request: Request) {
   const aprobada = transaccion.status === "APPROVED";
 
   try {
-    // ── Compra única (Web Checkout) ───────────────────────
-    if (referencia.startsWith("UNI-")) {
-      const { error } = await db
-        .from("pedidos_unicos")
-        .update({ estado: aprobada ? "pagado" : "fallido" })
-        .eq("wompi_referencia", referencia);
-      if (error) throw error;
-      return NextResponse.json({ ok: true });
+    // Pedido del carrito: el resultado va al inventario (o al respaldo
+    // local). Si falla, se reintenta con el reintento de Wompi.
+    if (referencia.startsWith("PED-")) {
+      await registrarPago(db, referencia, {
+        aprobada,
+        transaccion: transaccion.id,
+        montoCop: Math.round((transaccion.amount_in_cents ?? 0) / 100),
+      });
     }
-
-    // ── Cobro de suscripción ──────────────────────────────
-    const resultado = await resolverCobro(db, await obtenerCatalogo(db), referencia, transaccion.status, {
-      transaccionId: transaccion.id,
-      montoEnCentavos: transaccion.amount_in_cents,
-      motivo: (transaccion as { status_message?: string | null }).status_message ?? null,
-    });
-    return NextResponse.json({ ok: true, resultado });
+    return NextResponse.json({ ok: true });
   } catch (e) {
     // Se borra el registro del evento para que el reintento de Wompi entre
     // de nuevo, y se responde 500 para que Wompi reintente.

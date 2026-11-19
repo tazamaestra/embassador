@@ -66,13 +66,12 @@ describe("catálogo multi-origen", () => {
       expect(p.tueste_es, `${p.id}: tueste`).toBeTruthy();
       expect(p.pesoG, `${p.id}: peso`).toBeGreaterThan(0);
       expect(p.precioCop, `${p.id}: precio`).toBeGreaterThan(0);
-      expect(p.precioSuscriptorCop, `${p.id}: precio suscriptor`).toBeGreaterThan(0);
+      if (p.negocio) expect(p.negocio.precioCop, `${p.id}: precio cuarterón`).toBeGreaterThan(0);
     }
   });
 
-  it("viene de más de un productor", () => {
-    const productores = new Set(products.map((p) => p.productor));
-    expect(productores.size).toBeGreaterThan(1);
+  it("todos los cafés tienen productor", () => {
+    expect(products.every((p) => p.productor.trim().length > 0)).toBe(true);
   });
 
   it("cada café tiene un momento que existe", () => {

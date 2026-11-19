@@ -1,9 +1,7 @@
 import rawContent from "../data/content.json";
-import rawSuscripcion from "../data/suscripcion.json";
 import type {
   Product, ProductFilter, Method, OriginFact, Faq,
   BlogFilter, BlogPost, BlogPostRaw, HeroSlide, HeroStat, Momento, MomentoId,
-  SuscripcionEditorial,
 } from "./types";
 
 const c = rawContent as unknown as {
@@ -19,10 +17,11 @@ const c = rawContent as unknown as {
   blogFilters: BlogFilter[];
   blogFeatured: { slug: string };
   blogPosts: BlogPostRaw[];
+  ciudades: string[];
 };
 
 export const { brand, heroStats, heroSlides, momentos, productFilters,
-  originFacts, faqs, blogFilters } = c;
+  originFacts, faqs, blogFilters, ciudades } = c;
 
 export const products = c.products.filter((p) => !p._disabled);
 export const methods = c.methods.filter((m) => !m._disabled);
@@ -58,16 +57,3 @@ export function findMomento(id: string): Momento | undefined {
 export function productsByMomento(id: MomentoId): Product[] {
   return products.filter((p) => p.momento === id);
 }
-
-// ── Suscripción ────────────────────────────────────────────────────────────
-// Solo los textos. Precios y reglas vienen de Supabase: ver lib/catalogo.ts.
-
-export const suscripcionEditorial = rawSuscripcion as unknown as SuscripcionEditorial;
-
-export const {
-  club,
-  beneficios,
-  origenDelMes,
-  ciudades,
-  faqs: faqsSuscripcion,
-} = suscripcionEditorial;

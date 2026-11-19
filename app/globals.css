@@ -191,3 +191,176 @@ body {
   }
   html { scroll-behavior: auto; }
 }
+
+/* ── Hero: carrusel de cafés ────────────────────────────────────────────
+   Todo es transform/opacity (o sus propiedades sueltas translate, scale,
+   rotate, que se componen entre sí sin pisarse). Con movimiento reducido,
+   la regla global de arriba deja cada animación en su estado final. */
+
+/* Texto: entra escalonado al cambiar de café (no en la primera carga, para
+   no retrasar el primer pintado del título). */
+@keyframes heroEntra {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: none; }
+}
+.tm-hero-anima [data-paso] {
+  animation: heroEntra .75s cubic-bezier(.22,.61,.36,1) both;
+  animation-delay: calc(var(--paso, 0) * 90ms + 80ms);
+}
+
+/* Pastillas del proceso y la insignia: aparecen con un pequeño rebote. */
+@keyframes heroPop {
+  from { opacity: 0; scale: .6; }
+  to   { opacity: 1; scale: 1; }
+}
+.tm-hero-activo .tm-hero-sello,
+.tm-hero-activo .tm-hero-pop {
+  animation: heroPop .55s cubic-bezier(.34,1.56,.64,1) both;
+  animation-delay: var(--d, 0ms);
+}
+.tm-hero-pop { rotate: -8deg; transform: translateZ(70px); }
+
+/* Sabores: aparecen y luego flotan, cada uno a su ritmo. */
+@keyframes heroFlotar {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -10px; }
+}
+.tm-hero-sabor { transform: translateZ(50px); }
+.tm-hero-activo .tm-hero-sabor {
+  animation-name: heroPop, heroFlotar;
+  animation-timing-function: cubic-bezier(.34,1.56,.64,1), ease-in-out;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: both, none;
+  animation-delay: var(--d, 0ms), calc(var(--d, 0ms) + .6s);
+}
+
+/* La bolsa: entra y sale de lado, girando un poco. */
+@keyframes bolsaEntraDer {
+  from { opacity: 0; transform: translateX(30%) rotate(9deg) scale(.82); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes bolsaEntraIzq {
+  from { opacity: 0; transform: translateX(-30%) rotate(-9deg) scale(.82); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes bolsaSaleIzq {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateX(-30%) rotate(-9deg) scale(.82); }
+}
+@keyframes bolsaSaleDer {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateX(30%) rotate(9deg) scale(.82); }
+}
+.tm-bolsa-entra-der { animation: bolsaEntraDer .9s cubic-bezier(.22,.61,.36,1) both; }
+.tm-bolsa-entra-izq { animation: bolsaEntraIzq .9s cubic-bezier(.22,.61,.36,1) both; }
+.tm-bolsa-sale-izq  { animation: bolsaSaleIzq .7s cubic-bezier(.55,0,.45,1) both; }
+.tm-bolsa-sale-der  { animation: bolsaSaleDer .7s cubic-bezier(.55,0,.45,1) both; }
+
+/* Inclinación con el puntero: las variables las escribe el componente. */
+.tm-hero-tilt {
+  transform-style: preserve-3d;
+  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform .5s cubic-bezier(.22,.61,.36,1);
+}
+
+/* La bolsa flota. */
+@keyframes heroBolsaFlota {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  50%      { translate: 0 -16px; rotate: -1.5deg; }
+}
+.tm-hero-flota { animation: heroBolsaFlota 6.5s ease-in-out infinite; }
+
+/* Brillo detrás de la bolsa, respirando. */
+@keyframes heroBrillo {
+  0%, 100% { opacity: .28; scale: .88; }
+  50%      { opacity: .5;  scale: 1; }
+}
+.tm-hero-brillo { animation: heroBrillo 5s ease-in-out infinite; }
+
+/* Anillo punteado girando muy despacio. */
+@keyframes heroGira { to { rotate: 360deg; } }
+.tm-hero-anillo { animation: heroGira 60s linear infinite; }
+
+/* Halo del fondo que se mueve apenas. */
+@keyframes heroHalo {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: -40px 30px; }
+}
+.tm-hero-halo { animation: heroHalo 14s ease-in-out infinite; }
+
+/* Aroma: partículas que suben y se desvanecen. */
+@keyframes heroParticula {
+  0%   { opacity: 0; translate: 0 0; }
+  20%  { opacity: .45; }
+  100% { opacity: 0; translate: 24px -220px; }
+}
+.tm-hero-particula { opacity: 0; animation: heroParticula 10s ease-out infinite; }
+
+/* Punto del kicker que late. */
+@keyframes heroLatido {
+  0%, 100% { opacity: 1; scale: 1; }
+  50%      { opacity: .4; scale: .7; }
+}
+.tm-hero-latido { animation: heroLatido 2s ease-in-out infinite; }
+
+/* Barra de progreso del carrusel: al terminar, pasa al siguiente café. */
+@keyframes heroProgreso {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.tm-hero-progreso { animation: heroProgreso linear both; }
+
+/* ── Tienda: franja de sabores y la muestra ─────────────────────────── */
+@keyframes franjaCorre {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.tm-franja { animation: franjaCorre 38s linear infinite; }
+.tm-franja:hover { animation-play-state: paused; }
+
+@keyframes muestraFlota {
+  0%, 100% { translate: 0 0; rotate: -6deg; }
+  50%      { translate: 0 -10px; rotate: -2deg; }
+}
+.tm-muestra { animation: muestraFlota 4.5s ease-in-out infinite; }
+
+@keyframes selloLatido {
+  0%, 100% { scale: 1; }
+  50%      { scale: 1.12; }
+}
+.tm-muestra-sello { animation: selloLatido 1.8s ease-in-out infinite; }
+
+/* ── Historias: nuestra historia ─────────────────────────────────────── */
+.tm-entra { animation: fadeUp .7s cubic-bezier(.22,.61,.36,1) both; }
+
+/* Crisis → Reto → Raíces → Pasión: una luz recorre el camino en bucle. */
+@keyframes etapaLuz {
+  0%, 22%   { color: var(--color-naranja-claro); scale: 1.06; }
+  30%, 100% { color: rgb(250 246 238 / .38); scale: 1; }
+}
+.tm-etapa {
+  display: inline-block;
+  color: rgb(250 246 238 / .38);
+  animation: etapaLuz 6.4s ease-in-out infinite;
+}
+
+/* La línea entre capítulos se dibuja cuando la sección entra. */
+.tm-linea { transform-origin: left; transition: transform 1.4s cubic-bezier(.22,.61,.36,1) .2s; }
+[data-revelar="oculto"] .tm-linea { transform: scaleX(0); }
+[data-revelar="visible"] .tm-linea { transform: scaleX(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-etapa { color: var(--color-naranja-claro); }
+  [data-revelar="oculto"] .tm-linea { transform: none; }
+}
+
+/* Historias: los nodos del anillo se encienden al mismo ritmo que las palabras. */
+@keyframes nodoLuz {
+  0%, 22%   { background: var(--color-naranja-claro); color: #3E080C; scale: 1.15; box-shadow: 0 0 0 8px rgb(240 162 75 / .18); }
+  30%, 100% { background: rgb(255 255 255 / .06); color: rgb(250 246 238 / .7); scale: 1; box-shadow: none; }
+}
+.tm-nodo {
+  background: rgb(255 255 255 / .06);
+  color: rgb(250 246 238 / .7);
+  animation: nodoLuz 6.4s ease-in-out infinite;
+}
