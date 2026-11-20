@@ -95,7 +95,9 @@ export async function llamarApi<T = Record<string, unknown>>(
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
     });
     const cuerpo = await r.json().catch(() => ({}));
-    if (!r.ok) return { ok: false, status: r.status, error: cuerpo.error ?? "error", mensaje: cuerpo.mensaje, campo: cuerpo.campo };
+    // Sin `error` en el cuerpo, la respuesta no vino de nuestro handler (página
+    // de error de Next o de Vercel): el código HTTP es la única pista.
+    if (!r.ok) return { ok: false, status: r.status, error: cuerpo.error ?? "error", mensaje: cuerpo.mensaje ?? (cuerpo.error ? undefined : `HTTP ${r.status}`), campo: cuerpo.campo };
     return { ok: true, data: cuerpo as T };
   } catch {
     return { ok: false, status: 0, error: "red" };

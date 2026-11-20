@@ -51,7 +51,9 @@ function errorCurso(error: string, campo: string | undefined, es: boolean, detal
     if (campo === "titulo") return es ? "Falta el título del curso." : "The course title is missing.";
   }
   if (error === "lectura" || detalle?.includes("cursos")) {
-    return es ? "No se pudo leer la base. ¿Ya corriste supabase/cursos.sql?" : "Couldn't read the database. Did you run supabase/cursos.sql?";
+    const base = es ? "No se pudo leer la base. ¿Ya corriste supabase/cursos.sql?" : "Couldn't read the database. Did you run supabase/cursos.sql?";
+    // El detalle dice la causa real (tabla, llave, permiso…).
+    return detalle ? `${base} (${detalle})` : base;
   }
   return mensajeError(error, campo, es, detalle);
 }
