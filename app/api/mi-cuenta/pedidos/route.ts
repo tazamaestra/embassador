@@ -1,9 +1,10 @@
 // Pedido hecho por un cliente desde su cuenta.
 //
-//   POST /api/mi-cuenta/pedidos  { items: [{ cafe, presentacion, cantidad }], entrega: { linea, ciudad, departamento, notas? } }
+//   POST /api/mi-cuenta/pedidos  { items: [{ cafe, presentacion, cantidad, precioCop? }], entrega: { linea, ciudad, departamento, notas? } }
 //
-// Nombre, correo y teléfono salen de su ficha. El precio sale del catálogo
-// (nunca del navegador). Con el inventario conectado, el pedido se crea allá
+// Nombre, correo y teléfono salen de su ficha. El cliente puede ajustar el
+// precio unitario de cada línea (precioCop); si no lo manda, va el del
+// catálogo. El pedido queda pendiente y el equipo lo confirma. Con el inventario conectado, el pedido se crea allá
 // (POST /pedidos, ver docs/contrato-api-inventario.md); si no está, da
 // error (los pedidos solo viven en el inventario).
 
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
 
   let items, entrega;
   try {
-    items = armarLineas(cuerpo.items, await obtenerCafes());
+    items = armarLineas(cuerpo.items, await obtenerCafes(), { precioLibre: true });
     entrega = validarEntrega(cuerpo.entrega);
   } catch (e) {
     if (e instanceof PedidoInvalido) return respuestaError("campo_invalido", 400, { campo: e.campo });

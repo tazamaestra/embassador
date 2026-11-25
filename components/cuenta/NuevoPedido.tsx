@@ -44,6 +44,8 @@ export default function NuevoPedido({
 }) {
   const cafes = useCafes();
   const [cantidades, setCantidades] = useState<Record<string, number>>({});
+  // Precio unitario que el cliente ajusta; si no lo toca, va el del catálogo.
+  const [precios, setPrecios] = useState<Record<string, number>>({});
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState("");
   const [campoMalo, setCampoMalo] = useState<string | null>(null);
@@ -55,13 +57,15 @@ export default function NuevoPedido({
     () =>
       cafes.flatMap((cafe) =>
         presentacionesDe(cafe).flatMap((pres) => {
-          const cantidad = cantidades[clave(cafe.id, pres.id)] ?? 0;
-          return cantidad > 0 ? [{ cafe, pres, cantidad }] : [];
+          const k = clave(cafe.id, pres.id);
+          const cantidad = cantidades[k] ?? 0;
+          const precio = precios[k] ?? pres.precioCop;
+          return cantidad > 0 ? [{ cafe, pres, cantidad, precio }] : [];
         })
       ),
-    [cafes, cantidades]
+    [cafes, cantidades, precios]
   );
-  const total = lineas.reduce((s, l) => s + l.pres.precioCop * l.cantidad, 0);
+  const total = lineas.reduce((s, l) => s + l.precio * l.cantidad, 0);
   const cuarterones = lineas.filter((l) => l.pres.id === "negocio").reduce((s, l) => s + l.cantidad, 0);
 
   // Cuántas horas le sumaría este pedido cuando se confirme.
@@ -81,13 +85,19 @@ export default function NuevoPedido({
     setError("");
     setCampoMalo(null);
     if (lineas.length === 0) return setError(es ? "Agrega al menos un café." : "Add at least one coffee.");
+    if (lineas.some((l) => !Number.isInteger(l.precio) || l.precio < 1000)) {
+      return setError(es ? "Revisa los precios: mínimo $1.000 por unidad." : "Check the prices: at least $1,000 per unit.");
+    }
     const entrega = Object.fromEntries(new FormData(e.currentTarget).entries());
     setOcupado(true);
     const r = await llamarApi<{ pedido: Pedido }>("/api/mi-cuenta/pedidos", {
-      body: { items: lineas.map((l) => ({ cafe: l.cafe.id, presentacion: l.pres.id, cantidad: l.cantidad })), entrega },
+      body: { items: lineas.map((l) => ({ cafe: l.cafe.id, presentacion: l.pres.id, cantidad: l.cantidad, precioCop: l.precio })), entrega },
     });
     setOcupado(false);
     if (!r.ok) {
+      if (r.error === "campo_invalido" && r.campo === "precio") {
+        return setError(es ? "Revisa los precios: deben estar entre $1.000 y $10.000.000." : "Check the prices: between $1,000 and $10,000,000.");
+      }
       if (r.error === "campo_invalido" && r.campo && r.campo !== "items") {
         setCampoMalo(r.campo);
         document.getElementById(`np-${r.campo}`)?.focus();
@@ -136,6 +146,7 @@ export default function NuevoPedido({
                 {presentacionesDe(cafe).map((pres) => {
                   const k = clave(cafe.id, pres.id);
                   const n = cantidades[k] ?? 0;
+                  const precio = precios[k] ?? pres.precioCop;
                   return (
                     <li key={pres.id} className="flex items-center justify-between gap-3 py-2.5">
                       <div className="flex items-center gap-3 min-w-0">
@@ -148,7 +159,31 @@ export default function NuevoPedido({
                           <p className="font-body font-700 text-sm text-tinta">
                             {pres.id === "negocio" ? (es ? "Cuarterón" : "Large bag") : (es ? "Bolsa" : "Bag")} · {formatPeso(pres.pesoG)}
                           </p>
-                          <p className="font-body text-xs text-tinta-suave">{formatCOP(pres.precioCop)}</p>
+                          <div className="flex items-center gap-1 mt-1 font-body text-xs text-tinta-suave">
+                            <span aria-hidden="true">$</span>
+                            <input
+                              aria-label={es ? `Precio por unidad de ${cafe.name} ${formatPeso(pres.pesoG)}` : `Unit price of ${cafe.name} ${formatPeso(pres.pesoG)}`}
+                              type="text"
+                              inputMode="numeric"
+                              value={precio ? precio.toLocaleString("es-CO") : ""}
+                              onChange={(e) => {
+                                const digitos = e.target.value.replace(/\D/g, "").slice(0, 8);
+                                setPrecios((p) => ({ ...p, [k]: digitos ? Number(digitos) : 0 }));
+                              }}
+                              disabled={ocupado}
+                              aria-invalid={n > 0 && precio < 1000}
+                              className="w-28 h-8 font-body text-sm text-tinta bg-white border border-borde rounded-input px-2 tabular-nums focus:border-vino focus:outline-none focus:ring-2 focus:ring-vino/15 aria-[invalid=true]:border-vino"
+                            />
+                            {precio !== pres.precioCop && (
+                              <button
+                                type="button"
+                                onClick={() => setPrecios((p) => ({ ...p, [k]: pres.precioCop }))}
+                                className="underline hover:text-vino"
+                              >
+                                {es ? `restaurar ${formatCOP(pres.precioCop)}` : `reset ${formatCOP(pres.precioCop)}`}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <Contador valor={n} onCambio={(v) => poner(k, v)} nombre={`${cafe.name} ${formatPeso(pres.pesoG)}`} es={es} />
@@ -193,7 +228,7 @@ export default function NuevoPedido({
                   <span className="text-tinta">
                     {l.cantidad} × {l.cafe.name} <span className="text-tinta-suave">{formatPeso(l.pres.pesoG)}</span>
                   </span>
-                  <span className="text-tinta tabular-nums">{formatCOP(l.pres.precioCop * l.cantidad)}</span>
+                  <span className="text-tinta tabular-nums">{formatCOP(l.precio * l.cantidad)}</span>
                 </li>
               ))}
             </ul>

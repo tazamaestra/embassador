@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Cormorant_Garamond, Mulish, Space_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
@@ -16,26 +16,29 @@ import "../globals.css";
 // el `lang`, y esa sola llamada obligaba a renderizar TODAS las páginas en cada
 // visita. Con el idioma leído de la ruta, el sitio entero se genera en el build.
 
-// Solo los pesos que se usan de verdad. Cada peso extra es una descarga más
-// en el camino crítico del home.
-const cormorant = Cormorant_Garamond({
+// Fuentes servidas desde el proyecto (app/fonts, subconjunto latin de Google
+// Fonts). Con next/font/google, Turbopack las descargaba en cada compilación
+// y cualquier falla de red rompía el dev con "Can't resolve
+// '@vercel/turbopack-next/internal/font/google/font'".
+// Cormorant y Mulish son variables: un solo archivo cubre todos los pesos.
+const cormorant = localFont({
   variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["600", "700"],
+  src: [{ path: "../fonts/cormorant-garamond.woff2", weight: "600 700", style: "normal" }],
   display: "swap",
 });
 
-const mulish = Mulish({
+const mulish = localFont({
   variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
+  src: [{ path: "../fonts/mulish.woff2", weight: "400 800", style: "normal" }],
   display: "swap",
 });
 
-const spaceMono = Space_Mono({
+const spaceMono = localFont({
   variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["400", "700"],
+  src: [
+    { path: "../fonts/space-mono-400.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/space-mono-700.woff2", weight: "700", style: "normal" },
+  ],
   display: "swap",
 });
 

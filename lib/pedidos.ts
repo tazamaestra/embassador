@@ -1,6 +1,7 @@
 // Pedidos de la tienda (compra única desde el carrito). Funciones puras:
 // validan lo que manda el navegador y arman las líneas con el precio del
-// catálogo. El monto NUNCA viene del navegador.
+// catálogo. En la tienda el monto NUNCA viene del navegador; solo los
+// pedidos desde la cuenta del cliente pueden ajustar el precio unitario.
 
 import { presentacionDe } from "./presentaciones";
 import type { EstadoPedido, LineaPedido, Product } from "./types";
@@ -26,8 +27,15 @@ const MAX_LINEAS = 20;
 const MAX_CANTIDAD = 50;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Las líneas del carrito → líneas con nombre, peso y precio del catálogo. */
-export function armarLineas(crudo: unknown, catalogo: Product[]): LineaPedido[] {
+const PRECIO_MIN = 1_000;
+const PRECIO_MAX = 10_000_000;
+
+/**
+ * Las líneas del carrito → líneas con nombre, peso y precio del catálogo.
+ * Con `precioLibre` (solo pedidos desde la cuenta del cliente) cada línea
+ * puede traer su `precioCop`, entero en pesos; si no lo trae, va el del catálogo.
+ */
+export function armarLineas(crudo: unknown, catalogo: Product[], opciones: { precioLibre?: boolean } = {}): LineaPedido[] {
   if (!Array.isArray(crudo) || crudo.length === 0 || crudo.length > MAX_LINEAS) throw new PedidoInvalido("items");
   const porClave = new Map<string, LineaPedido>();
   for (const x of crudo) {
@@ -39,6 +47,12 @@ export function armarLineas(crudo: unknown, catalogo: Product[]): LineaPedido[] 
     const cantidad = Number(r.cantidad);
     if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > MAX_CANTIDAD) throw new PedidoInvalido("items");
 
+    let precioCop = pres.precioCop;
+    if (opciones.precioLibre && r.precioCop !== undefined && r.precioCop !== null) {
+      precioCop = Number(r.precioCop);
+      if (!Number.isInteger(precioCop) || precioCop < PRECIO_MIN || precioCop > PRECIO_MAX) throw new PedidoInvalido("precio");
+    }
+
     // La misma presentación dos veces se suma en una sola línea.
     const clave = `${cafe.id}:${pres.id}`;
     const previa = porClave.get(clave);
@@ -48,7 +62,7 @@ export function armarLineas(crudo: unknown, catalogo: Product[]): LineaPedido[] 
       presentacion: pres.id,
       pesoG: pres.pesoG,
       cantidad: Math.min(MAX_CANTIDAD, (previa?.cantidad ?? 0) + cantidad),
-      precioCop: pres.precioCop,
+      precioCop,
     });
   }
   return [...porClave.values()];
