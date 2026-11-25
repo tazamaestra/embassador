@@ -80,6 +80,20 @@ export default function NuevoPedido({
     return { horas: despues.ganadas - antes.ganadas, regalo: despues.regalo > antes.regalo, faltan: despues.faltanParaSiguiente };
   }, [compras, capacitaciones, cuarterones]);
 
+  // Señala el campo de entrega con problema y dice cuál es.
+  function marcarCampo(campo: string) {
+    const mensajes: Record<string, [string, string]> = {
+      linea: ["Escribe la dirección de entrega (máximo 200 caracteres).", "Enter the delivery address (200 characters max)."],
+      ciudad: ["Elige la ciudad de entrega (o escríbela en “Otra…”).", "Choose the delivery city (or type it under “Other…”)."],
+      departamento: ["Escribe el departamento de entrega.", "Enter the delivery state."],
+      notas: ["Las indicaciones son muy largas (máximo 300 caracteres).", "Notes are too long (300 characters max)."],
+    };
+    setCampoMalo(campo);
+    document.getElementById(`np-${campo}`)?.focus();
+    const [msgEs, msgEn] = mensajes[campo] ?? ["Revisa los datos de entrega.", "Check the delivery details."];
+    setError(es ? msgEs : msgEn);
+  }
+
   async function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -89,6 +103,9 @@ export default function NuevoPedido({
       return setError(es ? "Revisa los precios: mínimo $1.000 por unidad." : "Check the prices: at least $1,000 per unit.");
     }
     const entrega = Object.fromEntries(new FormData(e.currentTarget).entries());
+    // Los obligatorios se revisan aquí para decir cuál falta antes de ir al servidor.
+    const faltante = (["linea", "ciudad", "departamento"] as const).find((k) => !String(entrega[k] ?? "").trim());
+    if (faltante) return marcarCampo(faltante);
     setOcupado(true);
     const r = await llamarApi<{ pedido: Pedido }>("/api/mi-cuenta/pedidos", {
       body: { items: lineas.map((l) => ({ cafe: l.cafe.id, presentacion: l.pres.id, cantidad: l.cantidad, precioCop: l.precio })), entrega },
@@ -98,11 +115,7 @@ export default function NuevoPedido({
       if (r.error === "campo_invalido" && r.campo === "precio") {
         return setError(es ? "Revisa los precios: deben estar entre $1.000 y $10.000.000." : "Check the prices: between $1,000 and $10,000,000.");
       }
-      if (r.error === "campo_invalido" && r.campo && r.campo !== "items") {
-        setCampoMalo(r.campo);
-        document.getElementById(`np-${r.campo}`)?.focus();
-        return setError(es ? "Revisa los datos de entrega." : "Check the delivery details.");
-      }
+      if (r.error === "campo_invalido" && r.campo && r.campo !== "items") return marcarCampo(r.campo);
       if (r.error === "cliente_no_encontrado") {
         return setError(es
           ? "Tu NIT o cédula todavía no está registrado en nuestro sistema. Escríbenos y lo activamos."
@@ -199,7 +212,7 @@ export default function NuevoPedido({
             <legend className="font-display font-bold text-tinta text-lg px-1">{es ? "Entrega" : "Delivery"}</legend>
             <div className="sm:col-span-2">
               <label className={ETIQUETA} htmlFor="np-linea">{es ? "Dirección" : "Address"}</label>
-              <input id="np-linea" name="linea" defaultValue={ultimo?.linea} required disabled={ocupado} aria-invalid={campoMalo === "linea"} className={ENTRADA} placeholder={es ? "Calle 12 #4-56, local 2" : "Street, number, unit"} />
+              <input id="np-linea" name="linea" defaultValue={ultimo?.linea} maxLength={200} required disabled={ocupado} aria-invalid={campoMalo === "linea"} className={ENTRADA} placeholder={es ? "Calle 12 #4-56, local 2" : "Street, number, unit"} />
             </div>
             <div>
               <label className={ETIQUETA} htmlFor="np-ciudad">{es ? "Ciudad" : "City"}</label>
@@ -211,7 +224,7 @@ export default function NuevoPedido({
             </div>
             <div className="sm:col-span-2">
               <label className={ETIQUETA} htmlFor="np-notas">{es ? "Indicaciones (opcional)" : "Notes (optional)"}</label>
-              <input id="np-notas" name="notas" disabled={ocupado} className={ENTRADA} placeholder={es ? "Horario de recibo, molienda, quién recibe…" : "Receiving hours, grind, who receives…"} />
+              <input id="np-notas" name="notas" maxLength={300} disabled={ocupado} aria-invalid={campoMalo === "notas"} className={ENTRADA} placeholder={es ? "Horario de recibo, molienda, quién recibe…" : "Receiving hours, grind, who receives…"} />
             </div>
           </fieldset>
         </div>
