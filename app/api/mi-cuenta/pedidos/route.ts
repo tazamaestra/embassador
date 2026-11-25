@@ -1,10 +1,15 @@
 // Pedido hecho por un cliente desde su cuenta.
 //
-//   POST /api/mi-cuenta/pedidos  { items: [{ cafe, presentacion, cantidad, precioCop? }], entrega: { linea, ciudad, departamento, notas? } }
+//   POST /api/mi-cuenta/pedidos
+//     { items: [{ cafe, presentacion, cantidad, precioCop?, molienda? }], notas?,
+//       otraDireccion?: { linea, ciudad, departamento } }
 //
-// Nombre, correo y teléfono salen de su ficha. El cliente puede ajustar el
-// precio unitario de cada línea (precioCop); si no lo manda, va el del
-// catálogo. El pedido queda pendiente y el equipo lo confirma. Con el inventario conectado, el pedido se crea allá
+// La dirección no es obligatoria: el cliente va identificado (ID del
+// inventario o NIT) y el inventario ya tiene la suya. Solo si pide enviarlo
+// a otra dirección llega `otraDireccion`. Nombre, correo y teléfono salen de
+// su ficha. Precios de cliente (precioClienteCop); puede ajustar el precio
+// unitario de cada línea (precioCop) y elegir grano o molido. El pedido
+// queda pendiente y el equipo lo confirma. Con el inventario conectado, el pedido se crea allá
 // (POST /pedidos, ver docs/contrato-api-inventario.md); si no está, da
 // error (los pedidos solo viven en el inventario).
 
@@ -13,7 +18,7 @@ import { crearClienteAdmin } from "@/lib/supabase-admin";
 import { obtenerCafes } from "@/lib/servidor/cafes";
 import { leerSesion, respuestaError } from "@/lib/servidor/sesion";
 import { aCliente } from "@/lib/clientes";
-import { armarLineas, PedidoInvalido, totalDe, validarEntrega } from "@/lib/pedidos";
+import { armarLineas, PedidoInvalido, totalDe, validarEntrega, validarNotas, type Entrega } from "@/lib/pedidos";
 import { registrarPedido } from "@/lib/servidor/pedidos";
 import { generarReferencia } from "@/lib/wompi";
 
@@ -32,10 +37,12 @@ export async function POST(request: Request) {
   const cliente = aCliente(fila);
   if (!cliente.activo) return respuestaError("inactivo", 403);
 
-  let items, entrega;
+  let items, notas;
+  let entrega: Entrega | null = null;
   try {
-    items = armarLineas(cuerpo.items, await obtenerCafes(), { precioLibre: true });
-    entrega = validarEntrega(cuerpo.entrega);
+    items = armarLineas(cuerpo.items, await obtenerCafes(), { cuenta: true });
+    notas = validarNotas(cuerpo.notas);
+    if (cuerpo.otraDireccion) entrega = validarEntrega({ ...(cuerpo.otraDireccion as object), notas });
   } catch (e) {
     if (e instanceof PedidoInvalido) return respuestaError("campo_invalido", 400, { campo: e.campo });
     throw e;
@@ -51,6 +58,7 @@ export async function POST(request: Request) {
       telefono: cliente.telefono || "—",
     },
     entrega,
+    notas,
     items,
     totalCop: totalDe(items),
   });

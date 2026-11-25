@@ -4,7 +4,7 @@
 // pedidos desde la cuenta del cliente pueden ajustar el precio unitario.
 
 import { presentacionDe } from "./presentaciones";
-import type { EstadoPedido, LineaPedido, Product } from "./types";
+import type { EstadoPedido, LineaPedido, Molienda, Product } from "./types";
 
 export const ETIQUETA_ESTADO_PEDIDO: Record<EstadoPedido, [string, string]> = {
   pendiente: ["Pendiente de pago", "Awaiting payment"],
@@ -32,29 +32,37 @@ const PRECIO_MAX = 10_000_000;
 
 /**
  * Las líneas del carrito → líneas con nombre, peso y precio del catálogo.
- * Con `precioLibre` (solo pedidos desde la cuenta del cliente) cada línea
- * puede traer su `precioCop`, entero en pesos; si no lo trae, va el del catálogo.
+ * Con `cuenta` (solo pedidos desde la cuenta del cliente) se usan los
+ * precios de cliente, cada línea puede traer su `precioCop` (entero en
+ * pesos; si no lo trae, va el del catálogo) y su `molienda` ("grano" por
+ * defecto, o "molido").
  */
-export function armarLineas(crudo: unknown, catalogo: Product[], opciones: { precioLibre?: boolean } = {}): LineaPedido[] {
+export function armarLineas(crudo: unknown, catalogo: Product[], opciones: { cuenta?: boolean } = {}): LineaPedido[] {
   if (!Array.isArray(crudo) || crudo.length === 0 || crudo.length > MAX_LINEAS) throw new PedidoInvalido("items");
   const porClave = new Map<string, LineaPedido>();
   for (const x of crudo) {
     const r = (x ?? {}) as Record<string, unknown>;
     const cafe = catalogo.find((p) => p.id === r.cafe);
     if (!cafe) throw new PedidoInvalido("items");
-    const pres = presentacionDe(cafe, r.presentacion ?? "bolsa");
+    const pres = presentacionDe(cafe, r.presentacion ?? "bolsa", opciones.cuenta ? "cuenta" : "tienda");
     if (!pres) throw new PedidoInvalido("items");
     const cantidad = Number(r.cantidad);
     if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > MAX_CANTIDAD) throw new PedidoInvalido("items");
 
     let precioCop = pres.precioCop;
-    if (opciones.precioLibre && r.precioCop !== undefined && r.precioCop !== null) {
+    if (opciones.cuenta && r.precioCop !== undefined && r.precioCop !== null) {
       precioCop = Number(r.precioCop);
       if (!Number.isInteger(precioCop) || precioCop < PRECIO_MIN || precioCop > PRECIO_MAX) throw new PedidoInvalido("precio");
     }
 
-    // La misma presentación dos veces se suma en una sola línea.
-    const clave = `${cafe.id}:${pres.id}`;
+    let molienda: Molienda | undefined;
+    if (opciones.cuenta) {
+      if (r.molienda !== undefined && r.molienda !== "grano" && r.molienda !== "molido") throw new PedidoInvalido("items");
+      molienda = (r.molienda as Molienda | undefined) ?? "grano";
+    }
+
+    // La misma presentación (y molienda) dos veces se suma en una sola línea.
+    const clave = `${cafe.id}:${pres.id}:${molienda ?? ""}`;
     const previa = porClave.get(clave);
     porClave.set(clave, {
       cafe: cafe.id,
@@ -63,6 +71,7 @@ export function armarLineas(crudo: unknown, catalogo: Product[], opciones: { pre
       pesoG: pres.pesoG,
       cantidad: Math.min(MAX_CANTIDAD, (previa?.cantidad ?? 0) + cantidad),
       precioCop,
+      ...(molienda ? { molienda } : {}),
     });
   }
   return [...porClave.values()];
@@ -108,7 +117,14 @@ export function validarContacto(crudo: unknown): Contacto {
   return c;
 }
 
-/** Datos de entrega de un pedido hecho desde la cuenta: el resto sale de la ficha. */
+/** Indicaciones opcionales de un pedido desde la cuenta (máx. 300 caracteres). */
+export function validarNotas(crudo: unknown): string {
+  const v = typeof crudo === "string" ? crudo.trim().replace(/\s+/g, " ") : "";
+  if (v.length > 300) throw new PedidoInvalido("notas");
+  return v;
+}
+
+/** Datos de entrega (dirección, ciudad, departamento, notas). */
 export interface Entrega {
   linea: string;
   ciudad: string;

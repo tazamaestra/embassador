@@ -4,17 +4,19 @@ import { useMemo, useState, type FormEvent } from "react";
 import Image from "next/image";
 import { useCafes } from "@/components/shared/CafesProvider";
 import BolsaNegocio from "@/components/shared/BolsaNegocio";
-import SelectorCiudad from "@/components/shared/SelectorCiudad";
 import { srcImagen } from "@/lib/cafes";
 import { calcularHoras } from "@/lib/capacitacion";
 import { formatCOP } from "@/lib/format";
-import { formatPeso, presentacionesDe, type PresentacionId } from "@/lib/presentaciones";
+import SelectorCiudad from "@/components/shared/SelectorCiudad";
+import { formatPeso, nombrePresentacion, presentacionesDe, type PresentacionId } from "@/lib/presentaciones";
 import { llamarApi } from "@/lib/pago";
-import type { Capacitacion, CompraInventario, Pedido } from "@/lib/types";
+import type { Capacitacion, CompraInventario, Molienda, Pedido } from "@/lib/types";
 
 // El cliente arma su pedido desde la cuenta: cantidades por café y
-// presentación, a dónde va, y ve cuántas horas de capacitación le sumaría.
-// Queda "pendiente" en el panel; el equipo confirma pago y envío.
+// presentación (precios de cliente, ajustables), grano o molido, y ve
+// cuántas horas de capacitación le sumaría. La dirección no es obligatoria:
+// el inventario ya tiene la del cliente; solo si marca "otra dirección" la escribe.
+// Queda "pendiente"; el equipo confirma pago y envío.
 
 const ENTRADA =
   "w-full h-11 font-body text-[15px] text-tinta bg-white border border-borde rounded-input px-3.5 focus:border-vino focus:outline-none focus:ring-2 focus:ring-vino/15 disabled:opacity-60 aria-[invalid=true]:border-vino";
@@ -32,13 +34,11 @@ function Contador({ valor, onCambio, nombre, es }: { valor: number; onCambio: (n
 }
 
 export default function NuevoPedido({
-  es, compras, capacitaciones, ultimo, onEnviado, onCerrar,
+  es, compras, capacitaciones, onEnviado, onCerrar,
 }: {
   es: boolean;
   compras: CompraInventario[];
   capacitaciones: Capacitacion[];
-  /** Su último pedido, para prellenar la dirección. */
-  ultimo?: Pedido;
   onEnviado: (p: Pedido) => void;
   onCerrar: () => void;
 }) {
@@ -48,6 +48,8 @@ export default function NuevoPedido({
   const [precios, setPrecios] = useState<Record<string, number>>({});
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState("");
+  const [molienda, setMolienda] = useState<Record<string, Molienda>>({});
+  const [otraDireccion, setOtraDireccion] = useState(false);
   const [campoMalo, setCampoMalo] = useState<string | null>(null);
 
   const clave = (cafe: string, pres: PresentacionId) => `${cafe}:${pres}`;
@@ -56,14 +58,14 @@ export default function NuevoPedido({
   const lineas = useMemo(
     () =>
       cafes.flatMap((cafe) =>
-        presentacionesDe(cafe).flatMap((pres) => {
+        presentacionesDe(cafe, "cuenta").flatMap((pres) => {
           const k = clave(cafe.id, pres.id);
           const cantidad = cantidades[k] ?? 0;
           const precio = precios[k] ?? pres.precioCop;
-          return cantidad > 0 ? [{ cafe, pres, cantidad, precio }] : [];
+          return cantidad > 0 ? [{ cafe, pres, cantidad, precio, molienda: molienda[k] ?? "grano" }] : [];
         })
       ),
-    [cafes, cantidades, precios]
+    [cafes, cantidades, precios, molienda]
   );
   const total = lineas.reduce((s, l) => s + l.precio * l.cantidad, 0);
   const cuarterones = lineas.filter((l) => l.pres.id === "negocio").reduce((s, l) => s + l.cantidad, 0);
@@ -80,17 +82,17 @@ export default function NuevoPedido({
     return { horas: despues.ganadas - antes.ganadas, regalo: despues.regalo > antes.regalo, faltan: despues.faltanParaSiguiente };
   }, [compras, capacitaciones, cuarterones]);
 
-  // Señala el campo de entrega con problema y dice cuál es.
+  // Señala el campo con problema y dice cuál es.
   function marcarCampo(campo: string) {
     const mensajes: Record<string, [string, string]> = {
-      linea: ["Escribe la dirección de entrega (máximo 200 caracteres).", "Enter the delivery address (200 characters max)."],
+      linea: ["Escribe la dirección de entrega.", "Enter the delivery address."],
       ciudad: ["Elige la ciudad de entrega (o escríbela en “Otra…”).", "Choose the delivery city (or type it under “Other…”)."],
       departamento: ["Escribe el departamento de entrega.", "Enter the delivery state."],
       notas: ["Las indicaciones son muy largas (máximo 300 caracteres).", "Notes are too long (300 characters max)."],
     };
     setCampoMalo(campo);
     document.getElementById(`np-${campo}`)?.focus();
-    const [msgEs, msgEn] = mensajes[campo] ?? ["Revisa los datos de entrega.", "Check the delivery details."];
+    const [msgEs, msgEn] = mensajes[campo] ?? ["Revisa los datos del pedido.", "Check the order details."];
     setError(es ? msgEs : msgEn);
   }
 
@@ -102,13 +104,20 @@ export default function NuevoPedido({
     if (lineas.some((l) => !Number.isInteger(l.precio) || l.precio < 1000)) {
       return setError(es ? "Revisa los precios: mínimo $1.000 por unidad." : "Check the prices: at least $1,000 per unit.");
     }
-    const entrega = Object.fromEntries(new FormData(e.currentTarget).entries());
-    // Los obligatorios se revisan aquí para decir cuál falta antes de ir al servidor.
-    const faltante = (["linea", "ciudad", "departamento"] as const).find((k) => !String(entrega[k] ?? "").trim());
-    if (faltante) return marcarCampo(faltante);
+    const datos = Object.fromEntries(new FormData(e.currentTarget).entries());
+    const texto = (k: string) => String(datos[k] ?? "").trim();
+    // La otra dirección solo se pide si el cliente la marcó; ahí sí son obligatorios.
+    if (otraDireccion) {
+      const falta = (["linea", "ciudad", "departamento"] as const).find((k) => !texto(k));
+      if (falta) return marcarCampo(falta);
+    }
     setOcupado(true);
     const r = await llamarApi<{ pedido: Pedido }>("/api/mi-cuenta/pedidos", {
-      body: { items: lineas.map((l) => ({ cafe: l.cafe.id, presentacion: l.pres.id, cantidad: l.cantidad, precioCop: l.precio })), entrega },
+      body: {
+        items: lineas.map((l) => ({ cafe: l.cafe.id, presentacion: l.pres.id, cantidad: l.cantidad, precioCop: l.precio, molienda: l.molienda })),
+        notas: texto("notas"),
+        ...(otraDireccion ? { otraDireccion: { linea: texto("linea"), ciudad: texto("ciudad"), departamento: texto("departamento") } } : {}),
+      },
     });
     setOcupado(false);
     if (!r.ok) {
@@ -121,7 +130,9 @@ export default function NuevoPedido({
           ? "Tu NIT o cédula todavía no está registrado en nuestro sistema. Escríbenos y lo activamos."
           : "Your tax ID isn't registered in our system yet. Contact us and we'll set it up.");
       }
-      return setError(es ? "No pudimos enviar el pedido. Intenta de nuevo en un momento." : "We couldn't send the order. Try again in a moment.");
+      // El detalle (qué respondió el inventario) ayuda a saber qué falló.
+      const detalle = r.mensaje ? ` (${r.mensaje})` : r.status ? ` (${r.error} · ${r.status})` : "";
+      return setError((es ? "No pudimos enviar el pedido. Intenta de nuevo en un momento." : "We couldn't send the order. Try again in a moment.") + detalle);
     }
     onEnviado(r.data.pedido);
   }
@@ -156,12 +167,14 @@ export default function NuevoPedido({
                 </div>
               </div>
               <ul className="divide-y divide-borde">
-                {presentacionesDe(cafe).map((pres) => {
+                {presentacionesDe(cafe, "cuenta").map((pres) => {
                   const k = clave(cafe.id, pres.id);
                   const n = cantidades[k] ?? 0;
                   const precio = precios[k] ?? pres.precioCop;
+                  const mol = molienda[k] ?? "grano";
                   return (
-                    <li key={pres.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <li key={pres.id} className="py-2.5">
+                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         {pres.id === "negocio" ? (
                           <BolsaNegocio product={cafe} id={`np-${cafe.id}`} proceso={es ? cafe.proceso_es : cafe.proceso_en} decorativa className="w-7 h-auto shrink-0" />
@@ -170,7 +183,7 @@ export default function NuevoPedido({
                         )}
                         <div className="min-w-0">
                           <p className="font-body font-700 text-sm text-tinta">
-                            {pres.id === "negocio" ? (es ? "Cuarterón" : "Large bag") : (es ? "Bolsa" : "Bag")} · {formatPeso(pres.pesoG)}
+                            {nombrePresentacion(pres.id, es)} · {formatPeso(pres.pesoG)}
                           </p>
                           <div className="flex items-center gap-1 mt-1 font-body text-xs text-tinta-suave">
                             <span aria-hidden="true">$</span>
@@ -200,6 +213,27 @@ export default function NuevoPedido({
                         </div>
                       </div>
                       <Contador valor={n} onCambio={(v) => poner(k, v)} nombre={`${cafe.name} ${formatPeso(pres.pesoG)}`} es={es} />
+                     </div>
+                      {/* Grano o molido: aparece al agregar esa presentación. */}
+                      {n > 0 && (
+                        <div role="radiogroup" aria-label={es ? `Molienda de ${cafe.name} ${formatPeso(pres.pesoG)}` : `Grind for ${cafe.name} ${formatPeso(pres.pesoG)}`} className="flex gap-2 mt-2 pl-10 animate-[fadeUp_.2s_ease-out]">
+                          {(["grano", "molido"] as const).map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              role="radio"
+                              aria-checked={mol === m}
+                              disabled={ocupado}
+                              onClick={() => setMolienda((x) => ({ ...x, [k]: m }))}
+                              className={`h-8 px-3 rounded-full border font-body text-xs font-700 transition-colors ${
+                                mol === m ? "border-vino bg-vino/5 text-vino" : "border-borde text-tinta-suave hover:border-vino"
+                              }`}
+                            >
+                              {m === "grano" ? (es ? "En grano" : "Whole bean") : (es ? "Molido" : "Ground")}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </li>
                   );
                 })}
@@ -207,26 +241,44 @@ export default function NuevoPedido({
             </div>
           ))}
 
-          {/* A dónde va */}
-          <fieldset className="rounded-card border border-borde p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <legend className="font-display font-bold text-tinta text-lg px-1">{es ? "Entrega" : "Delivery"}</legend>
-            <div className="sm:col-span-2">
-              <label className={ETIQUETA} htmlFor="np-linea">{es ? "Dirección" : "Address"}</label>
-              <input id="np-linea" name="linea" defaultValue={ultimo?.linea} maxLength={200} required disabled={ocupado} aria-invalid={campoMalo === "linea"} className={ENTRADA} placeholder={es ? "Calle 12 #4-56, local 2" : "Street, number, unit"} />
-            </div>
+          {/* Entrega: por defecto, la dirección que el cliente tiene en el inventario. */}
+          <div className="rounded-card border border-borde p-4 space-y-4">
             <div>
-              <label className={ETIQUETA} htmlFor="np-ciudad">{es ? "Ciudad" : "City"}</label>
-              <SelectorCiudad id="np-ciudad" es={es} defaultValue={ultimo?.ciudad} disabled={ocupado} className={ENTRADA} />
+              <p className="font-body text-sm text-tinta">
+                {es ? "Lo enviamos a la dirección que tenemos registrada para tu negocio." : "We'll ship to the address we have on file for your business."}
+              </p>
+              <label className="mt-2 inline-flex items-center gap-2 font-body text-sm font-600 text-tinta cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={otraDireccion}
+                  onChange={(e) => { setOtraDireccion(e.target.checked); setCampoMalo(null); setError(""); }}
+                  disabled={ocupado}
+                  className="w-4 h-4 accent-vino"
+                />
+                {es ? "Enviar a otra dirección" : "Ship to a different address"}
+              </label>
             </div>
+            {otraDireccion && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-[fadeUp_.2s_ease-out]">
+                <div className="sm:col-span-2">
+                  <label className={ETIQUETA} htmlFor="np-linea">{es ? "Dirección" : "Address"}</label>
+                  <input id="np-linea" name="linea" maxLength={200} disabled={ocupado} aria-invalid={campoMalo === "linea"} className={ENTRADA} placeholder={es ? "Calle 12 #4-56, local 2" : "Street, number, unit"} />
+                </div>
+                <div>
+                  <label className={ETIQUETA} htmlFor="np-ciudad">{es ? "Ciudad" : "City"}</label>
+                  <SelectorCiudad id="np-ciudad" es={es} disabled={ocupado} className={ENTRADA} />
+                </div>
+                <div>
+                  <label className={ETIQUETA} htmlFor="np-departamento">{es ? "Departamento" : "State"}</label>
+                  <input id="np-departamento" name="departamento" maxLength={80} disabled={ocupado} aria-invalid={campoMalo === "departamento"} className={ENTRADA} placeholder="Risaralda" />
+                </div>
+              </div>
+            )}
             <div>
-              <label className={ETIQUETA} htmlFor="np-departamento">{es ? "Departamento" : "State"}</label>
-              <input id="np-departamento" name="departamento" defaultValue={ultimo?.departamento} required disabled={ocupado} aria-invalid={campoMalo === "departamento"} className={ENTRADA} placeholder="Risaralda" />
-            </div>
-            <div className="sm:col-span-2">
               <label className={ETIQUETA} htmlFor="np-notas">{es ? "Indicaciones (opcional)" : "Notes (optional)"}</label>
-              <input id="np-notas" name="notas" maxLength={300} disabled={ocupado} aria-invalid={campoMalo === "notas"} className={ENTRADA} placeholder={es ? "Horario de recibo, molienda, quién recibe…" : "Receiving hours, grind, who receives…"} />
+              <input id="np-notas" name="notas" maxLength={300} disabled={ocupado} aria-invalid={campoMalo === "notas"} className={ENTRADA} placeholder={es ? "Horario de recibo, quién recibe…" : "Receiving hours, who receives…"} />
             </div>
-          </fieldset>
+          </div>
         </div>
 
         {/* Resumen */}
@@ -239,7 +291,10 @@ export default function NuevoPedido({
               {lineas.map((l) => (
                 <li key={clave(l.cafe.id, l.pres.id)} className="flex justify-between gap-3 font-body text-sm animate-[fadeUp_.2s_ease-out]">
                   <span className="text-tinta">
-                    {l.cantidad} × {l.cafe.name} <span className="text-tinta-suave">{formatPeso(l.pres.pesoG)}</span>
+                    {l.cantidad} × {l.cafe.name}{" "}
+                    <span className="text-tinta-suave">
+                      {formatPeso(l.pres.pesoG)} · {l.molienda === "molido" ? (es ? "molido" : "ground") : (es ? "en grano" : "whole bean")}
+                    </span>
                   </span>
                   <span className="text-tinta tabular-nums">{formatCOP(l.precio * l.cantidad)}</span>
                 </li>

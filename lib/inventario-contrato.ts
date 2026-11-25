@@ -21,11 +21,14 @@ export interface ItemPedidoInventario {
   producto: string;
   /** Nombre para mostrar, ej. "Casa Roja". */
   nombre: string;
+  /** "bolsa" cubre la de 450 g y la pequeña de 220 g: las distingue `gramos`. */
   presentacion: PresentacionInventario;
   gramos: number;
   cantidad: number;
   /** Precio por unidad que cobró la web (los precios viven en la web). */
   precio_unitario: number;
+  /** En grano o molido. Solo en pedidos desde la cuenta. */
+  molienda?: "grano" | "molido";
 }
 
 export interface EntregaInventario {
@@ -67,7 +70,13 @@ export interface CrearPedidoInventario {
   origen: "cuenta" | "tienda";
   cliente: ClientePedidoInventario;
   contacto: ContactoInventario;
-  entrega: EntregaInventario;
+  /**
+   * A dónde va. Solo en compras de la tienda. En los pedidos desde la cuenta
+   * (`origen: "cuenta"`) no viene: el inventario usa los datos del cliente.
+   */
+  entrega?: EntregaInventario;
+  /** Indicaciones del cliente (molienda, horario de recibo…). Opcional. */
+  notas?: string;
   items: ItemPedidoInventario[];
   total: number;
   moneda: "COP";
@@ -84,7 +93,9 @@ export interface PedidoInventario {
   estado: EstadoPedidoInventario;
   creado_en: string;
   total: number;
-  entrega: EntregaInventario;
+  /** Puede venir vacío en pedidos desde la cuenta (usa los datos del cliente). */
+  entrega?: EntregaInventario | null;
+  notas?: string | null;
   items: ItemPedidoInventario[];
 }
 

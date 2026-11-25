@@ -14,10 +14,14 @@ export interface Momento {
   historia_en: string;
 }
 
+/** Una presentación extra del café (el cuarterón o la bolsa pequeña). */
 export interface PresentacionNegocio {
   pesoG: number;
+  /** Precio en la tienda pública. */
   precioCop: number;
   precioUsd?: number;
+  /** Precio para clientes con cuenta. Sin él, el de la tienda. */
+  precioClienteCop?: number;
 }
 
 export interface Product {
@@ -41,8 +45,13 @@ export interface Product {
   tueste_en: string;
   /** Peso de la bolsa en gramos. */
   pesoG: number;
+  /** Precio de la bolsa en la tienda pública. */
   precioCop: number;
   precioUsd?: number;
+  /** Precio de la bolsa para clientes con cuenta. Sin él, el de la tienda. */
+  precioClienteCop?: number;
+  /** Bolsa pequeña (220 g), con precio propio. */
+  pequena?: PresentacionNegocio;
   /**
    * Presentación para cafeterías o negocios (el cuarterón), con precio
    * propio. Los campos de arriba son los de la bolsa normal.
@@ -150,11 +159,15 @@ export type EstadoPedido = "pendiente" | "confirmado" | "pagado" | "fallido" | "
 export interface LineaPedido {
   cafe: string;
   nombre: string;
-  presentacion: "bolsa" | "negocio";
+  presentacion: "bolsa" | "pequena" | "negocio";
   pesoG: number;
   cantidad: number;
   precioCop: number;
+  /** Solo en pedidos desde la cuenta. */
+  molienda?: Molienda;
 }
+
+export type Molienda = "grano" | "molido";
 
 export interface Pedido {
   id: string;

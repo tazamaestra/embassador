@@ -7,10 +7,11 @@
 
 import { getSupabase } from "@/lib/supabase";
 import type { Contacto } from "@/lib/pedidos";
+import type { PresentacionId } from "@/lib/presentaciones";
 
 export interface LineaCarrito {
   cafe: string;
-  presentacion: "bolsa" | "negocio";
+  presentacion: PresentacionId;
   cantidad: number;
 }
 

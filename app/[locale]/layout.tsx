@@ -45,7 +45,7 @@ const spaceMono = localFont({
 export const metadata: Metadata = {
   title: "Taza Maestra · Café de especialidad",
   description:
-    "Café colombiano de finca propia: Casa Roja y Chambrana, en bolsa de 340 g o cuarterón para cafeterías. Pide una muestra gratis.",
+    "Café colombiano de finca propia: Casa Roja y Chambrana, en bolsa de 450 g, 220 g o cuarterón para cafeterías. Pide una muestra gratis.",
 };
 
 /** Las dos versiones del sitio se arman en el build, no en cada visita. */

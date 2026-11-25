@@ -12,7 +12,7 @@ interface Props {
   acento: string;
   patron: PatronBolsa;
   className?: string;
-  /** Lo que va en la etiqueta junto al proceso, ej. "340 G". */
+  /** Lo que va en la etiqueta junto al proceso, ej. "450 G". */
   peso?: string;
   /** Junto a un texto que ya nombra el café: el lector de pantalla la salta. */
   decorativa?: boolean;
@@ -43,7 +43,7 @@ function Dibujo({ patron, acento }: { patron: PatronBolsa; acento: string }) {
   }
 }
 
-export default function BolsaMockup({ id, nombre, region, proceso, fondo, acento, patron, className, decorativa, peso = "340 G" }: Props) {
+export default function BolsaMockup({ id, nombre, region, proceso, fondo, acento, patron, className, decorativa, peso = "450 G" }: Props) {
   const p = `tm-bolsa-${id}`;
   // La silueta de la bolsa: sello arriba, cuerpo que se abre un poco hacia la base.
   const cuerpo = "M44 52 L256 52 L266 356 Q268 384 240 384 L60 384 Q32 384 34 356 Z";

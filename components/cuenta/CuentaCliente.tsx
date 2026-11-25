@@ -218,7 +218,6 @@ export default function CuentaCliente({ locale }: { locale: Locale }) {
               es={es}
               compras={compras}
               capacitaciones={capacitaciones}
-              ultimo={pedidos[0]}
               onCerrar={() => setPidiendo(false)}
               onEnviado={(p) => {
                 setPidiendo(false);

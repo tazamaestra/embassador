@@ -19,7 +19,10 @@ export interface NuevoPedido {
   /** Cliente con cuenta, o null si es un comprador ocasional de la tienda. */
   cliente: Cliente | null;
   contacto: { nombre: string; email: string; telefono: string };
-  entrega: { linea: string; ciudad: string; departamento: string; notas: string };
+  /** A dónde va. null en pedidos desde la cuenta: el inventario ya tiene los datos del cliente. */
+  entrega: { linea: string; ciudad: string; departamento: string; notas: string } | null;
+  /** Indicaciones sueltas cuando no hay `entrega` (pedidos desde la cuenta). */
+  notas?: string;
   items: LineaPedido[];
   totalCop: number;
 }
@@ -39,7 +42,10 @@ export function aPedidoInventario(p: NuevoPedido): CrearPedidoInventario {
         ? { tipo: "registrado", documento: p.cliente.documento }
         : { tipo: "ocasional" },
     contacto: p.contacto,
-    entrega: { direccion: p.entrega.linea, ciudad: p.entrega.ciudad, departamento: p.entrega.departamento, notas: p.entrega.notas },
+    ...(p.entrega
+      ? { entrega: { direccion: p.entrega.linea, ciudad: p.entrega.ciudad, departamento: p.entrega.departamento, notas: p.entrega.notas } }
+      : {}),
+    ...(p.notas ? { notas: p.notas } : {}),
     items: p.items.map((l) => ({
       producto: l.cafe,
       nombre: l.nombre,
@@ -47,6 +53,7 @@ export function aPedidoInventario(p: NuevoPedido): CrearPedidoInventario {
       gramos: l.pesoG,
       cantidad: l.cantidad,
       precio_unitario: l.precioCop,
+      ...(l.molienda ? { molienda: l.molienda } : {}),
     })),
     total: p.totalCop,
     moneda: "COP",
@@ -60,7 +67,7 @@ export async function registrarPedido(p: NuevoPedido): Promise<ResultadoRegistro
     return { ok: false, motivo: "no_disponible", mensaje: "Inventario sin configurar" };
   }
   const r = await crearPedidoEnInventario(aPedidoInventario(p));
-  if (!r.ok) return { ok: false, motivo: r.motivo };
+  if (!r.ok) return { ok: false, motivo: r.motivo, mensaje: "mensaje" in r ? r.mensaje : undefined };
   return { ok: true, pedido: aPedidoWeb(r.pedido, p.cliente?.id ?? null) };
 }
 

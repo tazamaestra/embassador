@@ -86,8 +86,8 @@ function semilla(texto: string): () => number {
 const CATALOGO_SIMULADO = [
   { producto: "Chambrana cuarterón", gramos: 2250, precio: 150000 },
   { producto: "Casa Roja cuarterón", gramos: 2250, precio: 200000 },
-  { producto: "Chambrana bolsa", gramos: 340, precio: 30000 },
-  { producto: "Casa Roja bolsa", gramos: 340, precio: 40000 },
+  { producto: "Chambrana bolsa", gramos: 450, precio: 30000 },
+  { producto: "Casa Roja bolsa", gramos: 450, precio: 40000 },
 ];
 
 /**
@@ -208,7 +208,13 @@ async function llamarInventario<T>(ruta: string, init: { method?: string; body?:
       signal: AbortSignal.timeout(TIEMPO_MAXIMO_MS),
     });
     const cuerpo = (await r.json().catch(() => null)) as unknown;
-    if (!r.ok) return { ok: false, status: r.status, error: (cuerpo as ErrorInventario) ?? null };
+    if (!r.ok) {
+      // El 404 de una consulta es normal (cliente sin datos); lo demás se deja ver.
+      if (!(r.status === 404 && (init.method ?? "GET") === "GET")) {
+        console.error(`[inventario] ${init.method ?? "GET"} ${ruta} respondió ${r.status}:`, JSON.stringify(cuerpo));
+      }
+      return { ok: false, status: r.status, error: (cuerpo as ErrorInventario) ?? null };
+    }
     return { ok: true, status: r.status, data: cuerpo as T };
   } catch (e) {
     console.error(`[inventario] ${init.method ?? "GET"} ${ruta} falló:`, e);
@@ -237,14 +243,16 @@ export function aPedidoWeb(p: PedidoInventario, clienteId: string | null): Pedid
     linea: p.entrega?.direccion ?? "",
     ciudad: p.entrega?.ciudad ?? "",
     departamento: p.entrega?.departamento ?? "",
-    notas: p.entrega?.notas ?? "",
+    notas: p.entrega?.notas || p.notas || "",
     items: (p.items ?? []).map((i) => ({
       cafe: i.producto,
       nombre: i.nombre,
-      presentacion: i.presentacion === "cuarteron" ? "negocio" : "bolsa",
+      // La bolsa pequeña viaja como "bolsa" con menos gramos.
+      presentacion: i.presentacion === "cuarteron" ? "negocio" : i.gramos > 0 && i.gramos <= 250 ? "pequena" : "bolsa",
       pesoG: i.gramos,
       cantidad: i.cantidad,
       precioCop: i.precio_unitario,
+      ...(i.molienda === "grano" || i.molienda === "molido" ? { molienda: i.molienda } : {}),
     })),
     totalCop: p.total,
     estado: ESTADOS_WEB[p.estado] ?? "pendiente",
@@ -258,12 +266,15 @@ export function aPedidoWeb(p: PedidoInventario, clienteId: string | null): Pedid
  */
 export async function crearPedidoEnInventario(
   pedido: CrearPedidoInventario
-): Promise<{ ok: true; pedido: PedidoInventario } | { ok: false; motivo: "validacion" | "cliente_no_encontrado" | "no_disponible"; campos?: Record<string, string> }> {
+): Promise<{ ok: true; pedido: PedidoInventario } | { ok: false; motivo: "validacion" | "cliente_no_encontrado" | "no_disponible"; mensaje?: string; campos?: Record<string, string> }> {
   const r = await llamarInventario<PedidoInventario>("/pedidos", { method: "POST", body: pedido });
   if (r.ok) return { ok: true, pedido: r.data };
-  if (r.error?.error === "validacion") return { ok: false, motivo: "validacion", campos: r.error.campos };
+  // Lo que dijo el inventario, para que el error no quede mudo.
+  const detalle = [r.error?.mensaje, r.error?.campos && JSON.stringify(r.error.campos)].filter(Boolean).join(" ");
+  const mensaje = r.status === 0 ? "El inventario no respondió (red o tiempo agotado)" : `Inventario ${r.status}${detalle ? `: ${detalle}` : ""}`;
+  if (r.error?.error === "validacion") return { ok: false, motivo: "validacion", mensaje, campos: r.error.campos };
   if (r.error?.error === "cliente_no_encontrado") return { ok: false, motivo: "cliente_no_encontrado" };
-  return { ok: false, motivo: "no_disponible" };
+  return { ok: false, motivo: "no_disponible", mensaje };
 }
 
 /** GET /clientes/{clave}/pedidos. null si el inventario no respondió. */

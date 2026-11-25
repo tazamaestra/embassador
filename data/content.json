@@ -15,7 +15,7 @@
       "label_en": "Profiles"
     },
     {
-      "num": "340 g",
+      "num": "450 g",
       "label_es": "Por bolsa",
       "label_en": "Per bag"
     },
@@ -138,9 +138,16 @@
       "historia_en": "Taza Maestra began with a question: who teaches people to tell specialty coffee from commercial coffee? This coffee is the answer. We want it to be the reference point, the cup you measure every other against, so you learn to tell for yourself when a coffee is good and when it isn't.",
       "tueste_es": "Media",
       "tueste_en": "Medium",
-      "pesoG": 340,
-      "precioCop": 40000,
-      "precioUsd": 10,
+      "pesoG": 450,
+      "precioCop": 50000,
+      "precioUsd": 12.5,
+      "precioClienteCop": 40000,
+      "pequena": {
+        "pesoG": 220,
+        "precioCop": 25000,
+        "precioUsd": 6.25,
+        "precioClienteCop": 20000
+      },
       "negocio": {
         "pesoG": 2250,
         "precioCop": 200000,
@@ -170,9 +177,16 @@
       "notas_en": "Chocolate, almond and panela. Sweet finish.",
       "tueste_es": "Media",
       "tueste_en": "Medium",
-      "pesoG": 340,
-      "precioCop": 30000,
-      "precioUsd": 7.5,
+      "pesoG": 450,
+      "precioCop": 40000,
+      "precioUsd": 10,
+      "precioClienteCop": 30000,
+      "pequena": {
+        "pesoG": 220,
+        "precioCop": 20000,
+        "precioUsd": 5,
+        "precioClienteCop": 15000
+      },
       "negocio": {
         "pesoG": 2250,
         "precioCop": 150000,

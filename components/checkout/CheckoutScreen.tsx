@@ -177,7 +177,7 @@ export default function CheckoutScreen({ locale }: { locale: Locale }) {
                   <div>
                     <p className="font-display font-bold text-tinta leading-tight">{l.cafe.name}</p>
                     <p className="font-body text-xs text-tinta-suave">
-                      {l.pres.id === "negocio" ? (es ? "Cuarterón para negocios · " : "Business bag · ") : ""}
+                      {l.pres.id === "negocio" ? (es ? "Cuarterón para negocios · " : "Business bag · ") : l.pres.id === "pequena" ? (es ? "Bolsa pequeña · " : "Small bag · ") : ""}
                       {formatPeso(l.pres.pesoG)} · {l.cantidad} × {formatCOP(l.pres.precioCop)}
                     </p>
                   </div>

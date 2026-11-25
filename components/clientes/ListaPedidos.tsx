@@ -37,7 +37,8 @@ export default function ListaPedidos({ pedidos, es, vacio }: { pedidos: Pedido[]
                 <span>
                   {l.cantidad} × {l.nombre}{" "}
                   <span className="text-tinta-suave">
-                    ({l.presentacion === "negocio" ? (es ? "cuarterón " : "large bag ") : ""}{formatPeso(l.pesoG)})
+                    ({l.presentacion === "negocio" ? (es ? "cuarterón " : "large bag ") : ""}{formatPeso(l.pesoG)}
+                    {l.molienda ? ` · ${l.molienda === "molido" ? (es ? "molido" : "ground") : (es ? "en grano" : "whole bean")}` : ""})
                   </span>
                 </span>
                 <span className="tabular-nums text-tinta-suave">{formatCOP(l.precioCop * l.cantidad)}</span>
@@ -45,7 +46,7 @@ export default function ListaPedidos({ pedidos, es, vacio }: { pedidos: Pedido[]
             ))}
           </ul>
           <div className="flex justify-between gap-3 border-t border-borde mt-2 pt-2 font-body text-sm">
-            <span className="text-tinta-suave truncate">{p.linea}, {p.ciudad}</span>
+            <span className="text-tinta-suave truncate">{[p.linea, p.ciudad].filter(Boolean).join(", ") || p.notas}</span>
             <span className="font-700 text-tinta tabular-nums whitespace-nowrap">{formatCOP(p.totalCop)} {es ? "+ envío" : "+ shipping"}</span>
           </div>
         </li>

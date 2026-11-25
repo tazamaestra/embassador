@@ -168,13 +168,13 @@ export default function ProductoScreen({
               ))}
             </dl>
 
-            {/* Presentación: la bolsa o el cuarterón para negocios */}
+            {/* Presentación: la bolsa, la bolsa pequeña o el cuarterón para negocios */}
             {presentaciones.length > 1 && (
               <div className="border-t border-borde pt-6">
                 <p className="font-mono text-[9px] tracking-[.18em] text-tinta-suave uppercase mb-2">
                   {t("presentacion")}
                 </p>
-                <div role="radiogroup" aria-label={t("presentacion")} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div role="radiogroup" aria-label={t("presentacion")} className={`grid grid-cols-1 gap-2 ${presentaciones.length > 2 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
                   {presentaciones.map((p) => {
                     const activa = p.id === pres.id;
                     return (
@@ -190,7 +190,7 @@ export default function ProductoScreen({
                         }`}
                       >
                         <span className="block font-700 text-sm text-tinta">
-                          {p.id === "negocio" ? t("presNegocio") : t("presBolsa")}
+                          {p.id === "negocio" ? t("presNegocio") : p.id === "pequena" ? t("presPequena") : t("presBolsa")}
                         </span>
                         <span className="block font-mono text-[11px] mt-0.5">
                           {formatPeso(p.pesoG)} · {formatCOP(p.precioCop)}

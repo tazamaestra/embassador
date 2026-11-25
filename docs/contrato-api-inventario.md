@@ -48,8 +48,9 @@ hacer pedidos y las compras que se muestran son de ejemplo.
 | Dinero | Pesos colombianos, **enteros** (`150000`, no `150000.00` ni `"$150.000"`) |
 | Fechas | ISO 8601. `fecha` de solo día: `"2026-11-18"`. Fecha y hora: `"2026-11-18T15:04:05Z"` |
 | Documento | NIT o cédula **sin puntos ni espacios**, en mayúsculas, con guion si lo tiene: `"900123456-7"`, `"1088123456"` |
-| Presentación | `"bolsa"` (340 g) o `"cuarteron"` (2.250 g) |
-| Gramos | Siempre se envían: `340` o `2250` |
+| Presentación | `"bolsa"` (450 g o 220 g) o `"cuarteron"` (2.250 g) |
+| Gramos | Siempre se envían: `450`, `220` o `2250` |
+| Molienda | Solo en pedidos desde la cuenta, por ítem: `"grano"` o `"molido"` |
 
 ### Productos
 
@@ -58,8 +59,12 @@ equivalencia con sus propias referencias.
 
 | `producto` (código web) | Nombre | Presentaciones |
 |---|---|---|
-| `la-esperanza` | Casa Roja | `bolsa` 340 g, `cuarteron` 2.250 g |
-| `santa-rita` | Chambrana | `bolsa` 340 g, `cuarteron` 2.250 g |
+| `la-esperanza` | Casa Roja | `bolsa` 450 g, `bolsa` 220 g, `cuarteron` 2.250 g |
+| `santa-rita` | Chambrana | `bolsa` 450 g, `bolsa` 220 g, `cuarteron` 2.250 g |
+
+Las dos bolsas viajan con `presentacion: "bolsa"`; las distingue `gramos`
+(450 o 220). El inventario debe mapear `producto` + `presentacion` + `gramos`
+a su referencia.
 
 ## 3. Endpoints
 
@@ -73,7 +78,7 @@ La web lo llama cuando un cliente hace un pedido desde su cuenta
 ```json
 {
   "referencia_web": "PED-LX3K9A2F-8QZ4M1",
-  "origen": "cuenta",
+  "origen": "tienda",
   "cliente": { "tipo": "registrado", "documento": "900123456-7" },
   "contacto": {
     "nombre": "Ana Gómez · Café La Esquina",
@@ -88,9 +93,9 @@ La web lo llama cuando un cliente hace un pedido desde su cuenta
   },
   "items": [
     { "producto": "santa-rita", "nombre": "Chambrana", "presentacion": "cuarteron", "gramos": 2250, "cantidad": 3, "precio_unitario": 150000 },
-    { "producto": "la-esperanza", "nombre": "Casa Roja", "presentacion": "bolsa", "gramos": 340, "cantidad": 2, "precio_unitario": 40000 }
+    { "producto": "la-esperanza", "nombre": "Casa Roja", "presentacion": "bolsa", "gramos": 450, "cantidad": 2, "precio_unitario": 50000 }
   ],
-  "total": 530000,
+  "total": 550000,
   "moneda": "COP",
   "creado_en": "2026-11-18T15:04:05Z"
 }
@@ -102,6 +107,36 @@ La web lo llama cuando un cliente hace un pedido desde su cuenta
 |---|---|---|
 | Cliente con cuenta | `{ "tipo": "registrado", "documento": "900123456-7" }` | Asocia el pedido a ese cliente. Si el documento no existe, responde `404 cliente_no_encontrado`. |
 | Comprador de la tienda sin cuenta | `{ "tipo": "ocasional" }` | Lo registra como **cliente ocasional**, con los datos de `contacto`. |
+
+**Entrega:** en compras de la tienda (`origen: "tienda"`) `entrega` viene
+siempre. En los pedidos desde la cuenta (`origen: "cuenta"`) es
+**opcional**: el cliente va identificado por `cliente.id` o
+`cliente.documento`, y si no viene `entrega` el inventario usa la dirección
+que ya tiene registrada para él. Solo viene `entrega` cuando el cliente
+pidió enviarlo **a otra dirección**. Puede venir también un campo suelto
+`notas` (texto, máx. 300, opcional) con indicaciones del cliente (horario de
+recibo, quién recibe…). El inventario **no** debe responder
+`400 validacion` por falta de `entrega` en un pedido `origen: "cuenta"`.
+
+**Molienda:** en los pedidos desde la cuenta cada ítem trae
+`molienda: "grano" | "molido"`. En la tienda no viene (se asume en grano).
+
+```json
+{
+  "referencia_web": "PED-LX3K9A2F-8QZ4M1",
+  "origen": "cuenta",
+  "cliente": { "tipo": "registrado", "id": "6f1c2a0e-…", "documento": "900123456-7" },
+  "contacto": { "nombre": "Ana Gómez · Café La Esquina", "email": "ana@cafelaesquina.co", "telefono": "3001234567" },
+  "notas": "Recibir de 8 a 11 a. m.",
+  "items": [
+    { "producto": "santa-rita", "nombre": "Chambrana", "presentacion": "cuarteron", "gramos": 2250, "cantidad": 3, "precio_unitario": 150000, "molienda": "molido" },
+    { "producto": "la-esperanza", "nombre": "Casa Roja", "presentacion": "bolsa", "gramos": 220, "cantidad": 4, "precio_unitario": 20000, "molienda": "grano" }
+  ],
+  "total": 530000,
+  "moneda": "COP",
+  "creado_en": "2026-11-25T15:04:05Z"
+}
+```
 
 **Precios:** `precio_unitario` y `total` los calcula la web, que es la dueña
 de los precios. El inventario los guarda tal cual. Si quiere, puede verificar
@@ -123,9 +158,13 @@ idempotencia):
   "entrega": { "direccion": "Calle 12 #4-56, local 2", "ciudad": "Pereira", "departamento": "Risaralda", "notas": "Recibir de 8 a 11 a. m." },
   "items": [
     { "producto": "santa-rita", "nombre": "Chambrana", "presentacion": "cuarteron", "gramos": 2250, "cantidad": 3, "precio_unitario": 150000 },
-    { "producto": "la-esperanza", "nombre": "Casa Roja", "presentacion": "bolsa", "gramos": 340, "cantidad": 2, "precio_unitario": 40000 }
+    { "producto": "la-esperanza", "nombre": "Casa Roja", "presentacion": "bolsa", "gramos": 220, "cantidad": 4, "precio_unitario": 20000, "molienda": "grano" }
   ]
 }
+```
+
+En un pedido desde la cuenta sin otra dirección, `entrega` puede venir con
+la dirección registrada del cliente o no venir.
 ```
 
 #### Idempotencia (obligatoria)
@@ -203,7 +242,7 @@ los cancelados.
 {
   "compras": [
     { "id": "V-0456-1", "fecha": "2026-11-08", "producto": "santa-rita", "presentacion": "cuarteron", "gramos": 2250, "cantidad": 2, "total": 300000 },
-    { "id": "V-0431-1", "fecha": "2026-10-20", "producto": "la-esperanza", "presentacion": "bolsa", "gramos": 340, "cantidad": 4, "total": 160000 }
+    { "id": "V-0431-1", "fecha": "2026-10-20", "producto": "la-esperanza", "presentacion": "bolsa", "gramos": 450, "cantidad": 4, "total": 160000 }
   ]
 }
 ```
@@ -280,6 +319,9 @@ Todas las respuestas de error tienen esta forma:
 - [ ] `GET /compras` devuelve solo ventas confirmadas, con la fecha real de la venta.
 - [ ] Los documentos se guardan normalizados (sin puntos ni espacios, en mayúsculas).
 - [ ] Los errores usan la forma de la sección 5.
+- [ ] Un `POST /pedidos` con `origen: "cuenta"` **sin `entrega`** se acepta y usa la dirección registrada del cliente.
+- [ ] Se acepta `notas` suelto (opcional) y `molienda` (`"grano"` / `"molido"`) en cada ítem.
+- [ ] La tabla de equivalencias distingue la bolsa de **450 g** y la de **220 g** (por `gramos`).
 
 ## 7. Probar con curl
 
@@ -291,8 +333,8 @@ curl -s -X POST "$API/pedidos" -H "Authorization: Bearer $TOKEN" -H "Content-Typ
   -d '{"referencia_web":"PED-PRUEBA-0001","origen":"tienda","cliente":{"tipo":"ocasional"},
        "contacto":{"nombre":"Prueba","email":"prueba@correo.co","telefono":"3000000000"},
        "entrega":{"direccion":"Calle 1 #2-3","ciudad":"Pereira","departamento":"Risaralda","notas":""},
-       "items":[{"producto":"santa-rita","nombre":"Chambrana","presentacion":"bolsa","gramos":340,"cantidad":1,"precio_unitario":30000}],
-       "total":30000,"moneda":"COP","creado_en":"2026-11-18T15:00:00Z"}'
+       "items":[{"producto":"santa-rita","nombre":"Chambrana","presentacion":"bolsa","gramos":450,"cantidad":1,"precio_unitario":40000}],
+       "total":40000,"moneda":"COP","creado_en":"2026-11-18T15:00:00Z"}'
 
 curl -s "$API/pedidos/PED-PRUEBA-0001" -H "Authorization: Bearer $TOKEN"
 curl -s "$API/clientes/900123456-7/pedidos" -H "Authorization: Bearer $TOKEN"
